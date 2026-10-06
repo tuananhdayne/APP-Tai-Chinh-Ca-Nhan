@@ -45,23 +45,30 @@ class AiService(private val dbHelper: FinanceDatabaseHelper) {
 
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
-    suspend fun pingServer(serverUrl: String): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun pingServer(serverUrl: String, apiKey: String = ""): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val cleanUrl = serverUrl.trim().trimEnd('/')
-            val endpoint = "$cleanUrl/v1/models"
-            val request = Request.Builder()
+            val rawUrl = serverUrl.trim().trimEnd('/')
+            val cleanBase = if (rawUrl.endsWith("/v1")) rawUrl.substringBeforeLast("/v1") else rawUrl
+            val endpoint = "$cleanBase/v1/models"
+            val reqBuilder = Request.Builder()
                 .url(endpoint)
                 .addHeader("ngrok-skip-browser-warning", "true")
                 .addHeader("User-Agent", "AppTaiChinh-Android/1.0")
-                .get()
-                .build()
+
+            if (apiKey.isNotBlank()) {
+                reqBuilder.addHeader("Authorization", "Bearer ${apiKey.trim()}")
+            }
+
+            val request = reqBuilder.get().build()
 
             client.newCall(request).execute().use { response ->
                 val bodyStr = response.body?.string() ?: ""
                 if (response.isSuccessful) {
-                    Result.success("Kết nối thành công tới LM Studio!")
+                    Result.success("Kết nối thành công tới máy chủ AI!")
                 } else if (response.code == 404 && bodyStr.contains("ngrok")) {
-                    Result.failure(IOException("Ngrok đang offline hoặc chưa bật domain. Hãy chạy: ngrok http 1234 --url=$cleanUrl"))
+                    Result.failure(IOException("Ngrok đang offline hoặc chưa bật domain."))
+                } else if (response.code == 401 || response.code == 403) {
+                    Result.failure(IOException("Lỗi xác thực (API Key không đúng hoặc bị thiếu). Mã: ${response.code}"))
                 } else {
                     Result.failure(IOException("Mã phản hồi từ máy chủ: ${response.code} (${response.message})"))
                 }
@@ -80,15 +87,26 @@ class AiService(private val dbHelper: FinanceDatabaseHelper) {
         conversationHistory: List<ChatMessage>,
         categories: List<Category>,
         serverUrl: String,
-        modelName: String
+        modelName: String,
+        apiKey: String = ""
     ): AiResponse = withContext(Dispatchers.IO) {
         try {
-            val cleanUrl = serverUrl.trim().trimEnd('/')
-            if (cleanUrl.isBlank()) {
-                return@withContext AiResponse.Error("Vui lòng cài đặt URL ngrok hoặc LM Studio IP trước khi sử dụng.")
+            val rawUrl = serverUrl.trim().trimEnd('/')
+            if (rawUrl.isBlank()) {
+                return@withContext AiResponse.Error("Vui lòng cài đặt URL ngrok hoặc Server IP trước khi sử dụng.")
             }
 
-            val endpoint = "$cleanUrl/v1/chat/completions"
+            val cleanBase = if (rawUrl.endsWith("/v1")) rawUrl.substringBeforeLast("/v1") else rawUrl
+            val endpoint = "$cleanBase/v1/chat/completions"
+
+            // Mapping alias linh hoạt: tự động chuyển các cách gọi tên model sang mã định danh chuẩn
+            val actualModel = when (modelName.trim().lowercase()) {
+                "gemini3.7flash", "gemini-3.7-flash", "gemini37flash", "gemini 3.7 flash", "gemini 3.7" -> "ag/gemini-3.7-flash-high"
+                "gemini3.8flash", "gemini-3.8-flash", "gemini 3.8 flash" -> "ag/gemini-3.8-flash-high"
+                "qwen2.5-3b-instruct", "qwen" -> "ag/gemini-3.7-flash-high"
+                "" -> "ag/gemini-3.7-flash-high"
+                else -> modelName.trim()
+            }
 
             // 1. Khởi tạo mảng tin nhắn với System Prompt từ file AgentPrompts riêng biệt
             val messagesArray = JSONArray()
@@ -181,7 +199,8 @@ class AiService(private val dbHelper: FinanceDatabaseHelper) {
             // --- VÒNG LẶP ĐA TÁC TỬ (MULTI-STEP REACT LOOP) ---
             for (iteration in 0 until maxIterations) {
                 val payload = JSONObject().apply {
-                    put("model", modelName.ifBlank { "qwen2.5-3b-instruct" })
+                    put("model", actualModel)
+                    put("stream", false)
                     put("messages", messagesArray)
                     put("tools", ToolDefinitions.getAllTools())
                     put("tool_choice", "auto")
@@ -189,18 +208,23 @@ class AiService(private val dbHelper: FinanceDatabaseHelper) {
                 }
 
                 val body = payload.toString().toRequestBody(jsonMediaType)
-                val request = Request.Builder()
+                val reqBuilder = Request.Builder()
                     .url(endpoint)
                     .addHeader("ngrok-skip-browser-warning", "true")
                     .addHeader("User-Agent", "AppTaiChinh-Android/1.0")
                     .post(body)
-                    .build()
+
+                if (apiKey.isNotBlank()) {
+                    reqBuilder.addHeader("Authorization", "Bearer ${apiKey.trim()}")
+                }
+
+                val request = reqBuilder.build()
 
                 val responseStr: String
                 client.newCall(request).execute().use { response ->
                     responseStr = response.body?.string() ?: ""
                     if (!response.isSuccessful) {
-                        return@withContext AiResponse.Error("Lỗi kết nối LM Studio (Mã ${response.code}): $responseStr")
+                        return@withContext AiResponse.Error("Lỗi kết nối máy chủ AI (Mã ${response.code}): $responseStr")
                     }
                 }
 

@@ -25,10 +25,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SmartToy
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -241,10 +237,10 @@ fun AiChatBubble(
                     )
             )
 
-            // Khối nút tròn chính của Robot AI
+            // Khối nút tròn chính của Trợ Lý AI với biểu tượng phát sáng thế hệ mới
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(54.dp)
                     .shadow(
                         elevation = elevation,
                         shape = CircleShape,
@@ -255,41 +251,34 @@ fun AiChatBubble(
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFF4338CA), // Deep Indigo
-                                Color(0xFF6366F1), // Electric Purple/Blue
-                                Color(0xFF06B6D4)  // Cyan
+                                Color(0xFF1E1B4B), // Deep Midnight Indigo
+                                Color(0xFF312E81), // Indigo 900
+                                Color(0xFF0F172A)  // Slate 900
                             ),
                             start = Offset(0f, 0f),
-                            end = Offset(120f, 120f)
+                            end = Offset(140f, 140f)
                         )
                     )
                     .border(
-                        width = 1.5.dp,
+                        width = 1.6.dp,
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.8f),
-                                Color(0xFF38BDF8).copy(alpha = 0.5f)
+                                Color.White.copy(alpha = 0.85f),
+                                Color(0xFF38BDF8).copy(alpha = 0.7f),
+                                Color(0xFF818CF8).copy(alpha = 0.5f)
                             )
                         ),
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (isThinking) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(28.dp),
-                        color = Color.White,
-                        strokeWidth = 2.5.dp
-                    )
-                } else {
-                    // Biểu tượng Robot AI thông minh
-                    Icon(
-                        imageVector = Icons.Default.SmartToy,
-                        contentDescription = "Trợ Lý AI",
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
+                // Biểu tượng Ngôi sao AI tỏa sáng đa sắc
+                AiLogoView(
+                    size = 36.dp,
+                    isThinking = isThinking,
+                    withGlow = true,
+                    withBackground = false
+                )
             }
 
             // Chấm đèn tín hiệu xanh lá "Online" ở góc trên bên phải

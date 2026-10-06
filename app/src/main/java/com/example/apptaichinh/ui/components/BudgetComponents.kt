@@ -1,13 +1,22 @@
 package com.example.apptaichinh.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,25 +28,48 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.CategoryBudget
 import com.example.apptaichinh.data.model.OverallBudget
+import com.example.apptaichinh.theme.CarbonSurfaceGlass
+import com.example.apptaichinh.theme.CarbonSurfaceRecessed
+import com.example.apptaichinh.theme.NeonAmber
+import com.example.apptaichinh.theme.NeonAzure
+import com.example.apptaichinh.theme.NeonCoral
+import com.example.apptaichinh.theme.NeonEmerald
+import com.example.apptaichinh.theme.SpecularBorderBrush
+import com.example.apptaichinh.theme.TextHighContrast
+import com.example.apptaichinh.theme.TextMediumContrast
+import com.example.apptaichinh.theme.TextMuted
+import kotlin.math.cos
+import kotlin.math.sin
 
+/**
+ * Thẻ Ngân Sách Tổng Thể 3D Neumorphic-Glassmorphism (Panel 1)
+ * - Vòng tròn tiến trình 3D có chiều sâu (3D Circular Progress Gauge) với chuyển sắc Neon đa tầng.
+ * - Hiệu ứng lơ lửng xúc giác (Tactile Floating Console) với bóng đổ kép mềm mại.
+ * - Hai bảng số liệu lơ lửng hiển thị rõ ràng: "Đã chi tiêu" và "Còn lại".
+ */
 @Composable
 fun OverallBudgetCard(
     budget: OverallBudget,
@@ -45,158 +77,322 @@ fun OverallBudgetCard(
     modifier: Modifier = Modifier
 ) {
     val progress = budget.percentage.coerceIn(0f, 1f)
-    val animatedProgress by animateFloatAsState(targetValue = progress, animationSpec = tween(700))
+    val animatedProgress = remember { Animatable(0f) }
 
-    val statusColor by animateColorAsState(
-        targetValue = when {
-            budget.isOverBudget -> Color(0xFFEF4444) // Đỏ
-            budget.percentage > 0.8f -> Color(0xFFF59E0B) // Vàng cam cảnh báo
-            else -> Color(0xFF10B981) // Xanh an toàn
-        },
-        animationSpec = tween(500)
+    LaunchedEffect(progress) {
+        animatedProgress.animateTo(
+            targetValue = progress,
+            animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+        )
+    }
+
+    // Màu trạng thái dựa trên % chi tiêu
+    val statusColor = when {
+        budget.isOverBudget -> NeonCoral
+        budget.percentage > 0.8f -> NeonAmber
+        else -> NeonEmerald
+    }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "gaugePulse")
+    val pulseGlow by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseGlow"
     )
 
-    Card(
+    NeumorphicGlassCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(26.dp),
+        elevation = 8.dp,
+        containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
+        contentPadding = PaddingValues(20.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            // Header
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header: Tiêu đề & Nút sửa
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(statusColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🎯", fontSize = 18.sp)
-                    }
+                    Glyph3DIcon(
+                        icon = "🎯",
+                        accentColor = statusColor,
+                        size = 38.dp,
+                        fontSize = 18f
+                    )
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
                             text = "Ngân Sách Tổng Cả Tháng",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = TextHighContrast
                         )
                         Text(
-                            text = if (budget.isOverBudget) "⚠️ Đã vượt hạn mức chi tiêu!" else "Kế hoạch tài chính hàng tháng",
+                            text = if (budget.isOverBudget) "⚠️ Đã vượt hạn mức ngân sách!" else "Kế hoạch chi tiêu chủ động",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (budget.isOverBudget) Color(0xFFEF4444) else MaterialTheme.colorScheme.outline
+                            color = if (budget.isOverBudget) NeonCoral else TextMediumContrast
                         )
                     }
                 }
 
-                IconButton(onClick = onEditBudget) {
+                // Nút sửa xúc giác
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF1E2638).copy(alpha = 0.85f))
+                        .border(1.dp, SpecularBorderBrush, CircleShape)
+                        .clickable { onEditBudget() },
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Sửa ngân sách",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = NeonAzure,
+                        modifier = Modifier.size(17.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // Hạn mức & Đã tiêu
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Đã chi tiêu",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                    Text(
-                        text = Formatters.formatVnd(budget.totalExpense),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Hạn mức tối đa",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                    Text(
-                        text = Formatters.formatVnd(budget.totalBudget),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Thanh tiến độ Budget
+            // VÒNG TRÒN TIẾN TRÌNH 3D CÓ CHIỀU SÂU (3D Depth Circular Gauge)
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(10.dp)
-                    .clip(RoundedCornerShape(5.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .size(200.dp)
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(animatedProgress)
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(statusColor)
-                )
+                Canvas(modifier = Modifier.size(184.dp)) {
+                    val strokeWidth = 16.dp.toPx()
+                    val arcSize = size.width - strokeWidth
+                    val topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val radius = arcSize / 2f
+
+                    // 1. Rãnh nền lõm 3D (Recessed Track)
+                    drawArc(
+                        color = Color(0xFF0C101A),
+                        startAngle = 135f,
+                        sweepAngle = 270f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = Size(arcSize, arcSize),
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+
+                    // Viền phản quang bên trong rãnh
+                    drawArc(
+                        color = Color.White.copy(alpha = 0.05f),
+                        startAngle = 135f,
+                        sweepAngle = 270f,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = Size(arcSize, arcSize),
+                        style = Stroke(width = strokeWidth * 0.9f, cap = StrokeCap.Round)
+                    )
+
+                    // 2. Vòng tiến trình 3D Gradient tỏa sáng
+                    val currentSweep = animatedProgress.value * 270f
+                    if (currentSweep > 0f) {
+                        val gradientBrush = Brush.sweepGradient(
+                            colors = listOf(
+                                NeonEmerald,
+                                NeonAzure,
+                                NeonAmber,
+                                NeonCoral
+                            ),
+                            center = center
+                        )
+
+                        // Lớp tỏa sáng mờ dưới arc (Neon Bloom)
+                        drawArc(
+                            brush = gradientBrush,
+                            startAngle = 135f,
+                            sweepAngle = currentSweep,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = Size(arcSize, arcSize),
+                            style = Stroke(width = strokeWidth * 1.25f, cap = StrokeCap.Round),
+                            alpha = pulseGlow * 0.45f
+                        )
+
+                        // Lớp arc chính
+                        drawArc(
+                            brush = gradientBrush,
+                            startAngle = 135f,
+                            sweepAngle = currentSweep,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = Size(arcSize, arcSize),
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+
+                        // Đầu hạt ngọc phát sáng ở chóp cung (Glow Tip Bead)
+                        val angleRad = Math.toRadians((135f + currentSweep).toDouble())
+                        val beadX = center.x + radius * cos(angleRad).toFloat()
+                        val beadY = center.y + radius * sin(angleRad).toFloat()
+
+                        drawCircle(
+                            color = Color.White,
+                            radius = strokeWidth * 0.42f,
+                            center = Offset(beadX, beadY)
+                        )
+                        drawCircle(
+                            color = statusColor.copy(alpha = pulseGlow),
+                            radius = strokeWidth * 0.85f,
+                            center = Offset(beadX, beadY)
+                        )
+                    }
+                }
+
+                // Cụm thông tin xúc giác ở giữa vòng tròn
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val pct = (budget.percentage * 100).coerceAtLeast(0f)
+                    Text(
+                        text = String.format("%.0f%%", pct),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextHighContrast,
+                        letterSpacing = (-0.5).sp
+                    )
+
+                    Text(
+                        text = "ĐÃ SỬ DỤNG",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextMediumContrast,
+                        letterSpacing = 1.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    TactilePillChip(
+                        text = if (budget.isOverBudget) "Vượt mức" else if (budget.percentage > 0.8f) "Cảnh báo" else "An toàn",
+                        accentColor = statusColor,
+                        leadingDot = true
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Footer info: Số dư còn lại & %
+            // HAI BẢNG SỐ LIỆU LƠ LỬNG (Floating Metrics Consoles)
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Thẻ Đã Chi
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(NeonCoral)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Đã chi tiêu",
+                                fontSize = 11.5.sp,
+                                color = TextMuted,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = Formatters.formatVnd(budget.totalExpense),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = NeonCoral
+                        )
+                    }
+                }
+
+                // Thẻ Còn Lại
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(if (budget.remaining >= 0) NeonEmerald else NeonCoral)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (budget.remaining >= 0) "Còn lại" else "Vượt mức",
+                                fontSize = 11.5.sp,
+                                color = TextMuted,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = Formatters.formatVnd(Math.abs(budget.remaining)),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (budget.remaining >= 0) NeonEmerald else NeonCoral
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Dòng Hạn mức mục tiêu
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (budget.remaining >= 0) {
-                        "Còn lại: ${Formatters.formatVnd(budget.remaining)}"
-                    } else {
-                        "Vượt mức: ${Formatters.formatVnd(Math.abs(budget.remaining))}"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (budget.remaining >= 0) MaterialTheme.colorScheme.onSurface else Color(0xFFEF4444)
+                    text = "Hạn mức tối đa cả tháng:",
+                    fontSize = 12.sp,
+                    color = TextMediumContrast
                 )
-
-                val pctText = String.format("%.1f%%", budget.percentage * 100)
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(statusColor.copy(alpha = 0.12f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = pctText,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = statusColor
-                    )
-                }
+                Text(
+                    text = Formatters.formatVnd(budget.totalBudget),
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextHighContrast
+                )
             }
         }
     }
 }
 
+/**
+ * Thẻ Ngân Sách Cho Từng Danh Mục Riêng Biệt (Category Budget Card)
+ * - Thiết kế Card lơ lửng riêng biệt (Floating Glass Tile) với biểu tượng 3D tùy chỉnh.
+ * - Thanh tiến độ Neon chuyển sắc mượt mà với hiệu ứng phản quang.
+ */
 @Composable
 fun CategoryBudgetCard(
     categoryBudget: CategoryBudget,
@@ -204,47 +400,54 @@ fun CategoryBudgetCard(
     modifier: Modifier = Modifier
 ) {
     val progress = categoryBudget.percentage.coerceIn(0f, 1f)
-    val animatedProgress by animateFloatAsState(targetValue = progress, animationSpec = tween(600))
-
-    val statusColor by animateColorAsState(
-        targetValue = when {
-            categoryBudget.isOverBudget -> Color(0xFFEF4444)
-            categoryBudget.percentage > 0.8f -> Color(0xFFF59E0B)
-            else -> Color(0xFF10B981)
-        }
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 650, easing = FastOutSlowInEasing),
+        label = "catBudgetProgress"
     )
 
-    Card(
+    val catColor = Formatters.parseColor(categoryBudget.category.colorHex)
+    val statusColor = when {
+        categoryBudget.isOverBudget -> NeonCoral
+        categoryBudget.percentage > 0.8f -> NeonAmber
+        else -> NeonEmerald
+    }
+
+    NeumorphicGlassCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onEditCategoryBudget() },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(20.dp),
+        elevation = 4.dp,
+        containerColor = CarbonSurfaceGlass.copy(alpha = 0.85f),
+        contentPadding = PaddingValues(15.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Formatters.parseColor(categoryBudget.category.colorHex).copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = categoryBudget.category.icon, fontSize = 20.sp)
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    // Biểu tượng 3D Glyph của danh mục
+                    Glyph3DIcon(
+                        icon = categoryBudget.category.icon,
+                        accentColor = catColor,
+                        size = 44.dp,
+                        fontSize = 20f
+                    )
+
                     Spacer(modifier = Modifier.width(12.dp))
+
                     Column {
                         Text(
                             text = categoryBudget.category.name,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = TextHighContrast
                         )
                         Text(
                             text = if (categoryBudget.budgetAmount > 0) {
@@ -253,54 +456,64 @@ fun CategoryBudgetCard(
                                 "Chưa đặt ngân sách"
                             },
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.outline
+                            color = TextMediumContrast
                         )
                     }
                 }
 
+                // Cột bên phải: Số tiền đã chi & %
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = Formatters.formatVnd(categoryBudget.spentAmount),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (categoryBudget.isOverBudget) Color(0xFFEF4444) else MaterialTheme.colorScheme.onSurface
+                        color = if (categoryBudget.isOverBudget) NeonCoral else TextHighContrast
                     )
                     if (categoryBudget.budgetAmount > 0) {
                         val pctStr = String.format("%.0f%%", categoryBudget.percentage * 100)
-                        Text(
+                        TactilePillChip(
                             text = if (categoryBudget.isOverBudget) "Vượt $pctStr" else "$pctStr",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = statusColor
+                            accentColor = statusColor,
+                            leadingDot = false
                         )
                     }
                 }
             }
 
             if (categoryBudget.budgetAmount > 0) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
+                // Thanh tiến độ Neon có rãnh 3D
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFF0C101A))
+                        .border(0.8.dp, Color.White.copy(alpha = 0.04f), RoundedCornerShape(4.dp))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(animatedProgress)
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(statusColor)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        catColor,
+                                        statusColor
+                                    )
+                                )
+                            )
                     )
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = if (categoryBudget.remaining >= 0) {
@@ -308,22 +521,25 @@ fun CategoryBudgetCard(
                         } else {
                             "Vượt: ${Formatters.formatVnd(Math.abs(categoryBudget.remaining))}"
                         },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (categoryBudget.remaining >= 0) MaterialTheme.colorScheme.outline else Color(0xFFEF4444)
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (categoryBudget.remaining >= 0) TextMediumContrast else NeonCoral
                     )
 
                     Text(
-                        text = "Chạm để đổi",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "Chạm để chỉnh sửa ❯",
+                        fontSize = 11.sp,
+                        color = NeonAzure,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             } else {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "+ Chạm để thiết lập ngân sách cho mục này",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    text = "+ Chạm để thiết lập hạn mức cho mục này",
+                    fontSize = 12.sp,
+                    color = NeonAzure,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

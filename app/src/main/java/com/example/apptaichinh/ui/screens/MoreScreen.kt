@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.apptaichinh.ui.components.AiLogoView
 import com.example.apptaichinh.ui.components.Formatters
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 
@@ -68,9 +69,11 @@ fun MoreScreen(
 
     val currentAiUrl by viewModel.aiServerUrl.collectAsState()
     val currentAiModel by viewModel.aiModelName.collectAsState()
+    val currentAiApiKey by viewModel.aiApiKey.collectAsState()
 
     var serverUrlInput by remember(currentAiUrl) { mutableStateOf(currentAiUrl) }
     var modelNameInput by remember(currentAiModel) { mutableStateOf(currentAiModel) }
+    var apiKeyInput by remember(currentAiApiKey) { mutableStateOf(currentAiApiKey) }
 
     var isPinging by remember { mutableStateOf(false) }
     var pingResult by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
@@ -119,15 +122,75 @@ fun MoreScreen(
                     onClick = onOpenCategories
                 )
 
-                // Mục Trợ lý AI
-                MoreFeatureItem(
-                    icon = Icons.Default.AutoAwesome,
-                    iconTint = Color(0xFF8B5CF6),
-                    iconBg = Color(0xFF8B5CF6).copy(alpha = 0.12f),
-                    title = "Trợ Lý AI Tài Chính",
-                    subtitle = "Trò chuyện tự nhiên, tra cứu số dư & phân tích thông minh",
-                    onClick = onOpenAiChat
-                )
+                // Mục Trợ lý AI thế hệ mới với biểu tượng phát sáng
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onOpenAiChat() },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            AiLogoView(
+                                size = 34.dp,
+                                withGlow = true,
+                                withBackground = true
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Trợ Lý AI Tài Chính",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(Color(0xFF6366F1).copy(alpha = 0.15f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "Gemini 3.7",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF6366F1)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Trò chuyện tự nhiên, tra cứu số dư & phân tích thông minh",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
             }
         }
 
@@ -149,7 +212,7 @@ fun MoreScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Cấu Hình Máy Chủ AI (LM Studio / Ollama)",
+                            text = "Cấu Hình Máy Chủ AI (Gemini / Ngrok / LM Studio)",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -165,7 +228,7 @@ fun MoreScreen(
                             pingResult = null
                         },
                         label = { Text("URL Máy Chủ AI (hoặc Cloudflare / Ngrok)") },
-                        placeholder = { Text("http://192.168.1.x:1234") },
+                        placeholder = { Text("https://chas-unshaped-jacalyn.ngrok-free.dev") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true
@@ -181,7 +244,23 @@ fun MoreScreen(
                             pingResult = null
                         },
                         label = { Text("Tên Mô Hình AI") },
-                        placeholder = { Text("gemma-2-2b-it") },
+                        placeholder = { Text("ag/gemini-3.7-flash-high") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = apiKeyInput,
+                        onValueChange = {
+                            apiKeyInput = it
+                            saveSuccess = false
+                            pingResult = null
+                        },
+                        label = { Text("API Key (Bearer Token)") },
+                        placeholder = { Text("sk-...") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true
@@ -234,7 +313,7 @@ fun MoreScreen(
                             onClick = {
                                 isPinging = true
                                 pingResult = null
-                                viewModel.pingAiServer(serverUrlInput) { success, msg ->
+                                viewModel.pingAiServer(serverUrlInput, apiKeyInput) { success, msg ->
                                     isPinging = false
                                     pingResult = Pair(success, msg)
                                 }
@@ -254,6 +333,7 @@ fun MoreScreen(
                             onClick = {
                                 viewModel.setAiServerUrl(serverUrlInput)
                                 viewModel.setAiModelName(modelNameInput)
+                                viewModel.setAiApiKey(apiKeyInput)
                                 saveSuccess = true
                             },
                             modifier = Modifier.weight(1f),

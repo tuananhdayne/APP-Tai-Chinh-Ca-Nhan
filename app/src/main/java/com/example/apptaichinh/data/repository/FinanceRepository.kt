@@ -19,6 +19,7 @@ import java.util.Calendar
 
 class FinanceRepository private constructor(context: Context) {
 
+    private val appContext = context.applicationContext
     private val dbHelper = FinanceDatabaseHelper.getInstance(context)
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -61,6 +62,9 @@ class FinanceRepository private constructor(context: Context) {
     private val _aiModelName = MutableStateFlow(dbHelper.getAiModelName())
     val aiModelName: StateFlow<String> = _aiModelName.asStateFlow()
 
+    private val _aiApiKey = MutableStateFlow(dbHelper.getAiApiKey())
+    val aiApiKey: StateFlow<String> = _aiApiKey.asStateFlow()
+
     fun setAiServerUrl(url: String) {
         dbHelper.setAiServerUrl(url)
         _aiServerUrl.value = url.trim()
@@ -69,6 +73,11 @@ class FinanceRepository private constructor(context: Context) {
     fun setAiModelName(model: String) {
         dbHelper.setAiModelName(model)
         _aiModelName.value = model.trim()
+    }
+
+    fun setAiApiKey(key: String) {
+        dbHelper.setAiApiKey(key)
+        _aiApiKey.value = key.trim()
     }
 
     fun searchTransactions(keyword: String, amount: Long? = null): List<Transaction> {
@@ -151,6 +160,10 @@ class FinanceRepository private constructor(context: Context) {
         _categoryBudgets.value = catBudgets
         _categoryStats.value = stats
         _categories.value = allCats
+
+        try {
+            com.example.apptaichinh.widget.FinanceAppWidgetProvider.updateAllWidgets(appContext)
+        } catch (_: Exception) {}
     }
 
     private fun refreshTransactions() {

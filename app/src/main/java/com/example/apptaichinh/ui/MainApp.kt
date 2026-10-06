@@ -41,6 +41,23 @@ import com.example.apptaichinh.ui.components.AddTransactionSheet
 import com.example.apptaichinh.ui.components.AiChatBubble
 import com.example.apptaichinh.ui.components.EditBudgetDialog
 import com.example.apptaichinh.ui.components.EditCategoryDialog
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.material3.NavigationBarItemDefaults
+import com.example.apptaichinh.theme.CarbonBackground
+import com.example.apptaichinh.theme.NeonAzure
+import com.example.apptaichinh.theme.NeonIndigo
+import com.example.apptaichinh.theme.SpecularBorderBrush
+import com.example.apptaichinh.theme.TextHighContrast
+import com.example.apptaichinh.theme.TextMuted
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontWeight
 import com.example.apptaichinh.ui.screens.AnalyticsScreen
 import com.example.apptaichinh.ui.screens.BudgetScreen
 import com.example.apptaichinh.ui.screens.CategoryScreen
@@ -84,53 +101,89 @@ fun MainApp(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
+                containerColor = CarbonBackground.copy(alpha = 0.96f),
+                tonalElevation = 8.dp,
+                modifier = Modifier
+                    .border(
+                        width = 1.dp,
+                        brush = SpecularBorderBrush,
+                        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                    )
+                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             ) {
+                val itemColors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = NeonAzure,
+                    selectedTextColor = NeonAzure,
+                    unselectedIconColor = TextMuted,
+                    unselectedTextColor = TextMuted,
+                    indicatorColor = NeonAzure.copy(alpha = 0.16f)
+                )
+
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.EditNote, contentDescription = "Nhập vào") },
-                    label = { Text("Nhập vào") },
+                    label = { Text("Nhập vào", fontWeight = if (currentTab == 0) FontWeight.Bold else FontWeight.Normal) },
                     selected = currentTab == 0,
-                    onClick = { viewModel.setCurrentTab(0) }
+                    onClick = { viewModel.setCurrentTab(0) },
+                    colors = itemColors
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.CalendarMonth, contentDescription = "Lịch") },
-                    label = { Text("Lịch") },
+                    label = { Text("Lịch", fontWeight = if (currentTab == 1) FontWeight.Bold else FontWeight.Normal) },
                     selected = currentTab == 1,
-                    onClick = { viewModel.setCurrentTab(1) }
+                    onClick = { viewModel.setCurrentTab(1) },
+                    colors = itemColors
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.PieChart, contentDescription = "Thống Kê") },
-                    label = { Text("Thống Kê") },
+                    label = { Text("Thống Kê", fontWeight = if (currentTab == 2) FontWeight.Bold else FontWeight.Normal) },
                     selected = currentTab == 2,
-                    onClick = { viewModel.setCurrentTab(2) }
+                    onClick = { viewModel.setCurrentTab(2) },
+                    colors = itemColors
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Savings, contentDescription = "Ngân Sách") },
-                    label = { Text("Ngân Sách") },
+                    label = { Text("Ngân Sách", fontWeight = if (currentTab == 3) FontWeight.Bold else FontWeight.Normal) },
                     selected = currentTab == 3,
-                    onClick = { viewModel.setCurrentTab(3) }
+                    onClick = { viewModel.setCurrentTab(3) },
+                    colors = itemColors
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Cài Đặt") },
-                    label = { Text("Cài Đặt") },
+                    label = { Text("Cài Đặt", fontWeight = if (currentTab == 4) FontWeight.Bold else FontWeight.Normal) },
                     selected = currentTab == 4,
-                    onClick = { viewModel.setCurrentTab(4) }
+                    onClick = { viewModel.setCurrentTab(4) },
+                    colors = itemColors
                 )
             }
         },
         floatingActionButton = {
             if (currentTab != 0) {
-                FloatingActionButton(
-                    onClick = {
-                        editingTx = null
-                        showAddTxSheet = true
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White,
-                    shape = CircleShape
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .shadow(
+                            elevation = 10.dp,
+                            shape = CircleShape,
+                            ambientColor = NeonAzure.copy(alpha = 0.6f),
+                            spotColor = NeonIndigo
+                        )
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    NeonAzure,
+                                    NeonIndigo
+                                )
+                            )
+                        )
+                        .border(1.2.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                        .clickable {
+                            editingTx = null
+                            showAddTxSheet = true
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Thêm Giao Dịch")
+                    Icon(Icons.Default.Add, contentDescription = "Thêm Giao Dịch", tint = Color.White, modifier = Modifier.size(28.dp))
                 }
             }
         }

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AppTaiChinh</string>
+    <string name="widget_name">Sổ Thu Chi Cá Nhân</string>
+    <string name="widget_description">Xem nhanh số dư tháng và mở form ghi chép thu chi tức thì</string>
 </resources>

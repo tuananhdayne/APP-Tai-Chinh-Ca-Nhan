@@ -49,9 +49,11 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     // AI Configuration & State
     val aiServerUrl: StateFlow<String> = repository.aiServerUrl
     val aiModelName: StateFlow<String> = repository.aiModelName
+    val aiApiKey: StateFlow<String> = repository.aiApiKey
 
     fun setAiServerUrl(url: String) = repository.setAiServerUrl(url)
     fun setAiModelName(model: String) = repository.setAiModelName(model)
+    fun setAiApiKey(key: String) = repository.setAiApiKey(key)
 
     // Chat Assistant Messages & Loading State
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(
@@ -67,9 +69,10 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     private val _isAiThinking = MutableStateFlow(false)
     val isAiThinking: StateFlow<Boolean> = _isAiThinking.asStateFlow()
 
-    fun pingAiServer(url: String, onResult: (Boolean, String) -> Unit) {
+    fun pingAiServer(url: String, apiKey: String? = null, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            val res = repository.aiService.pingServer(url)
+            val key = apiKey ?: aiApiKey.value
+            val res = repository.aiService.pingServer(url, key)
             res.onSuccess { onResult(true, it) }
                 .onFailure { onResult(false, it.localizedMessage ?: "Lỗi kết nối") }
         }
@@ -101,7 +104,8 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
                 conversationHistory = _chatMessages.value,
                 categories = categories.value,
                 serverUrl = aiServerUrl.value,
-                modelName = aiModelName.value
+                modelName = aiModelName.value,
+                apiKey = aiApiKey.value
             )
 
             _isAiThinking.value = false

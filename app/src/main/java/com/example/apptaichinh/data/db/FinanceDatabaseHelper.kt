@@ -46,7 +46,10 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         const val SETTING_TOTAL_BUDGET = "total_monthly_budget"
         const val SETTING_AI_SERVER_URL = "ai_server_url"
         const val SETTING_AI_MODEL = "ai_model_name"
+        const val SETTING_AI_API_KEY = "ai_api_key"
         const val DEFAULT_AI_SERVER_URL = "https://chas-unshaped-jacalyn.ngrok-free.dev"
+        const val DEFAULT_AI_MODEL = "ag/gemini-3.7-flash-high"
+        const val DEFAULT_AI_API_KEY = "sk-22448938a29fd142-2n6cp2-d7842622"
 
         @Volatile
         private var instance: FinanceDatabaseHelper? = null
@@ -478,10 +481,10 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         cursor.use {
             if (it.moveToFirst()) {
                 val model = it.getString(0)
-                if (model.isNotBlank()) return model
+                if (model.isNotBlank() && !model.contains("qwen", ignoreCase = true)) return model
             }
         }
-        return "qwen2.5-3b-instruct"
+        return DEFAULT_AI_MODEL
     }
 
     fun setAiModelName(model: String) {
@@ -489,6 +492,27 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         val cv = ContentValues().apply {
             put(COL_SETTING_KEY, SETTING_AI_MODEL)
             put(COL_SETTING_VAL, model.trim())
+        }
+        db.insertWithOnConflict(TABLE_SETTINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun getAiApiKey(): String {
+        val db = readableDatabase
+        val cursor = db.query(TABLE_SETTINGS, arrayOf(COL_SETTING_VAL), "$COL_SETTING_KEY = ?", arrayOf(SETTING_AI_API_KEY), null, null, null)
+        cursor.use {
+            if (it.moveToFirst()) {
+                val key = it.getString(0)
+                if (key.isNotBlank()) return key
+            }
+        }
+        return DEFAULT_AI_API_KEY
+    }
+
+    fun setAiApiKey(key: String) {
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_SETTING_KEY, SETTING_AI_API_KEY)
+            put(COL_SETTING_VAL, key.trim())
         }
         db.insertWithOnConflict(TABLE_SETTINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
     }

@@ -1,6 +1,19 @@
 package com.example.apptaichinh.ui.screens
 
+import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,8 +22,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,38 +38,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import android.app.Activity
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.speech.RecognizerIntent
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -66,19 +67,40 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.Category
 import com.example.apptaichinh.data.model.Transaction
+import com.example.apptaichinh.theme.ActiveNeonBorderBrush
+import com.example.apptaichinh.theme.CarbonSurface
+import com.example.apptaichinh.theme.CarbonSurfaceGlass
+import com.example.apptaichinh.theme.CarbonSurfaceRecessed
+import com.example.apptaichinh.theme.NeonAmber
+import com.example.apptaichinh.theme.NeonAzure
+import com.example.apptaichinh.theme.NeonCoral
+import com.example.apptaichinh.theme.NeonEmerald
+import com.example.apptaichinh.theme.SpecularBorderBrush
+import com.example.apptaichinh.theme.TextHighContrast
+import com.example.apptaichinh.theme.TextMediumContrast
+import com.example.apptaichinh.theme.TextMuted
+import com.example.apptaichinh.ui.components.AiLogoSize
+import com.example.apptaichinh.ui.components.AiLogoView
 import com.example.apptaichinh.ui.components.EditCategoryDialog
 import com.example.apptaichinh.ui.components.Formatters
+import com.example.apptaichinh.ui.components.Glyph3DIcon
+import com.example.apptaichinh.ui.components.NeumorphicGlassCard
+import com.example.apptaichinh.ui.components.TactilePillChip
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 import com.example.apptaichinh.ui.viewmodel.ParsedTransaction
 import kotlinx.coroutines.launch
@@ -87,6 +109,13 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Màn Hình Nhập Giao Dịch Skeuomorphic-Neumorphic Hiện Đại (Panel 4)
+ * - Tabs lớn xúc giác rõ ràng cho "Chi Tiêu (-)" vs "Thu Nhập (+)".
+ * - Bảng điều khiển số tiền kỹ thuật số (Recessed Digital Amount Console).
+ * - Bàn phím số xúc giác cao cấp (Tactile Skeuomorphic Numpad) với viền phím lấp lánh nhẹ.
+ * - Lưới thẻ danh mục rực rỡ bão hòa cao với biểu tượng 3D tinh xảo.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ManualEntryScreen(
@@ -102,13 +131,13 @@ fun ManualEntryScreen(
 
     val categories by viewModel.categories.collectAsState()
 
-    // 0: Nhập thủ công, 1: Nhập nhanh văn bản tự nhiên (Smart NLP)
+    // 0: Nhập thủ công xúc giác (Tactile Numpad & Grid), 1: Nhập nhanh văn bản tự nhiên (Smart NLP)
     var inputMode by remember { mutableStateOf(0) }
 
     // State loại giao dịch: EXPENSE hoặc INCOME
     var txType by remember { mutableStateOf("EXPENSE") }
 
-    // State ngày chọn (mặc định hôm nay)
+    // State ngày chọn
     val selectedCalendar = remember { mutableStateOf(Calendar.getInstance()) }
     var selectedDateEpoch by remember { mutableStateOf(System.currentTimeMillis()) }
 
@@ -116,20 +145,21 @@ fun ManualEntryScreen(
     var amountText by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
 
+    // Hiển thị bàn phím Numpad xúc giác hay không
+    var showNumpad by remember { mutableStateOf(true) }
+
     // Danh mục theo loại
     val filteredCategories = categories.filter { it.type == txType }
     var selectedCategory by remember(txType, categories) {
         mutableStateOf(filteredCategories.firstOrNull())
     }
 
-    // Dialog tạo danh mục mới
     var showAddCatDialog by remember { mutableStateOf(false) }
 
     // State Smart NLP
     var smartInputText by remember { mutableStateOf("") }
     var parsedTx by remember { mutableStateOf<ParsedTransaction?>(null) }
 
-    // Speech-to-Text launcher
     val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -188,7 +218,6 @@ fun ManualEntryScreen(
         }
     }
 
-    // Helper chọn ngày bằng DatePickerDialog
     fun openDatePicker() {
         val cal = selectedCalendar.value
         val y = cal.get(Calendar.YEAR)
@@ -206,18 +235,17 @@ fun ManualEntryScreen(
 
     val dateFormat = remember { SimpleDateFormat("EEEE, dd/MM/yyyy", Locale("vi", "VN")) }
     val formattedSelectedDate = dateFormat.format(Date(selectedDateEpoch)).replaceFirstChar { it.uppercase() }
-
     val amountLong = amountText.toLongOrNull() ?: 0L
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 90.dp, top = 8.dp)
+                .padding(horizontal = 14.dp)
+                .padding(bottom = 95.dp, top = 8.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. Tiêu đề
+            // 1. TIÊU ĐỀ & CHUYỂN CHẾ ĐỘ
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -228,56 +256,51 @@ fun ManualEntryScreen(
                         text = "Ghi Chép Giao Dịch",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = TextHighContrast
                     )
                     Text(
                         text = "Nhập nhanh thu chi hằng ngày vào sổ",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = TextMediumContrast
                     )
                 }
 
-                // Tab đổi chế độ Nhập Thủ Công vs Nhập Nhanh
+                // Switcher Pill: Bàn phím vs Trợ lý AI
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                        .background(Color(0xFF0C101A))
                         .padding(2.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (inputMode == 0) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .background(if (inputMode == 0) Color(0xFF1E293B) else Color.Transparent)
                             .clickable { inputMode = 0 }
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Text(
                             text = "Chi tiết",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (inputMode == 0) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (inputMode == 0) NeonAzure else TextMuted
                         )
                     }
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (inputMode == 1) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .background(if (inputMode == 1) Color(0xFF1E293B) else Color.Transparent)
                             .clickable { inputMode = 1 }
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                modifier = Modifier.size(12.dp),
-                                tint = if (inputMode == 1) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            AiLogoView(size = 14.dp, withGlow = false)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Gõ tắt",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (inputMode == 1) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (inputMode == 1) NeonAzure else TextMuted
                             )
                         }
                     }
@@ -287,167 +310,264 @@ fun ManualEntryScreen(
             Spacer(modifier = Modifier.height(14.dp))
 
             if (inputMode == 0) {
-                // --- CHẾ ĐỘ NHẬP THỦ CÔNG CHI TIẾT ---
+                // ==========================================
+                // CHẾ ĐỘ NHẬP THỦ CÔNG XÚC GIÁC (TACTILE NUMPAD)
+                // ==========================================
 
-                // 2. Bộ chọn Thu hay Chi ở trên cùng
+                // 2. TABS LỚN RÕ RÀNG VỚI PHẢN ỨNG CHẠM XÚC GIÁC: CHI TIÊU (-) VS THU NHẬP (+)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(
-                        onClick = {
-                            txType = "EXPENSE"
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (txType == "EXPENSE") Color(0xFFEF4444) else MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = if (txType == "EXPENSE") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = if (txType == "EXPENSE") 3.dp else 0.dp)
+                    // Tab Chi Tiêu
+                    val isExpense = txType == "EXPENSE"
+                    val expenseScale by animateFloatAsState(
+                        targetValue = if (isExpense) 1.02f else 0.98f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                        label = "expScale"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .scale(expenseScale)
+                            .shadow(
+                                elevation = if (isExpense) 6.dp else 1.dp,
+                                shape = RoundedCornerShape(18.dp),
+                                ambientColor = if (isExpense) NeonCoral.copy(alpha = 0.5f) else Color.Black
+                            )
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(
+                                if (isExpense) {
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color(0xFF881337), // Rose Deep
+                                            Color(0xFF4C0519)
+                                        )
+                                    )
+                                } else {
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color(0xFF161E2E),
+                                            Color(0xFF0F1522)
+                                        )
+                                    )
+                                }
+                            )
+                            .border(
+                                width = if (isExpense) 1.5.dp else 0.8.dp,
+                                brush = if (isExpense) {
+                                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.4f), NeonCoral))
+                                } else {
+                                    SpecularBorderBrush
+                                },
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                            .clickable {
+                                txType = "EXPENSE"
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            }
+                            .padding(vertical = 13.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Chi Tiêu (-)",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isExpense) NeonCoral else TextMuted)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Chi Tiêu (-)",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isExpense) TextHighContrast else TextMediumContrast
+                            )
+                        }
                     }
 
-                    Button(
-                        onClick = {
-                            txType = "INCOME"
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (txType == "INCOME") Color(0xFF10B981) else MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = if (txType == "INCOME") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = if (txType == "INCOME") 3.dp else 0.dp)
+                    // Tab Thu Nhập
+                    val isIncome = txType == "INCOME"
+                    val incomeScale by animateFloatAsState(
+                        targetValue = if (isIncome) 1.02f else 0.98f,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                        label = "incScale"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .scale(incomeScale)
+                            .shadow(
+                                elevation = if (isIncome) 6.dp else 1.dp,
+                                shape = RoundedCornerShape(18.dp),
+                                ambientColor = if (isIncome) NeonEmerald.copy(alpha = 0.5f) else Color.Black
+                            )
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(
+                                if (isIncome) {
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color(0xFF064E3B), // Emerald Deep
+                                            Color(0xFF022C22)
+                                        )
+                                    )
+                                } else {
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color(0xFF161E2E),
+                                            Color(0xFF0F1522)
+                                        )
+                                    )
+                                }
+                            )
+                            .border(
+                                width = if (isIncome) 1.5.dp else 0.8.dp,
+                                brush = if (isIncome) {
+                                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.4f), NeonEmerald))
+                                } else {
+                                    SpecularBorderBrush
+                                },
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                            .clickable {
+                                txType = "INCOME"
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            }
+                            .padding(vertical = 13.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Thu Nhập (+)",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isIncome) NeonEmerald else TextMuted)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Thu Nhập (+)",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isIncome) TextHighContrast else TextMediumContrast
+                            )
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 3. Chọn Ngày giao dịch
-                Card(
+                // 3. THẺ NGÀY GIAO DỊCH DẠNG KÍNH
+                NeumorphicGlassCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { openDatePicker() },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = 3.dp,
+                    containerColor = CarbonSurfaceGlass.copy(alpha = 0.85f),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = "Chọn ngày",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Glyph3DIcon(icon = "📅", accentColor = NeonAzure, size = 36.dp, fontSize = 16f)
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
                                     text = "Ngày giao dịch",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.outline
+                                    color = TextMediumContrast
                                 )
                                 Text(
                                     text = formattedSelectedDate,
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = TextHighContrast
                                 )
                             }
                         }
 
-                        Text(
-                            text = "Đổi ngày",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        TactilePillChip(text = "Đổi ngày", accentColor = NeonAzure, leadingDot = false)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 4. Ô nhập Số Tiền
-                Card(
+                // 4. BẢNG ĐIỀU KHIỂN SỐ TIỀN KỸ THUẬT SỐ (Recessed Digital Amount Console)
+                NeumorphicGlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    shape = RoundedCornerShape(22.dp),
+                    elevation = 6.dp,
+                    containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
+                    contentPadding = PaddingValues(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Số tiền (VNĐ):",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.outline
+                                text = "Số tiền giao dịch:",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = TextMediumContrast
                             )
-                            if (amountLong > 0) {
+
+                            TactilePillChip(
+                                text = "VNĐ",
+                                accentColor = if (txType == "EXPENSE") NeonCoral else NeonEmerald,
+                                leadingDot = true
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Màn hình hiển thị số lõm xuống (Recessed Display)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(CarbonSurfaceRecessed)
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                                .clickable { showNumpad = !showNumpad }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = Formatters.formatVnd(amountLong, showSign = true, isIncome = txType == "INCOME"),
-                                    style = MaterialTheme.typography.titleLarge,
+                                    text = if (txType == "EXPENSE") "Chi tiêu" else "Thu vào",
+                                    fontSize = 12.sp,
+                                    color = TextMuted,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                Text(
+                                    text = if (amountLong > 0) {
+                                        "${if (txType == "EXPENSE") "-" else "+"}${Formatters.formatVnd(amountLong)}"
+                                    } else {
+                                        "0 đ"
+                                    },
+                                    fontSize = 26.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = if (txType == "EXPENSE") Color(0xFFEF4444) else Color(0xFF10B981)
+                                    color = if (amountLong == 0L) TextMuted else if (txType == "EXPENSE") NeonCoral else NeonEmerald,
+                                    letterSpacing = (-0.5).sp
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedTextField(
-                            value = amountText,
-                            onValueChange = { input -> amountText = input.filter { it.isDigit() } },
-                            placeholder = { Text("Nhập số tiền (VD: 50000)") },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    focusManager.clearFocus()
-                                    keyboardController?.hide()
-                                }
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            singleLine = true,
-                            trailingIcon = {
-                                if (amountText.isNotEmpty()) {
-                                    IconButton(onClick = { amountText = "" }) {
-                                        Icon(imageVector = Icons.Default.Clear, contentDescription = "Xóa số tiền")
-                                    }
-                                }
-                            }
-                        )
-
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Các phím gợi ý cộng nhanh số tiền
+                        // Các phím gợi ý cộng nhanh số tiền dạng viên thuốc xúc giác
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -456,19 +576,20 @@ fun ManualEntryScreen(
                             listOf(10_000L, 20_000L, 50_000L, 100_000L, 200_000L, 500_000L, 1_000_000L).forEach { addVal ->
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFF161E2E))
+                                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
                                         .clickable {
                                             val cur = amountText.toLongOrNull() ?: 0L
                                             amountText = (cur + addVal).toString()
                                         }
-                                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                                        .padding(horizontal = 9.dp, vertical = 5.dp)
                                 ) {
                                     Text(
                                         text = "+${Formatters.formatCompactVnd(addVal)}",
                                         fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextHighContrast
                                     )
                                 }
                             }
@@ -476,16 +597,17 @@ fun ManualEntryScreen(
                             if (amountLong > 0) {
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f))
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(NeonCoral.copy(alpha = 0.15f))
+                                        .border(1.dp, NeonCoral.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
                                         .clickable { amountText = "" }
-                                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                                        .padding(horizontal = 9.dp, vertical = 5.dp)
                                 ) {
                                     Text(
-                                        text = "Xóa",
+                                        text = "Xóa hết",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.error
+                                        color = NeonCoral
                                     )
                                 }
                             }
@@ -495,188 +617,357 @@ fun ManualEntryScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 5. Chọn Danh Mục (tự động theo bên Thu hoặc Chi)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Danh mục ${if (txType == "EXPENSE") "chi tiêu" else "thu nhập"}:",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Text(
-                        text = "${filteredCategories.size} danh mục",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    filteredCategories.forEach { cat ->
-                        val isSelected = selectedCategory?.id == cat.id
-
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                selectedCategory = cat
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            },
-                            label = {
-                                Text(
-                                    text = "${cat.icon} ${cat.name}",
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = if (txType == "EXPENSE") Color(0xFFEF4444).copy(alpha = 0.15f) else Color(0xFF10B981).copy(alpha = 0.15f),
-                                selectedLabelColor = if (txType == "EXPENSE") Color(0xFFEF4444) else Color(0xFF10B981)
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = isSelected,
-                                selectedBorderColor = if (txType == "EXPENSE") Color(0xFFEF4444) else Color(0xFF10B981),
-                                selectedBorderWidth = 1.5.dp
+                // 5. BÀN PHÍM SỐ XÚC GIÁC CAO CẤP (Tactile Skeuomorphic Numpad)
+                if (showNumpad) {
+                    NeumorphicGlassCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(22.dp),
+                        elevation = 6.dp,
+                        containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
+                        contentPadding = PaddingValues(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val keys = listOf(
+                                listOf("1", "2", "3"),
+                                listOf("4", "5", "6"),
+                                listOf("7", "8", "9"),
+                                listOf("C", "0", "⌫")
                             )
-                        )
+
+                            keys.forEach { rowKeys ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    rowKeys.forEach { keyLabel ->
+                                        NumpadKeyButton(
+                                            label = keyLabel,
+                                            modifier = Modifier.weight(1f),
+                                            isActionKey = keyLabel == "C" || keyLabel == "⌫",
+                                            onClick = {
+                                                when (keyLabel) {
+                                                    "C" -> amountText = ""
+                                                    "⌫" -> {
+                                                        if (amountText.isNotEmpty()) {
+                                                            amountText = amountText.dropLast(1)
+                                                        }
+                                                    }
+                                                    else -> {
+                                                        if (amountText.length < 12) {
+                                                            amountText += keyLabel
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    // Nút thêm nhanh danh mục mới
-                    FilterChip(
-                        selected = false,
-                        onClick = {
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                            showAddCatDialog = true
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
+
+                // 6. LƯỚI THẺ DANH MỤC RỰC RỠ VỚI BIỂU TƯỢNG 3D (Vibrant Category Grid)
+                NeumorphicGlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(22.dp),
+                    elevation = 6.dp,
+                    containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Chọn Danh Mục ${if (txType == "EXPENSE") "Chi Tiêu" else "Thu Nhập"}:",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = TextHighContrast
                             )
-                        },
-                        label = { Text("+ Thêm mới", fontWeight = FontWeight.Medium) }
-                    )
+
+                            TactilePillChip(
+                                text = "${filteredCategories.size} nhóm",
+                                accentColor = NeonAzure,
+                                leadingDot = false
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Lưới 4 cột các thẻ danh mục
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            filteredCategories.forEach { cat ->
+                                val isSelected = selectedCategory?.id == cat.id
+                                val catColor = Formatters.parseColor(cat.colorHex)
+
+                                val scale by animateFloatAsState(
+                                    targetValue = if (isSelected) 1.04f else 1f,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                    label = "catTileScale"
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .width(76.dp)
+                                        .scale(scale)
+                                        .shadow(
+                                            elevation = if (isSelected) 6.dp else 1.dp,
+                                            shape = RoundedCornerShape(16.dp),
+                                            ambientColor = if (isSelected) catColor.copy(alpha = 0.5f) else Color.Black
+                                        )
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(
+                                            if (isSelected) {
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        catColor.copy(alpha = 0.28f),
+                                                        Color(0xFF161E2E)
+                                                    )
+                                                )
+                                            } else {
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color(0xFF131926).copy(alpha = 0.8f),
+                                                        Color(0xFF0F1522)
+                                                    )
+                                                )
+                                            }
+                                        )
+                                        .border(
+                                            width = if (isSelected) 1.8.dp else 0.8.dp,
+                                            brush = if (isSelected) {
+                                                Brush.linearGradient(listOf(Color.White.copy(alpha = 0.5f), catColor))
+                                            } else {
+                                                Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent))
+                                            },
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable {
+                                            selectedCategory = cat
+                                            focusManager.clearFocus()
+                                            keyboardController?.hide()
+                                        }
+                                        .padding(vertical = 10.dp, horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Glyph3DIcon(
+                                            icon = cat.icon,
+                                            accentColor = catColor,
+                                            size = 38.dp,
+                                            fontSize = 18f
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = cat.name,
+                                            fontSize = 11.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) TextHighContrast else TextMediumContrast,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Nút thêm danh mục mới
+                            Box(
+                                modifier = Modifier
+                                    .width(76.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color(0xFF131926).copy(alpha = 0.6f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                                    .clickable { showAddCatDialog = true }
+                                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .clip(CircleShape)
+                                            .background(NeonAzure.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = "Thêm danh mục", tint = NeonAzure, modifier = Modifier.size(20.dp))
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "+ Thêm",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = NeonAzure
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 6. Ô nhập Ghi Chú
-                Text(
-                    text = "Ghi chú (tùy chọn):",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    placeholder = { Text("Ví dụ: Ăn trưa bún bò, Đổ xăng xe máy, Tiền thưởng...") },
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        }
-                    ),
+                // 7. Ô NHẬP GHI CHÚ DẠNG KÍNH
+                NeumorphicGlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    singleLine = true
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = 3.dp,
+                    containerColor = CarbonSurfaceGlass.copy(alpha = 0.85f),
+                    contentPadding = PaddingValues(14.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Ghi chú bổ sung (tùy chọn):",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextMediumContrast
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = note,
+                            onValueChange = { note = it },
+                            placeholder = { Text("Ví dụ: Ăn trưa bún bò, Đổ xăng xe máy, Tiền thưởng...", color = TextMuted) },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = {
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            }),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = NeonAzure,
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.08f),
+                                focusedTextColor = TextHighContrast,
+                                unfocusedTextColor = TextHighContrast
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // 8. NÚT LƯU GIAO DỊCH XÚC GIÁC (Tactile Save Button)
+                val canSave = amountLong > 0 && selectedCategory != null
+                val saveScale by animateFloatAsState(
+                    targetValue = if (canSave) 1f else 0.98f,
+                    label = "saveScale"
                 )
 
-                Spacer(modifier = Modifier.height(22.dp))
-
-                // 7. Nút Lưu Giao Dịch
-                val canSave = amountLong > 0 && selectedCategory != null
-
-                Button(
-                    onClick = {
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                        val cat = selectedCategory ?: return@Button
-                        val newTx = Transaction(
-                            id = 0L,
-                            amount = amountLong,
-                            type = txType,
-                            categoryId = cat.id,
-                            categoryName = cat.name,
-                            categoryIcon = cat.icon,
-                            categoryColorHex = cat.colorHex,
-                            note = note.trim(),
-                            dateEpoch = selectedDateEpoch
-                        )
-
-                        viewModel.addTransaction(newTx) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Đã lưu vào sổ: ${cat.icon} ${cat.name} (${Formatters.formatVnd(amountLong)})",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                            // Reset form để sẵn sàng ghi khoản tiếp theo
-                            amountText = ""
-                            note = ""
-                        }
-                    },
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    enabled = canSave,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (txType == "EXPENSE") Color(0xFFEF4444) else Color(0xFF10B981)
-                    )
+                        .height(56.dp)
+                        .scale(saveScale)
+                        .shadow(
+                            elevation = if (canSave) 8.dp else 1.dp,
+                            shape = RoundedCornerShape(18.dp),
+                            ambientColor = if (txType == "EXPENSE") NeonCoral else NeonEmerald
+                        )
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            if (!canSave) {
+                                Brush.verticalGradient(listOf(Color(0xFF1E2638), Color(0xFF121722)))
+                            } else if (txType == "EXPENSE") {
+                                Brush.verticalGradient(listOf(NeonCoral, Color(0xFFDC2626)))
+                            } else {
+                                Brush.verticalGradient(listOf(NeonEmerald, Color(0xFF059669)))
+                            }
+                        )
+                        .border(
+                            width = 1.2.dp,
+                            brush = if (canSave) Brush.linearGradient(listOf(Color.White.copy(alpha = 0.5f), Color.Transparent)) else SpecularBorderBrush,
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .clickable(enabled = canSave) {
+                            val cat = selectedCategory ?: return@clickable
+                            val newTx = Transaction(
+                                id = 0L,
+                                amount = amountLong,
+                                type = txType,
+                                categoryId = cat.id,
+                                categoryName = cat.name,
+                                categoryIcon = cat.icon,
+                                categoryColorHex = cat.colorHex,
+                                note = note.trim(),
+                                dateEpoch = selectedDateEpoch
+                            )
+
+                            viewModel.addTransaction(newTx) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Đã lưu vào sổ: ${cat.icon} ${cat.name} (${Formatters.formatVnd(amountLong)})",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                                amountText = ""
+                                note = ""
+                            }
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Lưu Giao Dịch Vào Sổ",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = if (canSave) Color.White else TextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Lưu Giao Dịch Vào Sổ",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (canSave) Color.White else TextMuted
+                        )
+                    }
                 }
 
             } else {
-                // --- CHẾ ĐỘ NHẬP NHANH THÔNG MINH (SMART NLP) ---
-                Card(
+                // ==========================================
+                // CHẾ ĐỘ NHẬP NHANH THÔNG MINH (SMART NLP)
+                // ==========================================
+                NeumorphicGlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                    shape = RoundedCornerShape(22.dp),
+                    elevation = 6.dp,
+                    containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
+                    contentPadding = PaddingValues(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Gõ câu tiếng Việt tự nhiên:",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            AiLogoView(size = 32.dp, withGlow = true)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Trợ Lý Trích Xuất Giao Dịch",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextHighContrast
+                                )
+                                Text(
+                                    text = "Gõ hoặc nói câu tiếng Việt tự nhiên",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextMediumContrast
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         OutlinedTextField(
                             value = smartInputText,
@@ -684,19 +975,25 @@ fun ManualEntryScreen(
                                 smartInputText = it
                                 parsedTx = viewModel.parseQuickText(it)
                             },
-                            placeholder = { Text("Ví dụ: Ăn trưa 45k, Đổ xăng 80k, Tiền thưởng 2tr...") },
+                            placeholder = { Text("Ví dụ: Ăn trưa 45k, Đổ xăng 80k, Tiền thưởng 2tr...", color = TextMuted) },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RoundedCornerShape(16.dp),
                             maxLines = 3,
                             trailingIcon = {
                                 IconButton(onClick = { startVoiceSmartInput() }) {
                                     Icon(
                                         imageVector = Icons.Default.Mic,
                                         contentDescription = "Nói bằng giọng nói",
-                                        tint = MaterialTheme.colorScheme.primary
+                                        tint = NeonAzure
                                     )
                                 }
-                            }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = NeonAzure,
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.08f),
+                                focusedTextColor = TextHighContrast,
+                                unfocusedTextColor = TextHighContrast
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
@@ -706,28 +1003,30 @@ fun ManualEntryScreen(
                             val isIncome = parsed.type == "INCOME"
                             val cat = categories.find { it.id == parsed.categoryId } ?: categories.firstOrNull()
 
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                                    .border(1.dp, if (isIncome) NeonEmerald.copy(alpha = 0.4f) else NeonCoral.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                                    .padding(14.dp)
                             ) {
-                                Column(modifier = Modifier.padding(14.dp)) {
+                                Column {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
+                                        TactilePillChip(
                                             text = if (isIncome) "THU NHẬP (+)" else "CHI TIÊU (-)",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isIncome) Color(0xFF10B981) else Color(0xFFEF4444)
+                                            accentColor = if (isIncome) NeonEmerald else NeonCoral,
+                                            leadingDot = true
                                         )
                                         Text(
                                             text = Formatters.formatVnd(parsed.amount),
-                                            style = MaterialTheme.typography.titleMedium,
+                                            style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.ExtraBold,
-                                            color = if (isIncome) Color(0xFF10B981) else Color(0xFFEF4444)
+                                            color = if (isIncome) NeonEmerald else NeonCoral
                                         )
                                     }
 
@@ -735,44 +1034,59 @@ fun ManualEntryScreen(
 
                                     Text(
                                         text = "Danh mục: ${cat?.icon ?: "📦"} ${parsed.categoryName}",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = TextHighContrast
                                     )
                                     Text(
                                         text = "Ghi chú: ${parsed.note}",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.outline
+                                        color = TextMediumContrast
                                     )
 
                                     Spacer(modifier = Modifier.height(12.dp))
 
-                                    Button(
-                                        onClick = {
-                                            focusManager.clearFocus()
-                                            keyboardController?.hide()
-                                            val newTx = Transaction(
-                                                id = 0L,
-                                                amount = parsed.amount,
-                                                type = parsed.type,
-                                                categoryId = cat?.id ?: parsed.categoryId,
-                                                note = parsed.note,
-                                                dateEpoch = System.currentTimeMillis()
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(
+                                                if (isIncome) Brush.verticalGradient(listOf(NeonEmerald, Color(0xFF059669)))
+                                                else Brush.verticalGradient(listOf(NeonCoral, Color(0xFFDC2626)))
                                             )
-                                            viewModel.addTransaction(newTx) {
-                                                scope.launch {
-                                                    snackbarHostState.showSnackbar(
-                                                        message = "Đã lưu vào sổ: ${parsed.categoryName} (${Formatters.formatVnd(parsed.amount)})"
-                                                    )
+                                            .clickable {
+                                                focusManager.clearFocus()
+                                                keyboardController?.hide()
+                                                val newTx = Transaction(
+                                                    id = 0L,
+                                                    amount = parsed.amount,
+                                                    type = parsed.type,
+                                                    categoryId = cat?.id ?: parsed.categoryId,
+                                                    note = parsed.note,
+                                                    dateEpoch = System.currentTimeMillis()
+                                                )
+                                                viewModel.addTransaction(newTx) {
+                                                    scope.launch {
+                                                        snackbarHostState.showSnackbar(
+                                                            message = "Đã lưu vào sổ: ${parsed.categoryName} (${Formatters.formatVnd(parsed.amount)})"
+                                                        )
+                                                    }
+                                                    smartInputText = ""
+                                                    parsedTx = null
                                                 }
-                                                smartInputText = ""
-                                                parsedTx = null
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp)
+                                            },
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(imageVector = Icons.Default.Check, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text("Xác Nhận & Lưu Vào Sổ")
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Xác Nhận & Lưu Vào Sổ",
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -780,32 +1094,44 @@ fun ManualEntryScreen(
                             Text(
                                 text = "💡 Hãy kèm số tiền (VD: 45k, 70 nghìn, 2tr) để tự động trích xuất",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
+                                color = NeonAmber
                             )
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Phím tắt nhanh xem Lịch
-            OutlinedButton(
-                onClick = onNavigateToCalendar,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp)
+            // Phím tắt chuyển sang xem Lịch dạng kính nổi
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFF131926).copy(alpha = 0.7f))
+                    .border(1.dp, SpecularBorderBrush, RoundedCornerShape(14.dp))
+                    .clickable { onNavigateToCalendar() },
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.CalendarMonth,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Xem Sổ Thu Chi Dạng Lịch")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = NeonAzure,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Xem Sổ Thu Chi Dạng Lịch",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextHighContrast
+                    )
+                }
             }
         }
 
-        // Snackbar thông báo lưu thành công
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier
@@ -814,7 +1140,6 @@ fun ManualEntryScreen(
         )
     }
 
-    // Dialog thêm nhanh danh mục
     if (showAddCatDialog) {
         EditCategoryDialog(
             category = null,
@@ -826,6 +1151,74 @@ fun ManualEntryScreen(
                     showAddCatDialog = false
                 }
             }
+        )
+    }
+}
+
+/**
+ * Phím Numpad Xúc Giác Có Viền Phản Quang Nhẹ (Tactile Keycap Button)
+ */
+@Composable
+private fun NumpadKeyButton(
+    label: String,
+    modifier: Modifier = Modifier,
+    isActionKey: Boolean = false,
+    onClick: () -> Unit
+) {
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.93f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "keyScale"
+    )
+
+    Box(
+        modifier = modifier
+            .height(52.dp)
+            .scale(scale)
+            .shadow(
+                elevation = if (isPressed) 1.dp else 4.dp,
+                shape = RoundedCornerShape(14.dp),
+                ambientColor = Color.Black.copy(alpha = 0.6f)
+            )
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                if (isActionKey) {
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF26334D),
+                            Color(0xFF161E2E)
+                        )
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF1E2638),
+                            Color(0xFF131926)
+                        )
+                    )
+                }
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.18f),
+                        Color.White.copy(alpha = 0.04f)
+                    )
+                ),
+                shape = RoundedCornerShape(14.dp)
+            )
+            .clickable {
+                onClick()
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = if (label == "⌫" || label == "C") 17.sp else 21.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (label == "C") NeonCoral else if (label == "⌫") NeonAmber else TextHighContrast
         )
     }
 }

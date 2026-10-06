@@ -1,10 +1,12 @@
 package com.example.apptaichinh.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,8 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +31,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.Transaction
+import com.example.apptaichinh.theme.CarbonSurfaceGlass
+import com.example.apptaichinh.theme.NeonCoral
+import com.example.apptaichinh.theme.NeonEmerald
+import com.example.apptaichinh.theme.SpecularBorderBrush
+import com.example.apptaichinh.theme.TextHighContrast
+import com.example.apptaichinh.theme.TextMediumContrast
+import com.example.apptaichinh.theme.TextMuted
 
+/**
+ * Mục Giao Dịch Dạng Kính Nổi Xúc Giác (Neumorphic Glass Transaction Item)
+ */
 @Composable
 fun TransactionItemView(
     transaction: Transaction,
@@ -40,21 +50,20 @@ fun TransactionItemView(
     modifier: Modifier = Modifier
 ) {
     val isIncome = transaction.type == "INCOME"
-    val amountColor = if (isIncome) Color(0xFF10B981) else Color(0xFFEF4444)
+    val amountColor = if (isIncome) NeonEmerald else NeonCoral
     val catColor = Formatters.parseColor(transaction.categoryColorHex)
 
-    Card(
+    NeumorphicGlassCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(18.dp),
+        elevation = 3.dp,
+        containerColor = CarbonSurfaceGlass.copy(alpha = 0.85f),
+        contentPadding = PaddingValues(13.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -62,19 +71,13 @@ fun TransactionItemView(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                // Category Icon Avatar
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(catColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = transaction.categoryIcon,
-                        fontSize = 22.sp
-                    )
-                }
+                // Biểu tượng 3D Glyph của danh mục
+                Glyph3DIcon(
+                    icon = transaction.categoryIcon,
+                    accentColor = catColor,
+                    size = 44.dp,
+                    fontSize = 20f
+                )
 
                 Spacer(modifier = Modifier.width(12.dp))
 
@@ -82,15 +85,15 @@ fun TransactionItemView(
                     Text(
                         text = if (transaction.note.isNotBlank()) transaction.note else transaction.categoryName,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        color = TextHighContrast,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "${transaction.categoryName} • ${Formatters.formatDate(transaction.dateEpoch)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = TextMediumContrast,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -99,21 +102,21 @@ fun TransactionItemView(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = Formatters.formatVnd(transaction.amount, showSign = true, isIncome = isIncome),
+                    text = "${if (isIncome) "+" else "-"}${Formatters.formatVnd(transaction.amount)}",
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = amountColor
                 )
 
                 IconButton(
                     onClick = onDelete,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(34.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Delete,
-                        contentDescription = "Xóa",
-                        tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp)
+                        contentDescription = "Xóa giao dịch",
+                        tint = TextMuted,
+                        modifier = Modifier.size(17.dp)
                     )
                 }
             }

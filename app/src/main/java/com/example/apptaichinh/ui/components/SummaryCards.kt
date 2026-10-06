@@ -1,9 +1,12 @@
 package com.example.apptaichinh.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +34,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.MonthSummary
+import com.example.apptaichinh.theme.CarbonSurfaceGlass
+import com.example.apptaichinh.theme.NeonAzure
+import com.example.apptaichinh.theme.NeonCoral
+import com.example.apptaichinh.theme.NeonEmerald
+import com.example.apptaichinh.theme.SpecularBorderBrush
+import com.example.apptaichinh.theme.TextHighContrast
+import com.example.apptaichinh.theme.TextMediumContrast
+import com.example.apptaichinh.theme.TextMuted
 
+/**
+ * Thanh chọn Tháng theo phong cách Kính Mờ Lơ Lửng (Neumorphic Glass Month Selector)
+ */
 @Composable
 fun MonthSelector(
     year: Int,
@@ -45,162 +56,196 @@ fun MonthSelector(
 ) {
     val monthStr = String.format("Tháng %02d/%d", month + 1, year)
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    NeumorphicGlassCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        elevation = 3.dp,
+        containerColor = CarbonSurfaceGlass.copy(alpha = 0.85f),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
     ) {
-        IconButton(
-            onClick = onPrev,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Tháng trước",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF161E2E))
+                    .border(1.dp, SpecularBorderBrush, CircleShape)
+                    .clickable { onPrev() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Tháng trước",
+                    tint = TextHighContrast,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = monthStr,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "Sổ thu chi cá nhân",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline
-            )
-        }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = monthStr,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = TextHighContrast
+                )
+                Text(
+                    text = "Sổ thu chi cá nhân",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMediumContrast
+                )
+            }
 
-        IconButton(
-            onClick = onNext,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Tháng sau",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF161E2E))
+                    .border(1.dp, SpecularBorderBrush, CircleShape)
+                    .clickable { onNext() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Tháng sau",
+                    tint = TextHighContrast,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
 
+/**
+ * Thẻ Tổng Quan Số Dư Trong Tháng (Neumorphic Glass Balance Summary Card)
+ */
 @Composable
 fun BalanceSummaryCard(
     summary: MonthSummary,
     modifier: Modifier = Modifier
 ) {
-    val gradientColors = listOf(
-        Color(0xFF2563EB),
-        Color(0xFF4F46E5),
-        Color(0xFF7C3AED)
-    )
-
-    Card(
+    NeumorphicGlassCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = 6.dp,
+        containerColor = CarbonSurfaceGlass.copy(alpha = 0.90f),
+        contentPadding = PaddingValues(20.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Brush.horizontalGradient(gradientColors))
-                .padding(22.dp)
-        ) {
-            Column {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = "Số Dư Ròng Trong Tháng",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.85f)
+                    color = TextMediumContrast
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = Formatters.formatVnd(summary.balance),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
+                TactilePillChip(
+                    text = if (summary.balance >= 0) "Thặng dư" else "Thâm hụt",
+                    accentColor = if (summary.balance >= 0) NeonEmerald else NeonCoral,
+                    leadingDot = true
                 )
+            }
 
-                Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                // Dòng Thu Nhập & Chi Tiêu
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+            Text(
+                text = Formatters.formatVnd(summary.balance),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (summary.balance >= 0) TextHighContrast else NeonCoral,
+                letterSpacing = (-0.5).sp
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Dòng Thu Nhập & Chi Tiêu tách biệt
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Thu nhập
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
-                    // Thu nhập
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(30.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF10B981).copy(alpha = 0.25f)),
+                                .background(NeonEmerald.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowDownward,
                                 contentDescription = null,
-                                tint = Color(0xFF6EE7B7),
-                                modifier = Modifier.size(18.dp)
+                                tint = NeonEmerald,
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
                                 text = "Thu nhập",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.8f)
+                                fontSize = 11.5.sp,
+                                color = TextMuted
                             )
                             Text(
                                 text = Formatters.formatVnd(summary.totalIncome),
-                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF6EE7B7)
+                                color = NeonEmerald
                             )
                         }
                     }
+                }
 
-                    // Chi tiêu
+                // Chi tiêu
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(30.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFEF4444).copy(alpha = 0.25f)),
+                                .background(NeonCoral.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowUpward,
                                 contentDescription = null,
-                                tint = Color(0xFFFCA5A5),
-                                modifier = Modifier.size(18.dp)
+                                tint = NeonCoral,
+                                modifier = Modifier.size(16.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        Column(horizontalAlignment = Alignment.End) {
+                        Column {
                             Text(
                                 text = "Chi tiêu",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White.copy(alpha = 0.8f)
+                                fontSize = 11.5.sp,
+                                color = TextMuted
                             )
                             Text(
                                 text = Formatters.formatVnd(summary.totalExpense),
-                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFFCA5A5)
+                                color = NeonCoral
                             )
                         }
                     }

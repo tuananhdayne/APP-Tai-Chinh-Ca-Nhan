@@ -1,5 +1,8 @@
 package com.example.apptaichinh.ui.screens
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,13 +26,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Today
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,6 +39,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,11 +49,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.Transaction
+import com.example.apptaichinh.theme.ActiveNeonBorderBrush
+import com.example.apptaichinh.theme.CarbonSurfaceGlass
+import com.example.apptaichinh.theme.NeonAmber
+import com.example.apptaichinh.theme.NeonAzure
+import com.example.apptaichinh.theme.NeonCoral
+import com.example.apptaichinh.theme.NeonEmerald
+import com.example.apptaichinh.theme.SpecularBorderBrush
+import com.example.apptaichinh.theme.TextHighContrast
+import com.example.apptaichinh.theme.TextMediumContrast
+import com.example.apptaichinh.theme.TextMuted
 import com.example.apptaichinh.ui.components.Formatters
+import com.example.apptaichinh.ui.components.Glyph3DIcon
+import com.example.apptaichinh.ui.components.NeumorphicGlassCard
+import com.example.apptaichinh.ui.components.TactilePillChip
 import com.example.apptaichinh.ui.components.TransactionItemView
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 import java.util.Calendar
 
+/**
+ * Màn Hình Lịch Thu Chi Theo Phong Cách Skeuomorphic-Neumorphic & Subtle Glassmorphism (Panel 3)
+ * - Lưới lịch với các ô ngày làm mờ nhẹ (Frosted Tiles) và các hạt ngọc đánh dấu giao dịch (Jewel Dots).
+ * - Ngày đang chọn nổi bật với viền Neon đa sắc 3D và phản hồi xúc giác khi chạm.
+ * - Widget tóm tắt hàng ngày dạng bảng lơ lửng sành điệu (Floating Console) với 3 thẻ số liệu trực quan.
+ */
 @Composable
 fun CalendarScreen(
     viewModel: FinanceViewModel,
@@ -60,23 +80,20 @@ fun CalendarScreen(
     modifier: Modifier = Modifier
 ) {
     val year by viewModel.selectedYear.collectAsState()
-    val month by viewModel.selectedMonth.collectAsState() // 0-indexed (0=Jan, 8=Sep)
+    val month by viewModel.selectedMonth.collectAsState()
     val transactions by viewModel.transactions.collectAsState()
     val monthSummary by viewModel.monthSummary.collectAsState()
 
-    // Hôm nay theo thời gian thực
     val todayCal = remember { Calendar.getInstance() }
     val todayYear = todayCal.get(Calendar.YEAR)
     val todayMonth = todayCal.get(Calendar.MONTH)
     val todayDay = todayCal.get(Calendar.DAY_OF_MONTH)
 
-    // Ngày đang được chọn trên lịch
     var selectedDay by remember(year, month) {
         val defaultDay = if (year == todayYear && month == todayMonth) todayDay else 1
         mutableStateOf(defaultDay)
     }
 
-    // Tính toán số ngày trong tháng và thứ bắt đầu (Thứ 2 = 0, ..., CN = 6)
     val monthCal = remember(year, month) {
         Calendar.getInstance().apply {
             set(year, month, 1)
@@ -85,7 +102,7 @@ fun CalendarScreen(
     val daysInMonth = monthCal.getActualMaximum(Calendar.DAY_OF_MONTH)
     val startDayOfWeek = (monthCal.get(Calendar.DAY_OF_WEEK) - Calendar.MONDAY + 7) % 7
 
-    // Nhóm giao dịch theo ngày trong tháng
+    // Nhóm giao dịch theo ngày
     val transactionsByDay = remember(transactions, year, month) {
         val map = mutableMapOf<Int, MutableList<Transaction>>()
         val txCal = Calendar.getInstance()
@@ -99,37 +116,42 @@ fun CalendarScreen(
         map
     }
 
-    // Các giao dịch của ngày đang chọn
     val selectedDayTransactions = transactionsByDay[selectedDay] ?: emptyList()
     val dayIncome = selectedDayTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
     val dayExpense = selectedDayTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
     val dayBalance = dayIncome - dayExpense
 
-    // Chế độ hiển thị tổng hợp: Theo ngày đang chọn hay Cả tháng
     var viewMode by remember { mutableStateOf(0) } // 0: Ngày đang chọn, 1: Cả tháng
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 90.dp, top = 8.dp, start = 14.dp, end = 14.dp),
+        contentPadding = PaddingValues(bottom = 95.dp, top = 8.dp, start = 14.dp, end = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // 1. Month Selector Header
+        // 1. THANH CHỌN THÁNG DẠNG KÍNH (Month Selector Header)
         item {
-            Card(
+            NeumorphicGlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                shape = RoundedCornerShape(20.dp),
+                elevation = 4.dp,
+                containerColor = CarbonSurfaceGlass.copy(alpha = 0.85f),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { viewModel.prevMonth() }) {
-                        Icon(Icons.Default.ChevronLeft, contentDescription = "Tháng trước", tint = MaterialTheme.colorScheme.primary)
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF161E2E))
+                            .border(1.dp, SpecularBorderBrush, CircleShape)
+                            .clickable { viewModel.prevMonth() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.ChevronLeft, contentDescription = "Tháng trước", tint = TextHighContrast, modifier = Modifier.size(20.dp))
                     }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -137,13 +159,13 @@ fun CalendarScreen(
                             text = "Tháng ${String.format("%02d", month + 1)} / $year",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = TextHighContrast
                         )
                         if (year == todayYear && month == todayMonth) {
                             Text(
-                                text = "Tháng hiện tại",
+                                text = "● Tháng hiện tại",
                                 fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = NeonAzure,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -151,52 +173,70 @@ fun CalendarScreen(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (year != todayYear || month != todayMonth) {
-                            IconButton(onClick = {
-                                viewModel.setMonth(todayYear, todayMonth)
-                                selectedDay = todayDay
-                            }) {
-                                Icon(Icons.Default.Today, contentDescription = "Về hôm nay", tint = MaterialTheme.colorScheme.secondary)
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(NeonAzure.copy(alpha = 0.15f))
+                                    .clickable {
+                                        viewModel.setMonth(todayYear, todayMonth)
+                                        selectedDay = todayDay
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Today, contentDescription = "Về hôm nay", tint = NeonAzure, modifier = Modifier.size(18.dp))
                             }
+                            Spacer(modifier = Modifier.width(6.dp))
                         }
-                        IconButton(onClick = { viewModel.nextMonth() }) {
-                            Icon(Icons.Default.ChevronRight, contentDescription = "Tháng sau", tint = MaterialTheme.colorScheme.primary)
+
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF161E2E))
+                                .border(1.dp, SpecularBorderBrush, CircleShape)
+                                .clickable { viewModel.nextMonth() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.ChevronRight, contentDescription = "Tháng sau", tint = TextHighContrast, modifier = Modifier.size(20.dp))
                         }
                     }
                 }
             }
         }
 
-        // 2. Lưới Lịch Tháng (Calendar Grid)
+        // 2. LƯỚI LỊCH THÁNG (Calendar Grid With Frosted Tiles & Jewel Dots)
         item {
-            Card(
+            NeumorphicGlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                shape = RoundedCornerShape(24.dp),
+                elevation = 6.dp,
+                containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
+                contentPadding = PaddingValues(12.dp)
             ) {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    // Tiêu đề các thứ trong tuần (T2..CN)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Tiêu đề các thứ trong tuần
                     val daysOfWeek = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         daysOfWeek.forEachIndexed { idx, dayName ->
-                            val isWeekend = idx >= 5
+                            val isSunday = idx == 6
                             Text(
                                 text = dayName,
                                 modifier = Modifier.weight(1f),
                                 textAlign = TextAlign.Center,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isWeekend) Color(0xFFEF4444).copy(alpha = 0.8f) else MaterialTheme.colorScheme.outline
+                                color = if (isSunday) NeonCoral else TextMediumContrast
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Lưới các ô ngày trong tháng (tối đa 6 tuần)
+                    // Lưới các ô ngày
                     val totalCells = startDayOfWeek + daysInMonth
                     val totalRows = (totalCells + 6) / 7
 
@@ -214,39 +254,61 @@ fun CalendarScreen(
                                 if (dayNumber in 1..daysInMonth) {
                                     val isSelected = dayNumber == selectedDay
                                     val isToday = year == todayYear && month == todayMonth && dayNumber == todayDay
-
                                     val dayTx = transactionsByDay[dayNumber] ?: emptyList()
-                                    val inc = dayTx.filter { it.type == "INCOME" }.sumOf { it.amount }
-                                    val exp = dayTx.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+                                    val hasIncome = dayTx.any { it.type == "INCOME" }
+                                    val hasExpense = dayTx.any { it.type == "EXPENSE" }
+
+                                    val scale by animateFloatAsState(
+                                        targetValue = if (isSelected) 1.05f else 1f,
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                        label = "cellScale"
+                                    )
 
                                     Box(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .height(65.dp)
-                                            .padding(1.dp)
-                                            .clip(RoundedCornerShape(10.dp))
+                                            .height(58.dp)
+                                            .padding(2.dp)
+                                            .scale(scale)
+                                            .shadow(
+                                                elevation = if (isSelected) 6.dp else 1.dp,
+                                                shape = RoundedCornerShape(12.dp),
+                                                ambientColor = if (isSelected) Color(0xFF38BDF8).copy(alpha = 0.4f) else Color.Black
+                                            )
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(
                                                 when {
-                                                    isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                                                    isToday -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                                                    else -> Color.Transparent
+                                                    isSelected -> Brush.verticalGradient(
+                                                        colors = listOf(
+                                                            Color(0xFF1E293B),
+                                                            Color(0xFF0F172A)
+                                                        )
+                                                    )
+                                                    isToday -> Brush.verticalGradient(
+                                                        colors = listOf(
+                                                            Color(0xFF162032),
+                                                            Color(0xFF0D1424)
+                                                        )
+                                                    )
+                                                    else -> Brush.verticalGradient(
+                                                        colors = listOf(
+                                                            Color(0xFF121724).copy(alpha = 0.8f),
+                                                            Color(0xFF0B0F18).copy(alpha = 0.9f)
+                                                        )
+                                                    )
                                                 }
                                             )
                                             .border(
-                                                width = when {
-                                                    isSelected -> 2.dp
-                                                    isToday -> 1.dp
-                                                    else -> 0.dp
+                                                width = if (isSelected) 1.5.dp else if (isToday) 1.dp else 0.8.dp,
+                                                brush = when {
+                                                    isSelected -> ActiveNeonBorderBrush
+                                                    isToday -> Brush.linearGradient(listOf(NeonAzure, Color.Transparent))
+                                                    else -> Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent))
                                                 },
-                                                color = when {
-                                                    isSelected -> MaterialTheme.colorScheme.primary
-                                                    isToday -> MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                                                    else -> Color.Transparent
-                                                },
-                                                shape = RoundedCornerShape(10.dp)
+                                                shape = RoundedCornerShape(12.dp)
                                             )
                                             .clickable { selectedDay = dayNumber }
-                                            .padding(top = 3.dp, bottom = 2.dp, start = 1.dp, end = 1.dp),
+                                            .padding(top = 4.dp, bottom = 4.dp),
                                         contentAlignment = Alignment.TopCenter
                                     ) {
                                         Column(
@@ -257,42 +319,42 @@ fun CalendarScreen(
                                             // Số ngày
                                             Text(
                                                 text = "$dayNumber",
-                                                fontSize = 12.sp,
-                                                fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal,
+                                                fontSize = 12.5.sp,
+                                                fontWeight = if (isSelected || isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
                                                 color = when {
-                                                    isSelected -> MaterialTheme.colorScheme.primary
-                                                    colIndex == 6 -> Color(0xFFEF4444)
-                                                    else -> MaterialTheme.colorScheme.onSurface
+                                                    isSelected -> NeonAzure
+                                                    colIndex == 6 -> NeonCoral
+                                                    else -> TextHighContrast
                                                 }
                                             )
 
-                                            // Hiển thị thu và chi đầy đủ số tiền dưới ngày với 2 màu khác nhau
-                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                if (inc > 0) {
-                                                    Text(
-                                                        text = Formatters.formatVnd(inc, showSign = true, isIncome = true),
-                                                        fontSize = 8.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = Color(0xFF10B981), // Xanh lá thu nhập
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
+                                            // Các hạt ngọc giao dịch (Jewel Dots)
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                if (hasIncome) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(NeonEmerald)
+                                                            .shadow(elevation = 2.dp, shape = CircleShape)
                                                     )
                                                 }
-                                                if (exp > 0) {
-                                                    Text(
-                                                        text = Formatters.formatVnd(exp, showSign = true, isIncome = false),
-                                                        fontSize = 8.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = Color(0xFFEF4444), // Đỏ chi tiêu
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
+                                                if (hasExpense) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(NeonCoral)
+                                                            .shadow(elevation = 2.dp, shape = CircleShape)
                                                     )
                                                 }
                                             }
                                         }
                                     }
                                 } else {
-                                    // Ô trống đầu hoặc cuối tháng
                                     Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
@@ -302,14 +364,16 @@ fun CalendarScreen(
             }
         }
 
-        // 3. Hàng Tổng Hợp (Thu, Chi, Tổng)
+        // 3. WIDGET TÓM TẮT HÀNG NGÀY DẠNG BẢNG LƠ LỬNG (Floating Daily Console)
         item {
-            Card(
+            NeumorphicGlassCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                shape = RoundedCornerShape(22.dp),
+                elevation = 6.dp,
+                containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
+                contentPadding = PaddingValues(16.dp)
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -317,115 +381,138 @@ fun CalendarScreen(
                     ) {
                         Text(
                             text = if (viewMode == 0) "Tổng Hợp Ngày $selectedDay/${month + 1}" else "Tổng Hợp Cả Tháng ${month + 1}/$year",
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = TextHighContrast
                         )
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            FilterChip(
-                                selected = viewMode == 0,
-                                onClick = { viewMode = 0 },
-                                label = { Text("Ngày $selectedDay", fontSize = 11.sp) }
-                            )
-                            FilterChip(
-                                selected = viewMode == 1,
-                                onClick = { viewMode = 1 },
-                                label = { Text("Cả tháng", fontSize = 11.sp) }
-                            )
+                        // Nút chuyển chế độ dạng viên nhộng kép (Dual Pill Toggle)
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF0C101A))
+                                .padding(2.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (viewMode == 0) Color(0xFF1E293B) else Color.Transparent)
+                                    .clickable { viewMode = 0 }
+                                    .padding(horizontal = 9.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "Ngày $selectedDay",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (viewMode == 0) NeonAzure else TextMuted
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (viewMode == 1) Color(0xFF1E293B) else Color.Transparent)
+                                    .clickable { viewMode = 1 }
+                                    .padding(horizontal = 9.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "Cả tháng",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (viewMode == 1) NeonAzure else TextMuted
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     val curIncome = if (viewMode == 0) dayIncome else monthSummary.totalIncome
                     val curExpense = if (viewMode == 0) dayExpense else monthSummary.totalExpense
                     val curBalance = if (viewMode == 0) dayBalance else monthSummary.balance
 
+                    // 3 Khối Thống kê Xúc giác (Thu / Chi / Dư)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // 1. Cột Thu
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.1f))
+                        // 1. Thu
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                                .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     text = "Thu nhập",
                                     fontSize = 11.sp,
-                                    color = Color(0xFF10B981),
+                                    color = NeonEmerald,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
                                     text = Formatters.formatVnd(curIncome),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF10B981),
+                                    color = NeonEmerald,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
 
-                        // 2. Cột Chi
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.1f))
+                        // 2. Chi
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                                .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     text = "Chi tiêu",
                                     fontSize = 11.sp,
-                                    color = Color(0xFFEF4444),
+                                    color = NeonCoral,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
                                     text = Formatters.formatVnd(curExpense),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFEF4444),
+                                    color = NeonCoral,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
 
-                        // 3. Cột Tổng (Chênh lệch / Số dư)
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (curBalance >= 0) Color(0xFF3B82F6).copy(alpha = 0.1f) else Color(0xFFF97316).copy(alpha = 0.1f)
-                            )
+                        // 3. Chênh lệch / Dư
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                                .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                                 Text(
-                                    text = "Tổng (Số dư)",
+                                    text = "Số dư ròng",
                                     fontSize = 11.sp,
-                                    color = if (curBalance >= 0) Color(0xFF2563EB) else Color(0xFFEA580C),
+                                    color = if (curBalance >= 0) NeonAzure else NeonAmber,
                                     fontWeight = FontWeight.SemiBold
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
                                     text = Formatters.formatVnd(curBalance),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (curBalance >= 0) Color(0xFF2563EB) else Color(0xFFEA580C),
+                                    color = if (curBalance >= 0) NeonAzure else NeonAmber,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
@@ -436,12 +523,14 @@ fun CalendarScreen(
             }
         }
 
-        // 4. Lịch Sử Giao Dịch Dưới Lịch
+        // 4. DANH SÁCH GIAO DỊCH DƯỚI LỊCH
         val displayTransactions = if (viewMode == 0) selectedDayTransactions else transactions
 
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -449,44 +538,43 @@ fun CalendarScreen(
                     text = if (viewMode == 0) "Lịch Sử Ngày $selectedDay/${month + 1}" else "Tất Cả Giao Dịch Tháng ${month + 1}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = TextHighContrast
                 )
 
-                Text(
+                TactilePillChip(
                     text = "${displayTransactions.size} giao dịch",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    accentColor = NeonAzure,
+                    leadingDot = false
                 )
             }
         }
 
         if (displayTransactions.isEmpty()) {
             item {
-                Card(
+                NeumorphicGlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = 2.dp,
+                    contentPadding = PaddingValues(28.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "📅", fontSize = 32.sp)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = if (viewMode == 0) "Không có giao dịch nào vào ngày $selectedDay/${month + 1}" else "Chưa có giao dịch nào trong tháng này",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.outline
-                            )
-                            Text(
-                                text = "Chuyển sang tab Nhập Vào để ghi chép nhanh nhé!",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
-                            )
-                        }
+                        Text(text = "📅", fontSize = 34.sp)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = if (viewMode == 0) "Chưa có giao dịch vào ngày $selectedDay/${month + 1}" else "Chưa có giao dịch nào trong tháng này",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextHighContrast
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Chạm nút \"+\" hoặc Trợ Lý AI để thêm chi tiêu mới nhé!",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted
+                        )
                     }
                 }
             }

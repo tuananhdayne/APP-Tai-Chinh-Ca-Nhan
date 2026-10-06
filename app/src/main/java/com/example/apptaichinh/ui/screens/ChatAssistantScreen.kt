@@ -83,9 +83,13 @@ import com.example.apptaichinh.data.ai.MessageSender
 import com.example.apptaichinh.data.ai.ToolAction
 import com.example.apptaichinh.data.ai.ToolActionType
 import com.example.apptaichinh.data.model.Category
+import com.example.apptaichinh.ui.components.AiLogoView
+import com.example.apptaichinh.ui.components.AiLogoSize
 import com.example.apptaichinh.ui.components.EditCategoryDialog
 import com.example.apptaichinh.ui.components.Formatters
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Brush
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +102,7 @@ fun ChatAssistantScreen(
     val isThinking by viewModel.isAiThinking.collectAsState()
     val serverUrl by viewModel.aiServerUrl.collectAsState()
     val modelName by viewModel.aiModelName.collectAsState()
+    val apiKey by viewModel.aiApiKey.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
     var inputText by remember { mutableStateOf("") }
@@ -190,29 +195,35 @@ fun ChatAssistantScreen(
                 },
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        AiLogoView(
+                            size = 32.dp,
+                            isThinking = isThinking,
+                            withGlow = true,
+                            withBackground = true
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Trợ Lý AI",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(7.dp)
+                                        .clip(CircleShape)
+                                        .background(if (serverUrl.isNotBlank()) Color(0xFF10B981) else Color(0xFFEF4444))
+                                )
+                            }
+                            val displayModel = when {
+                                modelName.contains("gemini", ignoreCase = true) -> "Gemini 3.7 Flash • Function Calling"
+                                modelName.isNotBlank() -> "$modelName • Tool Calling"
+                                else -> "Gemini 3.7 Flash • Function Calling"
+                            }
                             Text(
-                                text = "Trợ Lý AI",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = if (serverUrl.isBlank()) "Chưa cấu hình URL" else "Qwen2.5-3B • Tool Calling",
+                                text = if (serverUrl.isBlank()) "Chưa cấu hình URL" else displayModel,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (serverUrl.isBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                             )
@@ -254,6 +265,16 @@ fun ChatAssistantScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                if (messages.isEmpty() && !isThinking) {
+                    item {
+                        AiWelcomeHero(
+                            onSelectPrompt = { selectedPrompt ->
+                                viewModel.sendAiChatMessage(selectedPrompt)
+                            }
+                        )
+                    }
+                }
+
                 items(messages, key = { it.id }) { message ->
                     ChatMessageItem(
                         message = message,
@@ -340,8 +361,21 @@ fun ChatAssistantScreen(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(
-                            if (inputText.isNotBlank() && !isThinking) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                            if (inputText.isNotBlank() && !isThinking) {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF2563EB), // Royal Blue
+                                        Color(0xFF7C3AED)  // Violet
+                                    )
+                                )
+                            } else {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                    )
+                                )
+                            }
                         )
                 ) {
                     Icon(
@@ -383,14 +417,16 @@ fun ChatAssistantScreen(
         AiServerConfigDialog(
             currentUrl = serverUrl,
             currentModel = modelName,
+            currentApiKey = apiKey,
             onDismiss = { showSettingsDialog = false },
-            onSave = { url, model ->
+            onSave = { url, model, key ->
                 viewModel.setAiServerUrl(url)
                 viewModel.setAiModelName(model)
+                viewModel.setAiApiKey(key)
                 showSettingsDialog = false
             },
-            onTestPing = { url, onResult ->
-                viewModel.pingAiServer(url, onResult)
+            onTestPing = { url, key, onResult ->
+                viewModel.pingAiServer(url, key, onResult)
             }
         )
     }
@@ -456,23 +492,12 @@ fun ChatMessageItem(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (message.isErrorMessage) MaterialTheme.colorScheme.errorContainer
-                            else MaterialTheme.colorScheme.primaryContainer
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        tint = if (message.isErrorMessage) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                AiLogoView(
+                    size = 30.dp,
+                    isThinking = false,
+                    withGlow = !message.isErrorMessage,
+                    withBackground = true
+                )
 
                 Spacer(modifier = Modifier.width(8.dp))
 
@@ -1705,7 +1730,113 @@ fun TransferCategoryCard(
     }
 }
 
-// Bong bóng "Đang suy nghĩ..."
+// Màn hình Chào đón & Gợi ý câu lệnh nhanh (Hero Empty State)
+@Composable
+fun AiWelcomeHero(
+    onSelectPrompt: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val samplePrompts = listOf(
+        "🍜 Ăn trưa bún bò 45k" to "Ghi chép chi tiêu ăn uống tức thì",
+        "🛵 Đổ xăng xe máy 60k" to "Phân loại chi phí đi lại chuẩn xác",
+        "💰 Nhận lương tháng 15 triệu" to "Cộng ngay vào số dư thu nhập",
+        "📊 Hôm nay tôi đã chi bao nhiêu?" to "Tra cứu tổng chi tiêu trong ngày",
+        "💡 Tôi có đang vượt ngân sách không?" to "Kiểm tra tiến độ chi tiêu tháng này"
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 20.dp, horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Biểu tượng Logo AI cỡ lớn tỏa sáng hào quang
+        AiLogoView(
+            size = 72.dp,
+            isThinking = false,
+            withGlow = true,
+            withBackground = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Trợ Lý AI Tài Chính",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "Sức mạnh từ Gemini 3.7 Flash & Function Calling.\nNói hoặc gõ bằng tiếng Việt tự nhiên để thao tác siêu tốc.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Danh sách gợi ý câu hỏi nhanh
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "✨ Gợi ý câu lệnh thử ngay:",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+            )
+
+            samplePrompts.forEach { (prompt, desc) ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .clickable { onSelectPrompt(prompt) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 11.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = prompt,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = desc,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Thử ngay",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Bong bóng "Đang suy nghĩ..." thế hệ mới
 @Composable
 fun AiThinkingBubble() {
     Row(
@@ -1713,27 +1844,24 @@ fun AiThinkingBubble() {
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+        AiLogoView(
+            size = 32.dp,
+            isThinking = true,
+            withGlow = true,
+            withBackground = true
+        )
 
         Spacer(modifier = Modifier.width(8.dp))
 
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 18.dp, bottomStart = 18.dp, bottomEnd = 18.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                    shape = RoundedCornerShape(topStart = 4.dp, topEnd = 18.dp, bottomStart = 18.dp, bottomEnd = 18.dp)
+                )
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1744,26 +1872,29 @@ fun AiThinkingBubble() {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Qwen2.5 đang phân tích lệnh...",
+                    text = "Gemini 3.7 Flash đang phân tích câu nói...",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.outline,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
     }
 }
 
-// Dialog cấu hình Server URL & Model
+// Dialog cấu hình Server URL, Model & API Key
 @Composable
 fun AiServerConfigDialog(
     currentUrl: String,
     currentModel: String,
+    currentApiKey: String = "",
     onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit,
-    onTestPing: (String, (Boolean, String) -> Unit) -> Unit
+    onSave: (String, String, String) -> Unit,
+    onTestPing: (String, String, (Boolean, String) -> Unit) -> Unit
 ) {
     var urlText by remember { mutableStateOf(currentUrl) }
     var modelText by remember { mutableStateOf(currentModel) }
+    var apiKeyText by remember { mutableStateOf(currentApiKey) }
     var isTesting by remember { mutableStateOf(false) }
     var pingResult by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
 
@@ -1780,7 +1911,7 @@ fun AiServerConfigDialog(
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Nhập URL ngrok (HTTPS) hoặc IP máy chủ LM Studio (port 1234):",
+                    text = "Nhập URL ngrok (HTTPS) hoặc IP máy chủ:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -1806,7 +1937,19 @@ fun AiServerConfigDialog(
                     value = modelText,
                     onValueChange = { modelText = it },
                     label = { Text("Model Identifier") },
-                    placeholder = { Text("qwen2.5-3b-instruct") },
+                    placeholder = { Text("ag/gemini-3.7-flash-high") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = apiKeyText,
+                    onValueChange = { apiKeyText = it },
+                    label = { Text("API Key (Bearer Token)") },
+                    placeholder = { Text("sk-...") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp)
@@ -1819,7 +1962,7 @@ fun AiServerConfigDialog(
                     onClick = {
                         isTesting = true
                         pingResult = null
-                        onTestPing(urlText) { success, msg ->
+                        onTestPing(urlText, apiKeyText) { success, msg ->
                             isTesting = false
                             pingResult = Pair(success, msg)
                         }
@@ -1853,7 +1996,7 @@ fun AiServerConfigDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSave(urlText, modelText) },
+                onClick = { onSave(urlText, modelText, apiKeyText) },
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text("Lưu Cài Đặt")

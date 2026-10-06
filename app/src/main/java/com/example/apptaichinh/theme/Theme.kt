@@ -1,50 +1,49 @@
 package com.example.apptaichinh.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(primary = Purple80, secondary = PurpleGrey80, tertiary = Pink80)
-
-private val LightColorScheme =
-  lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
+// Bảng màu chuẩn Skeuomorphic-Neumorphic Dark Mode
+private val NeumorphicCarbonDarkColorScheme = darkColorScheme(
+    primary = NeonAzure,
+    onPrimary = Color(0xFF0A0D14),
+    primaryContainer = Color(0xFF1E293B),
+    onPrimaryContainer = Color(0xFFE2E8F0),
+    secondary = NeonIndigo,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-  )
+    secondaryContainer = Color(0xFF26334D),
+    onSecondaryContainer = Color(0xFFEDE9FE),
+    tertiary = NeonAmber,
+    onTertiary = Color(0xFF0F172A),
+    tertiaryContainer = Color(0xFF161E2E),
+    onTertiaryContainer = Color(0xFFFDE68A),
+    background = CarbonBackground,
+    onBackground = TextHighContrast,
+    surface = CarbonSurface,
+    onSurface = TextHighContrast,
+    surfaceVariant = CarbonSurfaceGlass,
+    onSurfaceVariant = TextMediumContrast,
+    outline = Color(0xFF26334D),
+    outlineVariant = Color(0xFF1E2638),
+    error = NeonCoral,
+    onError = Color.White,
+    errorContainer = Color(0xFF4C0519),
+    onErrorContainer = Color(0xFFFECDD3)
+)
 
 @Composable
 fun AppTaiChinhTheme(
-  darkTheme: Boolean = isSystemInDarkTheme(),
-  // Dynamic color is available on Android 12+
-  dynamicColor: Boolean = true,
-  content: @Composable () -> Unit,
+    // Mặc định luôn chạy Dark Mode Carbon theo yêu cầu thiết kế Neumorphic-Glassmorphism
+    darkTheme: Boolean = true,
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit,
 ) {
-  val colorScheme =
-    when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }
-      darkTheme -> DarkColorScheme
-      else -> LightColorScheme
-    }
-
-  MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+    MaterialTheme(
+        colorScheme = NeumorphicCarbonDarkColorScheme,
+        typography = Typography,
+        content = content
+    )
 }
