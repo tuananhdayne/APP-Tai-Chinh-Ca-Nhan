@@ -100,7 +100,12 @@ import com.example.apptaichinh.ui.components.EditCategoryDialog
 import com.example.apptaichinh.ui.components.Formatters
 import com.example.apptaichinh.ui.components.Glyph3DIcon
 import com.example.apptaichinh.ui.components.NeumorphicGlassCard
+import com.example.apptaichinh.ui.components.TactileGradientButton
+import com.example.apptaichinh.ui.components.TactileKeyButton
 import com.example.apptaichinh.ui.components.TactilePillChip
+import com.example.apptaichinh.ui.components.TactileQuickChip
+import com.example.apptaichinh.ui.components.TactileTypeTab
+import com.example.apptaichinh.ui.components.tactileBounceClickable
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 import com.example.apptaichinh.ui.viewmodel.ParsedTransaction
 import kotlinx.coroutines.launch
@@ -269,13 +274,13 @@ fun ManualEntryScreen(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF0C101A))
+                        .background(Color(0xFFE2E8F0))
                         .padding(2.dp)
                 ) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (inputMode == 0) Color(0xFF1E293B) else Color.Transparent)
+                            .background(if (inputMode == 0) Color.White else Color.Transparent)
                             .clickable { inputMode = 0 }
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
@@ -289,7 +294,7 @@ fun ManualEntryScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (inputMode == 1) Color(0xFF1E293B) else Color.Transparent)
+                            .background(if (inputMode == 1) Color.White else Color.Transparent)
                             .clickable { inputMode = 1 }
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
@@ -319,143 +324,31 @@ fun ManualEntryScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Tab Chi Tiêu
-                    val isExpense = txType == "EXPENSE"
-                    val expenseScale by animateFloatAsState(
-                        targetValue = if (isExpense) 1.02f else 0.98f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                        label = "expScale"
+                    TactileTypeTab(
+                        title = "Chi Tiêu (-)",
+                        isSelected = txType == "EXPENSE",
+                        activeGradient = listOf(Color(0xFFFF3366), Color(0xFFE11D48), Color(0xFFBE123C)),
+                        glowColor = NeonCoral,
+                        onClick = {
+                            txType = "EXPENSE"
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        },
+                        modifier = Modifier.weight(1f)
                     )
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .scale(expenseScale)
-                            .shadow(
-                                elevation = if (isExpense) 6.dp else 1.dp,
-                                shape = RoundedCornerShape(18.dp),
-                                ambientColor = if (isExpense) NeonCoral.copy(alpha = 0.5f) else Color.Black
-                            )
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(
-                                if (isExpense) {
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color(0xFF881337), // Rose Deep
-                                            Color(0xFF4C0519)
-                                        )
-                                    )
-                                } else {
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color(0xFF161E2E),
-                                            Color(0xFF0F1522)
-                                        )
-                                    )
-                                }
-                            )
-                            .border(
-                                width = if (isExpense) 1.5.dp else 0.8.dp,
-                                brush = if (isExpense) {
-                                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.4f), NeonCoral))
-                                } else {
-                                    SpecularBorderBrush
-                                },
-                                shape = RoundedCornerShape(18.dp)
-                            )
-                            .clickable {
-                                txType = "EXPENSE"
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            }
-                            .padding(vertical = 13.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isExpense) NeonCoral else TextMuted)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Chi Tiêu (-)",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isExpense) TextHighContrast else TextMediumContrast
-                            )
-                        }
-                    }
-
-                    // Tab Thu Nhập
-                    val isIncome = txType == "INCOME"
-                    val incomeScale by animateFloatAsState(
-                        targetValue = if (isIncome) 1.02f else 0.98f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                        label = "incScale"
+                    TactileTypeTab(
+                        title = "Thu Nhập (+)",
+                        isSelected = txType == "INCOME",
+                        activeGradient = listOf(Color(0xFF10B981), Color(0xFF059669), Color(0xFF047857)),
+                        glowColor = NeonEmerald,
+                        onClick = {
+                            txType = "INCOME"
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        },
+                        modifier = Modifier.weight(1f)
                     )
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .scale(incomeScale)
-                            .shadow(
-                                elevation = if (isIncome) 6.dp else 1.dp,
-                                shape = RoundedCornerShape(18.dp),
-                                ambientColor = if (isIncome) NeonEmerald.copy(alpha = 0.5f) else Color.Black
-                            )
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(
-                                if (isIncome) {
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color(0xFF064E3B), // Emerald Deep
-                                            Color(0xFF022C22)
-                                        )
-                                    )
-                                } else {
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color(0xFF161E2E),
-                                            Color(0xFF0F1522)
-                                        )
-                                    )
-                                }
-                            )
-                            .border(
-                                width = if (isIncome) 1.5.dp else 0.8.dp,
-                                brush = if (isIncome) {
-                                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.4f), NeonEmerald))
-                                } else {
-                                    SpecularBorderBrush
-                                },
-                                shape = RoundedCornerShape(18.dp)
-                            )
-                            .clickable {
-                                txType = "INCOME"
-                                focusManager.clearFocus()
-                                keyboardController?.hide()
-                            }
-                            .padding(vertical = 13.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isIncome) NeonEmerald else TextMuted)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Thu Nhập (+)",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isIncome) TextHighContrast else TextMediumContrast
-                            )
-                        }
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -534,7 +427,7 @@ fun ManualEntryScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(CarbonSurfaceRecessed)
-                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(16.dp))
                                 .clickable { showNumpad = !showNumpad }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
                             contentAlignment = Alignment.CenterEnd
@@ -574,42 +467,22 @@ fun ManualEntryScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             listOf(10_000L, 20_000L, 50_000L, 100_000L, 200_000L, 500_000L, 1_000_000L).forEach { addVal ->
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0xFF161E2E))
-                                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
-                                        .clickable {
-                                            val cur = amountText.toLongOrNull() ?: 0L
-                                            amountText = (cur + addVal).toString()
-                                        }
-                                        .padding(horizontal = 9.dp, vertical = 5.dp)
-                                ) {
-                                    Text(
-                                        text = "+${Formatters.formatCompactVnd(addVal)}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextHighContrast
-                                    )
-                                }
+                                TactileQuickChip(
+                                    text = "+${Formatters.formatCompactVnd(addVal)}",
+                                    onClick = {
+                                        val cur = amountText.toLongOrNull() ?: 0L
+                                        amountText = (cur + addVal).toString()
+                                    }
+                                )
                             }
 
                             if (amountLong > 0) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(NeonCoral.copy(alpha = 0.15f))
-                                        .border(1.dp, NeonCoral.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                                        .clickable { amountText = "" }
-                                        .padding(horizontal = 9.dp, vertical = 5.dp)
-                                ) {
-                                    Text(
-                                        text = "Xóa hết",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = NeonCoral
-                                    )
-                                }
+                                TactileQuickChip(
+                                    text = "Xóa hết",
+                                    isDanger = true,
+                                    icon = Icons.Default.Clear,
+                                    onClick = { amountText = "" }
+                                )
                             }
                         }
                     }
@@ -643,10 +516,11 @@ fun ManualEntryScreen(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     rowKeys.forEach { keyLabel ->
-                                        NumpadKeyButton(
+                                        TactileKeyButton(
                                             label = keyLabel,
                                             modifier = Modifier.weight(1f),
-                                            isActionKey = keyLabel == "C" || keyLabel == "⌫",
+                                            isActionKey = keyLabel == "⌫",
+                                            isDangerKey = keyLabel == "C",
                                             onClick = {
                                                 when (keyLabel) {
                                                     "C" -> amountText = ""
@@ -723,38 +597,38 @@ fun ManualEntryScreen(
                                         .width(76.dp)
                                         .scale(scale)
                                         .shadow(
-                                            elevation = if (isSelected) 6.dp else 1.dp,
+                                            elevation = if (isSelected) 4.dp else 1.dp,
                                             shape = RoundedCornerShape(16.dp),
-                                            ambientColor = if (isSelected) catColor.copy(alpha = 0.5f) else Color.Black
+                                            ambientColor = if (isSelected) catColor.copy(alpha = 0.35f) else Color(0xFF64748B).copy(alpha = 0.10f)
                                         )
                                         .clip(RoundedCornerShape(16.dp))
                                         .background(
                                             if (isSelected) {
                                                 Brush.verticalGradient(
                                                     colors = listOf(
-                                                        catColor.copy(alpha = 0.28f),
-                                                        Color(0xFF161E2E)
+                                                        catColor.copy(alpha = 0.14f),
+                                                        Color.White
                                                     )
                                                 )
                                             } else {
                                                 Brush.verticalGradient(
                                                     colors = listOf(
-                                                        Color(0xFF131926).copy(alpha = 0.8f),
-                                                        Color(0xFF0F1522)
+                                                        Color.White,
+                                                        Color(0xFFF8FAFC)
                                                     )
                                                 )
                                             }
                                         )
                                         .border(
-                                            width = if (isSelected) 1.8.dp else 0.8.dp,
+                                            width = if (isSelected) 1.6.dp else 1.dp,
                                             brush = if (isSelected) {
-                                                Brush.linearGradient(listOf(Color.White.copy(alpha = 0.5f), catColor))
+                                                Brush.linearGradient(listOf(catColor, catColor.copy(alpha = 0.6f)))
                                             } else {
-                                                Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent))
+                                                Brush.linearGradient(listOf(Color(0xFFE2E8F0), Color(0xFFCBD5E1)))
                                             },
                                             shape = RoundedCornerShape(16.dp)
                                         )
-                                        .clickable {
+                                        .tactileBounceClickable {
                                             selectedCategory = cat
                                             focusManager.clearFocus()
                                             keyboardController?.hide()
@@ -791,9 +665,9 @@ fun ManualEntryScreen(
                                 modifier = Modifier
                                     .width(76.dp)
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFF131926).copy(alpha = 0.6f))
-                                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
-                                    .clickable { showAddCatDialog = true }
+                                    .background(Color(0xFFF8FAFC))
+                                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(16.dp))
+                                    .tactileBounceClickable { showAddCatDialog = true }
                                     .padding(vertical = 10.dp, horizontal = 4.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -851,7 +725,7 @@ fun ManualEntryScreen(
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = NeonAzure,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.08f),
+                                unfocusedBorderColor = Color(0xFFCBD5E1),
                                 focusedTextColor = TextHighContrast,
                                 unfocusedTextColor = TextHighContrast
                             )
@@ -863,79 +737,47 @@ fun ManualEntryScreen(
 
                 // 8. NÚT LƯU GIAO DỊCH XÚC GIÁC (Tactile Save Button)
                 val canSave = amountLong > 0 && selectedCategory != null
-                val saveScale by animateFloatAsState(
-                    targetValue = if (canSave) 1f else 0.98f,
-                    label = "saveScale"
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .scale(saveScale)
-                        .shadow(
-                            elevation = if (canSave) 8.dp else 1.dp,
-                            shape = RoundedCornerShape(18.dp),
-                            ambientColor = if (txType == "EXPENSE") NeonCoral else NeonEmerald
-                        )
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(
-                            if (!canSave) {
-                                Brush.verticalGradient(listOf(Color(0xFF1E2638), Color(0xFF121722)))
-                            } else if (txType == "EXPENSE") {
-                                Brush.verticalGradient(listOf(NeonCoral, Color(0xFFDC2626)))
-                            } else {
-                                Brush.verticalGradient(listOf(NeonEmerald, Color(0xFF059669)))
-                            }
-                        )
-                        .border(
-                            width = 1.2.dp,
-                            brush = if (canSave) Brush.linearGradient(listOf(Color.White.copy(alpha = 0.5f), Color.Transparent)) else SpecularBorderBrush,
-                            shape = RoundedCornerShape(18.dp)
-                        )
-                        .clickable(enabled = canSave) {
-                            val cat = selectedCategory ?: return@clickable
-                            val newTx = Transaction(
-                                id = 0L,
-                                amount = amountLong,
-                                type = txType,
-                                categoryId = cat.id,
-                                categoryName = cat.name,
-                                categoryIcon = cat.icon,
-                                categoryColorHex = cat.colorHex,
-                                note = note.trim(),
-                                dateEpoch = selectedDateEpoch
-                            )
-
-                            viewModel.addTransaction(newTx) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Đã lưu vào sổ: ${cat.icon} ${cat.name} (${Formatters.formatVnd(amountLong)})",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                                amountText = ""
-                                note = ""
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = if (canSave) Color.White else TextMuted,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Lưu Giao Dịch Vào Sổ",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (canSave) Color.White else TextMuted
-                        )
-                    }
+                val saveGradient = if (txType == "EXPENSE") {
+                    listOf(Color(0xFFFF3366), Color(0xFFE11D48), Color(0xFFBE123C))
+                } else {
+                    listOf(Color(0xFF10B981), Color(0xFF059669), Color(0xFF047857))
                 }
+                val saveGlow = if (txType == "EXPENSE") NeonCoral else NeonEmerald
+
+                TactileGradientButton(
+                    text = "Lưu Giao Dịch Vào Sổ",
+                    icon = Icons.Default.CheckCircle,
+                    gradientColors = saveGradient,
+                    glowColor = saveGlow,
+                    enabled = canSave,
+                    modifier = Modifier.fillMaxWidth(),
+                    height = 56.dp,
+                    onClick = {
+                        val cat = selectedCategory ?: return@TactileGradientButton
+                        val newTx = Transaction(
+                            id = 0L,
+                            amount = amountLong,
+                            type = txType,
+                            categoryId = cat.id,
+                            categoryName = cat.name,
+                            categoryIcon = cat.icon,
+                            categoryColorHex = cat.colorHex,
+                            note = note.trim(),
+                            dateEpoch = selectedDateEpoch
+                        )
+
+                        viewModel.addTransaction(newTx) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Đã lưu vào sổ: ${cat.icon} ${cat.name} (${Formatters.formatVnd(amountLong)})",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            amountText = ""
+                            note = ""
+                        }
+                    }
+                )
 
             } else {
                 // ==========================================
@@ -990,7 +832,7 @@ fun ManualEntryScreen(
                             },
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = NeonAzure,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.08f),
+                                unfocusedBorderColor = Color(0xFFCBD5E1),
                                 focusedTextColor = TextHighContrast,
                                 unfocusedTextColor = TextHighContrast
                             )
@@ -1007,7 +849,7 @@ fun ManualEntryScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFF0F1522).copy(alpha = 0.9f))
+                                    .background(Color(0xFFF8FAFC))
                                     .border(1.dp, if (isIncome) NeonEmerald.copy(alpha = 0.4f) else NeonCoral.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
                                     .padding(14.dp)
                             ) {
@@ -1046,48 +888,35 @@ fun ManualEntryScreen(
 
                                     Spacer(modifier = Modifier.height(12.dp))
 
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(48.dp)
-                                            .clip(RoundedCornerShape(14.dp))
-                                            .background(
-                                                if (isIncome) Brush.verticalGradient(listOf(NeonEmerald, Color(0xFF059669)))
-                                                else Brush.verticalGradient(listOf(NeonCoral, Color(0xFFDC2626)))
+                                    TactileGradientButton(
+                                        text = "Xác Nhận & Lưu Vào Sổ",
+                                        icon = Icons.Default.Check,
+                                        gradientColors = if (isIncome) listOf(Color(0xFF10B981), Color(0xFF059669)) else listOf(Color(0xFFFF3366), Color(0xFFE11D48)),
+                                        glowColor = if (isIncome) NeonEmerald else NeonCoral,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        height = 48.dp,
+                                        onClick = {
+                                            focusManager.clearFocus()
+                                            keyboardController?.hide()
+                                            val newTx = Transaction(
+                                                id = 0L,
+                                                amount = parsed.amount,
+                                                type = parsed.type,
+                                                categoryId = cat?.id ?: parsed.categoryId,
+                                                note = parsed.note,
+                                                dateEpoch = System.currentTimeMillis()
                                             )
-                                            .clickable {
-                                                focusManager.clearFocus()
-                                                keyboardController?.hide()
-                                                val newTx = Transaction(
-                                                    id = 0L,
-                                                    amount = parsed.amount,
-                                                    type = parsed.type,
-                                                    categoryId = cat?.id ?: parsed.categoryId,
-                                                    note = parsed.note,
-                                                    dateEpoch = System.currentTimeMillis()
-                                                )
-                                                viewModel.addTransaction(newTx) {
-                                                    scope.launch {
-                                                        snackbarHostState.showSnackbar(
-                                                            message = "Đã lưu vào sổ: ${parsed.categoryName} (${Formatters.formatVnd(parsed.amount)})"
-                                                        )
-                                                    }
-                                                    smartInputText = ""
-                                                    parsedTx = null
+                                            viewModel.addTransaction(newTx) {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar(
+                                                        message = "Đã lưu vào sổ: ${parsed.categoryName} (${Formatters.formatVnd(parsed.amount)})"
+                                                    )
                                                 }
-                                            },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = "Xác Nhận & Lưu Vào Sổ",
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color.White
-                                            )
+                                                smartInputText = ""
+                                                parsedTx = null
+                                            }
                                         }
-                                    }
+                                    )
                                 }
                             }
                         } else if (smartInputText.isNotBlank()) {
@@ -1109,9 +938,9 @@ fun ManualEntryScreen(
                     .fillMaxWidth()
                     .height(46.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF131926).copy(alpha = 0.7f))
+                    .background(Color.White)
                     .border(1.dp, SpecularBorderBrush, RoundedCornerShape(14.dp))
-                    .clickable { onNavigateToCalendar() },
+                    .tactileBounceClickable { onNavigateToCalendar() },
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1151,74 +980,6 @@ fun ManualEntryScreen(
                     showAddCatDialog = false
                 }
             }
-        )
-    }
-}
-
-/**
- * Phím Numpad Xúc Giác Có Viền Phản Quang Nhẹ (Tactile Keycap Button)
- */
-@Composable
-private fun NumpadKeyButton(
-    label: String,
-    modifier: Modifier = Modifier,
-    isActionKey: Boolean = false,
-    onClick: () -> Unit
-) {
-    var isPressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.93f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "keyScale"
-    )
-
-    Box(
-        modifier = modifier
-            .height(52.dp)
-            .scale(scale)
-            .shadow(
-                elevation = if (isPressed) 1.dp else 4.dp,
-                shape = RoundedCornerShape(14.dp),
-                ambientColor = Color.Black.copy(alpha = 0.6f)
-            )
-            .clip(RoundedCornerShape(14.dp))
-            .background(
-                if (isActionKey) {
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF26334D),
-                            Color(0xFF161E2E)
-                        )
-                    )
-                } else {
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF1E2638),
-                            Color(0xFF131926)
-                        )
-                    )
-                }
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.18f),
-                        Color.White.copy(alpha = 0.04f)
-                    )
-                ),
-                shape = RoundedCornerShape(14.dp)
-            )
-            .clickable {
-                onClick()
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            fontSize = if (label == "⌫" || label == "C") 17.sp else 21.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (label == "C") NeonCoral else if (label == "⌫") NeonAmber else TextHighContrast
         )
     }
 }

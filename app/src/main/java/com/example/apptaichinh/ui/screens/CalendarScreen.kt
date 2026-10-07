@@ -146,7 +146,7 @@ fun CalendarScreen(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF161E2E))
+                            .background(Color(0xFFF1F5F9))
                             .border(1.dp, SpecularBorderBrush, CircleShape)
                             .clickable { viewModel.prevMonth() },
                         contentAlignment = Alignment.Center
@@ -177,7 +177,7 @@ fun CalendarScreen(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(NeonAzure.copy(alpha = 0.15f))
+                                    .background(Color(0xFFEFF6FF))
                                     .clickable {
                                         viewModel.setMonth(todayYear, todayMonth)
                                         selectedDay = todayDay
@@ -193,7 +193,7 @@ fun CalendarScreen(
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF161E2E))
+                                .background(Color(0xFFF1F5F9))
                                 .border(1.dp, SpecularBorderBrush, CircleShape)
                                 .clickable { viewModel.nextMonth() },
                             contentAlignment = Alignment.Center
@@ -271,29 +271,29 @@ fun CalendarScreen(
                                             .padding(2.dp)
                                             .scale(scale)
                                             .shadow(
-                                                elevation = if (isSelected) 6.dp else 1.dp,
+                                                elevation = if (isSelected) 4.dp else 1.dp,
                                                 shape = RoundedCornerShape(12.dp),
-                                                ambientColor = if (isSelected) Color(0xFF38BDF8).copy(alpha = 0.4f) else Color.Black
+                                                ambientColor = if (isSelected) NeonAzure.copy(alpha = 0.35f) else Color(0xFF64748B).copy(alpha = 0.10f)
                                             )
                                             .clip(RoundedCornerShape(12.dp))
                                             .background(
                                                 when {
                                                     isSelected -> Brush.verticalGradient(
                                                         colors = listOf(
-                                                            Color(0xFF1E293B),
-                                                            Color(0xFF0F172A)
+                                                            Color(0xFF2563EB),
+                                                            Color(0xFF1D4ED8)
                                                         )
                                                     )
                                                     isToday -> Brush.verticalGradient(
                                                         colors = listOf(
-                                                            Color(0xFF162032),
-                                                            Color(0xFF0D1424)
+                                                            Color(0xFFEFF6FF),
+                                                            Color(0xFFDBEAFE)
                                                         )
                                                     )
                                                     else -> Brush.verticalGradient(
                                                         colors = listOf(
-                                                            Color(0xFF121724).copy(alpha = 0.8f),
-                                                            Color(0xFF0B0F18).copy(alpha = 0.9f)
+                                                            Color.White,
+                                                            Color(0xFFF8FAFC)
                                                         )
                                                     )
                                                 }
@@ -301,9 +301,9 @@ fun CalendarScreen(
                                             .border(
                                                 width = if (isSelected) 1.5.dp else if (isToday) 1.dp else 0.8.dp,
                                                 brush = when {
-                                                    isSelected -> ActiveNeonBorderBrush
-                                                    isToday -> Brush.linearGradient(listOf(NeonAzure, Color.Transparent))
-                                                    else -> Brush.linearGradient(listOf(Color.White.copy(alpha = 0.05f), Color.Transparent))
+                                                    isSelected -> Brush.linearGradient(listOf(Color(0xFF2563EB), Color(0xFF1D4ED8)))
+                                                    isToday -> Brush.linearGradient(listOf(Color(0xFF3B82F6), Color(0xFF60A5FA)))
+                                                    else -> Brush.linearGradient(listOf(Color(0xFFE2E8F0), Color(0xFFCBD5E1)))
                                                 },
                                                 shape = RoundedCornerShape(12.dp)
                                             )
@@ -322,7 +322,8 @@ fun CalendarScreen(
                                                 fontSize = 12.5.sp,
                                                 fontWeight = if (isSelected || isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
                                                 color = when {
-                                                    isSelected -> NeonAzure
+                                                    isSelected -> Color.White
+                                                    isToday -> Color(0xFF1D4ED8)
                                                     colIndex == 6 -> NeonCoral
                                                     else -> TextHighContrast
                                                 }
@@ -390,13 +391,13 @@ fun CalendarScreen(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF0C101A))
+                                .background(Color(0xFFE2E8F0))
                                 .padding(2.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(if (viewMode == 0) Color(0xFF1E293B) else Color.Transparent)
+                                    .background(if (viewMode == 0) Color.White else Color.Transparent)
                                     .clickable { viewMode = 0 }
                                     .padding(horizontal = 9.dp, vertical = 5.dp)
                             ) {
@@ -410,7 +411,7 @@ fun CalendarScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(if (viewMode == 1) Color(0xFF1E293B) else Color.Transparent)
+                                    .background(if (viewMode == 1) Color.White else Color.Transparent)
                                     .clickable { viewMode = 1 }
                                     .padding(horizontal = 9.dp, vertical = 5.dp)
                             ) {
@@ -440,8 +441,8 @@ fun CalendarScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                                .background(Color(0xFFECFDF5))
+                                .border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(14.dp))
                                 .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -468,8 +469,8 @@ fun CalendarScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                                .background(Color(0xFFFEF2F2))
+                                .border(1.dp, Color(0xFFFECDD3), RoundedCornerShape(14.dp))
                                 .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -496,8 +497,8 @@ fun CalendarScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                                .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(14.dp))
+                                .background(Color(0xFFEFF6FF))
+                                .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(14.dp))
                                 .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {

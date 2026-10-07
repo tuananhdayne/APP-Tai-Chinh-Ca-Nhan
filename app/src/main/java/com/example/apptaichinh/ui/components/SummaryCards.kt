@@ -72,7 +72,7 @@ fun MonthSelector(
                 modifier = Modifier
                     .size(38.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF161E2E))
+                    .background(Color(0xFFF1F5F9))
                     .border(1.dp, SpecularBorderBrush, CircleShape)
                     .clickable { onPrev() },
                 contentAlignment = Alignment.Center
@@ -103,7 +103,7 @@ fun MonthSelector(
                 modifier = Modifier
                     .size(38.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF161E2E))
+                    .background(Color(0xFFF1F5F9))
                     .border(1.dp, SpecularBorderBrush, CircleShape)
                     .clickable { onNext() },
                 contentAlignment = Alignment.Center
@@ -130,8 +130,8 @@ fun BalanceSummaryCard(
     NeumorphicGlassCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = 6.dp,
-        containerColor = CarbonSurfaceGlass.copy(alpha = 0.90f),
+        elevation = 3.dp,
+        containerColor = Color.White,
         contentPadding = PaddingValues(20.dp)
     ) {
         Column {
@@ -174,8 +174,8 @@ fun BalanceSummaryCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .background(Color(0xFFECFDF5))
+                        .border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(16.dp))
                         .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -215,8 +215,8 @@ fun BalanceSummaryCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .background(Color(0xFFFEF2F2))
+                        .border(1.dp, Color(0xFFFECDD3), RoundedCornerShape(16.dp))
                         .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

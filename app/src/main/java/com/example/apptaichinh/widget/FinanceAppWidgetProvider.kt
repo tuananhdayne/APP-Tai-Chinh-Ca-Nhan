@@ -19,7 +19,9 @@ import java.util.Calendar
  * AppWidgetProvider cho Tiện ích Sổ Thu Chi ngoài màn hình chính Android:
  * - Hiển thị Số dư ròng của tháng hiện tại (màu xanh nếu dương, màu đỏ nếu âm).
  * - Hiển thị Tổng Thu (+) và Tổng Chi (-).
- * - Nút [+ Ghi Chép] mở thẳng vào Tab 1 (Nhập nhanh) trong 1 chạm.
+ * - Hiển thị Hạn mức ngân sách còn lại.
+ * - Hiển thị Giao dịch gần nhất vừa phát sinh.
+ * - Nút [+ Ghi Chép] mở thẳng vào Tab 0 (Nhập vào) trong 1 chạm.
  * - Nút [⟳] làm mới số liệu tức thời từ SQLite cục bộ.
  */
 class FinanceAppWidgetProvider : AppWidgetProvider() {
@@ -52,17 +54,35 @@ class FinanceAppWidgetProvider : AppWidgetProvider() {
             }
         }
 
+        /**
+         * Ghim widget ra màn hình chính với 1 chạm (hỗ trợ Android 8.0+)
+         */
+        fun requestPinWidget(context: Context): Boolean {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val appWidgetManager = context.getSystemService(AppWidgetManager::class.java)
+                val myProvider = ComponentName(context, FinanceAppWidgetProvider::class.java)
+                if (appWidgetManager != null && appWidgetManager.isRequestPinAppWidgetSupported) {
+                    return appWidgetManager.requestPinAppWidget(myProvider, null, null)
+                }
+            }
+            return false
+        }
+
         private fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             val views = RemoteViews(context.packageName, R.layout.widget_finance)
 
             val cal = Calendar.getInstance()
             val year = cal.get(Calendar.YEAR)
-            val month = cal.get(Calendar.MONTH) + 1
+            val month0 = cal.get(Calendar.MONTH) // 0-indexed (0..11) cho FinanceDatabaseHelper
+            val monthDisplay = month0 + 1 // 1-indexed (1..12) để hiển thị
 
             val dbHelper = FinanceDatabaseHelper.getInstance(context)
-            val summary = dbHelper.getMonthSummary(year, month)
+            val summary = dbHelper.getMonthSummary(year, month0)
+            val overallBudget = dbHelper.getOverallBudget(year, month0)
+            val recentTxs = dbHelper.getTransactionsByMonth(year, month0)
+            val latestTx = recentTxs.firstOrNull()
 
-            views.setTextViewText(R.id.tv_widget_month, "T$month/$year")
+            views.setTextViewText(R.id.tv_widget_month, "T$monthDisplay/$year")
 
             val balanceSign = if (summary.balance >= 0) "+ " else "- "
             val balanceStr = balanceSign + Formatters.formatVnd(Math.abs(summary.balance))
@@ -74,6 +94,35 @@ class FinanceAppWidgetProvider : AppWidgetProvider() {
 
             views.setTextViewText(R.id.tv_widget_income, "Thu: +" + Formatters.formatVnd(summary.totalIncome))
             views.setTextViewText(R.id.tv_widget_expense, "Chi: -" + Formatters.formatVnd(summary.totalExpense))
+
+            // Hạn mức ngân sách
+            if (overallBudget.totalBudget > 0) {
+                val budgetText = if (overallBudget.isOverBudget) {
+                    "Vượt: " + Formatters.formatVnd(overallBudget.totalExpense - overallBudget.totalBudget)
+                } else {
+                    "Còn: " + Formatters.formatVnd(overallBudget.remaining)
+                }
+                views.setTextViewText(R.id.tv_widget_budget_badge, budgetText)
+                views.setTextColor(
+                    R.id.tv_widget_budget_badge,
+                    if (overallBudget.isOverBudget) Color.parseColor("#EF4444") else Color.parseColor("#38BDF8")
+                )
+            } else {
+                views.setTextViewText(R.id.tv_widget_budget_badge, "Chưa đặt ngân sách")
+                views.setTextColor(R.id.tv_widget_budget_badge, Color.parseColor("#71717A"))
+            }
+
+            // Giao dịch gần nhất
+            if (latestTx != null) {
+                val sign = if (latestTx.type == "INCOME") "+" else "-"
+                val noteStr = if (latestTx.note.isNotBlank()) latestTx.note else latestTx.categoryName
+                views.setTextViewText(
+                    R.id.tv_widget_recent,
+                    "⚡ Gần nhất: ${latestTx.categoryIcon} $noteStr ($sign${Formatters.formatVnd(latestTx.amount)})"
+                )
+            } else {
+                views.setTextViewText(R.id.tv_widget_recent, "⚡ Chưa có giao dịch trong tháng $monthDisplay")
+            }
 
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

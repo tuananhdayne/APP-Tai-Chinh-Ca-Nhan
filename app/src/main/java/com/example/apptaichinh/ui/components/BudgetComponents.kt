@@ -149,8 +149,8 @@ fun OverallBudgetCard(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF1E2638).copy(alpha = 0.85f))
-                        .border(1.dp, SpecularBorderBrush, CircleShape)
+                        .background(Color(0xFFEFF6FF))
+                        .border(1.dp, Color(0xFFBFDBFE), CircleShape)
                         .clickable { onEditBudget() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -181,7 +181,7 @@ fun OverallBudgetCard(
 
                     // 1. Rãnh nền lõm 3D (Recessed Track)
                     drawArc(
-                        color = Color(0xFF0C101A),
+                        color = Color(0xFFE2E8F0),
                         startAngle = 135f,
                         sweepAngle = 270f,
                         useCenter = false,
@@ -192,7 +192,7 @@ fun OverallBudgetCard(
 
                     // Viền phản quang bên trong rãnh
                     drawArc(
-                        color = Color.White.copy(alpha = 0.05f),
+                        color = Color.White.copy(alpha = 0.6f),
                         startAngle = 135f,
                         sweepAngle = 270f,
                         useCenter = false,
@@ -296,8 +296,8 @@ fun OverallBudgetCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .background(Color(0xFFFEF2F2))
+                        .border(1.dp, Color(0xFFFECDD3), RoundedCornerShape(16.dp))
                         .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
                     Column {
@@ -312,7 +312,7 @@ fun OverallBudgetCard(
                             Text(
                                 text = "Đã chi tiêu",
                                 fontSize = 11.5.sp,
-                                color = TextMuted,
+                                color = Color(0xFFB91C1C),
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -327,12 +327,17 @@ fun OverallBudgetCard(
                 }
 
                 // Thẻ Còn Lại
+                val isRemainingPositive = budget.remaining >= 0
+                val remainingBg = if (isRemainingPositive) Color(0xFFECFDF5) else Color(0xFFFEF2F2)
+                val remainingBorder = if (isRemainingPositive) Color(0xFFA7F3D0) else Color(0xFFFECDD3)
+                val remainingTextColor = if (isRemainingPositive) Color(0xFF047857) else Color(0xFFB91C1C)
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .background(remainingBg)
+                        .border(1.dp, remainingBorder, RoundedCornerShape(16.dp))
                         .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
                     Column {
@@ -341,13 +346,13 @@ fun OverallBudgetCard(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (budget.remaining >= 0) NeonEmerald else NeonCoral)
+                                    .background(if (isRemainingPositive) NeonEmerald else NeonCoral)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (budget.remaining >= 0) "Còn lại" else "Vượt mức",
+                                text = if (isRemainingPositive) "Còn lại" else "Vượt mức",
                                 fontSize = 11.5.sp,
-                                color = TextMuted,
+                                color = remainingTextColor,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -356,7 +361,7 @@ fun OverallBudgetCard(
                             text = Formatters.formatVnd(Math.abs(budget.remaining)),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (budget.remaining >= 0) NeonEmerald else NeonCoral
+                            color = if (isRemainingPositive) NeonEmerald else NeonCoral
                         )
                     }
                 }
@@ -489,8 +494,8 @@ fun CategoryBudgetCard(
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFF0C101A))
-                        .border(0.8.dp, Color.White.copy(alpha = 0.04f), RoundedCornerShape(4.dp))
+                        .background(Color(0xFFE2E8F0))
+                        .border(0.8.dp, Color(0xFFCBD5E1), RoundedCornerShape(4.dp))
                 ) {
                     Box(
                         modifier = Modifier

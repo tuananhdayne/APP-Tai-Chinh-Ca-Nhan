@@ -251,9 +251,9 @@ fun AiChatBubble(
                     .background(
                         Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFF1E1B4B), // Deep Midnight Indigo
-                                Color(0xFF312E81), // Indigo 900
-                                Color(0xFF0F172A)  // Slate 900
+                                Color(0xFF2563EB), // Royal Blue
+                                Color(0xFF4F46E5), // Indigo
+                                Color(0xFF7C3AED)  // Purple
                             ),
                             start = Offset(0f, 0f),
                             end = Offset(140f, 140f)
@@ -263,9 +263,9 @@ fun AiChatBubble(
                         width = 1.6.dp,
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = 0.85f),
-                                Color(0xFF38BDF8).copy(alpha = 0.7f),
-                                Color(0xFF818CF8).copy(alpha = 0.5f)
+                                Color.White.copy(alpha = 0.95f),
+                                Color(0xFF93C5FD).copy(alpha = 0.85f),
+                                Color(0xFFA5B4FC).copy(alpha = 0.7f)
                             )
                         ),
                         shape = CircleShape
@@ -303,19 +303,14 @@ fun AiChatBubble(
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(
-                            Color(0xFF1E1B4B).copy(alpha = 0.95f), // Indigo đậm
-                            Color(0xFF0F172A).copy(alpha = 0.98f)
+                            Color(0xFF2563EB),
+                            Color(0xFF4F46E5)
                         )
                     )
                 )
                 .border(
                     width = 1.dp,
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0xFF818CF8).copy(alpha = 0.8f),
-                            Color(0xFF38BDF8).copy(alpha = 0.6f)
-                        )
-                    ),
+                    color = Color.White.copy(alpha = 0.6f),
                     shape = RoundedCornerShape(10.dp)
                 )
                 .padding(horizontal = 7.dp, vertical = 2.5.dp),

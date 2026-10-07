@@ -21,10 +21,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,11 +72,15 @@ fun EditCategoryDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(20.dp),
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF0F172A),
+        textContentColor = Color(0xFF1E293B),
         title = {
             Text(
                 text = if (category == null) "Thêm Danh Mục Mới" else "Chỉnh Sửa Danh Mục",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0F172A)
             )
         },
         text = {
@@ -93,7 +100,13 @@ fun EditCategoryDialog(
                             type = "EXPENSE"
                             if (category == null && selectedIcon == "💵") selectedIcon = "🍜"
                         },
-                        label = { Text("Chi tiêu") }
+                        label = { Text("Chi tiêu", fontWeight = if (type == "EXPENSE") FontWeight.Bold else FontWeight.Medium) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color(0xFFF1F5F9),
+                            labelColor = Color(0xFF334155),
+                            selectedContainerColor = Color(0xFFFEE2E2),
+                            selectedLabelColor = Color(0xFFDC2626)
+                        )
                     )
                     FilterChip(
                         selected = type == "INCOME",
@@ -101,7 +114,13 @@ fun EditCategoryDialog(
                             type = "INCOME"
                             if (category == null && selectedIcon == "🍜") selectedIcon = "💵"
                         },
-                        label = { Text("Thu nhập") }
+                        label = { Text("Thu nhập", fontWeight = if (type == "INCOME") FontWeight.Bold else FontWeight.Medium) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color(0xFFF1F5F9),
+                            labelColor = Color(0xFF334155),
+                            selectedContainerColor = Color(0xFFDCFCE7),
+                            selectedLabelColor = Color(0xFF16A34A)
+                        )
                     )
                 }
 
@@ -111,8 +130,18 @@ fun EditCategoryDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Tên danh mục") },
-                    placeholder = { Text(if (type == "INCOME") "Ví dụ: Lương, Thưởng, Cổ tức..." else "Ví dụ: Ăn uống, Nhà ở, Đi lại...") },
+                    label = { Text("Tên danh mục", color = Color(0xFF475569)) },
+                    placeholder = { Text(if (type == "INCOME") "Ví dụ: Lương, Thưởng, Cổ tức..." else "Ví dụ: Ăn uống, Nhà ở, Đi lại...", color = Color(0xFF94A3B8)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color(0xFFF8FAFC),
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedBorderColor = Color(0xFF2563EB),
+                        unfocusedBorderColor = Color(0xFFCBD5E1),
+                        focusedLabelColor = Color(0xFF2563EB),
+                        unfocusedLabelColor = Color(0xFF475569)
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -167,7 +196,7 @@ fun EditCategoryDialog(
                                 .background(color)
                                 .border(
                                     width = if (isSelected) 3.dp else 0.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                    color = if (isSelected) Color(0xFF0F172A) else Color.Transparent,
                                     shape = CircleShape
                                 )
                                 .clickable { selectedColor = hex }
@@ -181,8 +210,18 @@ fun EditCategoryDialog(
                     OutlinedTextField(
                         value = budgetText,
                         onValueChange = { input -> budgetText = input.filter { it.isDigit() } },
-                        label = { Text("Hạn mức ngân sách tháng (VNĐ)") },
-                        placeholder = { Text("Ví dụ: 2000000 (Để trống nếu không đặt)") },
+                        label = { Text("Hạn mức ngân sách tháng (VNĐ)", color = Color(0xFF475569)) },
+                        placeholder = { Text("Ví dụ: 2000000 (Để trống nếu không đặt)", color = Color(0xFF94A3B8)) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color(0xFFF8FAFC),
+                            focusedTextColor = Color(0xFF0F172A),
+                            unfocusedTextColor = Color(0xFF0F172A),
+                            focusedBorderColor = Color(0xFF2563EB),
+                            unfocusedBorderColor = Color(0xFFCBD5E1),
+                            focusedLabelColor = Color(0xFF2563EB),
+                            unfocusedLabelColor = Color(0xFF475569)
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
@@ -206,14 +245,18 @@ fun EditCategoryDialog(
                         onSave(newCategory)
                     }
                 },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF2563EB),
+                    contentColor = Color.White
+                ),
                 enabled = name.isNotBlank()
             ) {
-                Text("Lưu Danh Mục")
+                Text("Lưu Danh Mục", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
-                Text("Hủy")
+                Text("Hủy", color = Color(0xFF64748B))
             }
         }
     )

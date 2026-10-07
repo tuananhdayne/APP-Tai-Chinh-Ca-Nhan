@@ -101,9 +101,10 @@ fun MainApp(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar(
-                containerColor = CarbonBackground.copy(alpha = 0.96f),
-                tonalElevation = 8.dp,
+                containerColor = Color.White,
+                tonalElevation = 3.dp,
                 modifier = Modifier
+                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp), ambientColor = Color(0xFF64748B).copy(alpha = 0.12f))
                     .border(
                         width = 1.dp,
                         brush = SpecularBorderBrush,
@@ -116,7 +117,7 @@ fun MainApp(
                     selectedTextColor = NeonAzure,
                     unselectedIconColor = TextMuted,
                     unselectedTextColor = TextMuted,
-                    indicatorColor = NeonAzure.copy(alpha = 0.16f)
+                    indicatorColor = NeonAzure.copy(alpha = 0.12f)
                 )
 
                 NavigationBarItem(
@@ -162,10 +163,10 @@ fun MainApp(
                     modifier = Modifier
                         .size(56.dp)
                         .shadow(
-                            elevation = 10.dp,
+                            elevation = 8.dp,
                             shape = CircleShape,
-                            ambientColor = NeonAzure.copy(alpha = 0.6f),
-                            spotColor = NeonIndigo
+                            ambientColor = NeonAzure.copy(alpha = 0.35f),
+                            spotColor = NeonIndigo.copy(alpha = 0.3f)
                         )
                         .clip(CircleShape)
                         .background(
@@ -176,7 +177,7 @@ fun MainApp(
                                 )
                             )
                         )
-                        .border(1.2.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                        .border(1.2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
                         .clickable {
                             editingTx = null
                             showAddTxSheet = true

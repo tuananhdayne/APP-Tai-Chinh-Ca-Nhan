@@ -1,5 +1,6 @@
 package com.example.apptaichinh.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,16 +27,19 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -58,6 +62,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.Category
 import com.example.apptaichinh.data.model.Transaction
+import com.example.apptaichinh.theme.NeonCoral
+import com.example.apptaichinh.theme.NeonEmerald
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 import com.example.apptaichinh.ui.viewmodel.ParsedTransaction
 
@@ -74,8 +80,8 @@ fun AddTransactionSheet(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // 0 = Nhập thủ công, 1 = Nhập nhanh thông minh (Smart NLP)
-    var selectedMode by remember { mutableStateOf(if (editingTransaction != null) 0 else 1) }
+    // 0 = Nhập nhanh thông minh (Smart NLP), 1 = Nhập chi tiết thủ công
+    var selectedMode by remember { mutableStateOf(if (editingTransaction != null) 1 else 0) }
 
     // State thủ công
     var txType by remember { mutableStateOf(editingTransaction?.type ?: "EXPENSE") }
@@ -98,7 +104,9 @@ fun AddTransactionSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = Color(0xFFF8FAFC),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFFCBD5E1)) }
     ) {
         Column(
             modifier = Modifier
@@ -116,8 +124,8 @@ fun AddTransactionSheet(
                 Text(
                     text = if (editingTransaction == null) "Thêm Giao Dịch Mới" else "Chỉnh Sửa Giao Dịch",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF0F172A)
                 )
             }
 
@@ -127,38 +135,48 @@ fun AddTransactionSheet(
             if (editingTransaction == null) {
                 TabRow(
                     selectedTabIndex = selectedMode,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    containerColor = Color(0xFFE2E8F0),
+                    contentColor = Color(0xFF2563EB),
+                    divider = {},
                     modifier = Modifier.clip(RoundedCornerShape(12.dp))
                 ) {
-                    Tab(
-                        selected = selectedMode == 1,
-                        onClick = { selectedMode = 1 },
-                        text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = if (selectedMode == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Nhập Nhanh")
-                            }
-                        }
-                    )
                     Tab(
                         selected = selectedMode == 0,
                         onClick = { selectedMode = 0 },
                         text = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (selectedMode == 0) Color(0xFF2563EB) else Color(0xFF64748B)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Nhập Nhanh",
+                                    fontWeight = if (selectedMode == 0) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (selectedMode == 0) Color(0xFF1D4ED8) else Color(0xFF64748B)
+                                )
+                            }
+                        }
+                    )
+                    Tab(
+                        selected = selectedMode == 1,
+                        onClick = { selectedMode = 1 },
+                        text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
-                                    tint = if (selectedMode == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                    tint = if (selectedMode == 1) Color(0xFF2563EB) else Color(0xFF64748B)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Nhập Chi Tiết")
+                                Text(
+                                    text = "Nhập Chi Tiết",
+                                    fontWeight = if (selectedMode == 1) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (selectedMode == 1) Color(0xFF1D4ED8) else Color(0xFF64748B)
+                                )
                             }
                         }
                     )
@@ -167,12 +185,13 @@ fun AddTransactionSheet(
                 Spacer(modifier = Modifier.height(18.dp))
             }
 
-            if (selectedMode == 1 && editingTransaction == null) {
+            if (selectedMode == 0 && editingTransaction == null) {
                 // GIAO DIỆN NHẬP NHANH THÔNG MINH (SMART NLP)
                 Text(
                     text = "Gõ câu chi tiêu bằng tiếng Việt tự nhiên:",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF334155)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -184,7 +203,15 @@ fun AddTransactionSheet(
                         parsedTx = viewModel.parseQuickText(it)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Ví dụ: Ăn trưa 45k, Đổ xăng 80k, Tiền thưởng 2tr...") },
+                    placeholder = { Text("Ví dụ: Ăn trưa 45k, Đổ xăng 80k, Tiền thưởng 2tr...", color = Color(0xFF94A3B8)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedBorderColor = Color(0xFF2563EB),
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    ),
                     singleLine = false,
                     maxLines = 3,
                     shape = RoundedCornerShape(16.dp)
@@ -201,7 +228,13 @@ fun AddTransactionSheet(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f))
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isIncome) Color(0xFFF0FDF4) else Color(0xFFFEF2F2)
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isIncome) Color(0xFF86EFAC) else Color(0xFFFECDD3)
+                        )
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
@@ -213,42 +246,57 @@ fun AddTransactionSheet(
                                     text = if (isIncome) "THU NHẬP (+)" else "CHI TIÊU (-)",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isIncome) Color(0xFF10B981) else Color(0xFFEF4444)
+                                    color = if (isIncome) Color(0xFF16A34A) else Color(0xFFDC2626)
                                 )
 
                                 Text(
                                     text = Formatters.formatVnd(parsed.amount),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = if (isIncome) Color(0xFF10B981) else Color(0xFFEF4444)
+                                    color = if (isIncome) Color(0xFF16A34A) else Color(0xFFDC2626)
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "Danh mục: ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                Text(
+                                    text = "Danh mục: ", 
+                                    style = MaterialTheme.typography.bodySmall, 
+                                    color = Color(0xFF64748B)
+                                )
                                 Text(
                                     text = "${cat?.icon ?: "📦"} ${parsed.categoryName}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF0F172A)
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "Ghi chú: ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                Text(
+                                    text = "Ghi chú: ", 
+                                    style = MaterialTheme.typography.bodySmall, 
+                                    color = Color(0xFF64748B)
+                                )
                                 Text(
                                     text = parsed.note,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = Color(0xFF0F172A)
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            Button(
+                            TactileGradientButton(
+                                text = "Xác Nhận & Lưu Vào Sổ",
+                                icon = Icons.Default.Check,
+                                gradientColors = if (isIncome) listOf(Color(0xFF10B981), Color(0xFF059669)) else listOf(Color(0xFFFF3366), Color(0xFFE11D48)),
+                                glowColor = if (isIncome) NeonEmerald else NeonCoral,
+                                modifier = Modifier.fillMaxWidth(),
+                                height = 48.dp,
                                 onClick = {
                                     focusManager.clearFocus()
                                     keyboardController?.hide()
@@ -261,21 +309,15 @@ fun AddTransactionSheet(
                                         dateEpoch = System.currentTimeMillis()
                                     )
                                     onSave(newTx)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(imageVector = Icons.Default.Check, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Xác Nhận & Lưu Vào Sổ")
-                            }
+                                }
+                            )
                         }
                     }
                 } else if (smartInputText.isNotBlank()) {
                     Text(
                         text = "💡 Hãy kèm số tiền (VD: 45k, 70 nghìn, 2tr, 1500000) để tự động trích xuất",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+                        color = Color(0xFF64748B)
                     )
                 }
 
@@ -286,39 +328,33 @@ fun AddTransactionSheet(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(
+                    TactileTypeTab(
+                        title = "Chi Tiêu (-)",
+                        isSelected = txType == "EXPENSE",
+                        activeGradient = listOf(Color(0xFFFF3366), Color(0xFFE11D48), Color(0xFFBE123C)),
+                        glowColor = NeonCoral,
                         onClick = {
                             txType = "EXPENSE"
                             selectedCategory = categories.filter { it.type == "EXPENSE" }.firstOrNull()
                             focusManager.clearFocus()
                             keyboardController?.hide()
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (txType == "EXPENSE") Color(0xFFEF4444) else MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = if (txType == "EXPENSE") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Chi Tiêu (-)", fontWeight = FontWeight.Bold)
-                    }
+                        modifier = Modifier.weight(1f)
+                    )
 
-                    Button(
+                    TactileTypeTab(
+                        title = "Thu Nhập (+)",
+                        isSelected = txType == "INCOME",
+                        activeGradient = listOf(Color(0xFF10B981), Color(0xFF059669), Color(0xFF047857)),
+                        glowColor = NeonEmerald,
                         onClick = {
                             txType = "INCOME"
                             selectedCategory = categories.filter { it.type == "INCOME" }.firstOrNull()
                             focusManager.clearFocus()
                             keyboardController?.hide()
                         },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (txType == "INCOME") Color(0xFF10B981) else MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = if (txType == "INCOME") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Thu Nhập (+)", fontWeight = FontWeight.Bold)
-                    }
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -327,8 +363,18 @@ fun AddTransactionSheet(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { input -> amountText = input.filter { it.isDigit() } },
-                    label = { Text("Số tiền (VNĐ)") },
-                    placeholder = { Text("Ví dụ: 50000") },
+                    label = { Text("Số tiền (VNĐ)", color = Color(0xFF475569)) },
+                    placeholder = { Text("Ví dụ: 50000", color = Color(0xFF94A3B8)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedBorderColor = Color(0xFF2563EB),
+                        unfocusedBorderColor = Color(0xFFCBD5E1),
+                        focusedLabelColor = Color(0xFF2563EB),
+                        unfocusedLabelColor = Color(0xFF475569)
+                    ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
@@ -351,7 +397,7 @@ fun AddTransactionSheet(
                         text = "Số tiền: ${Formatters.formatVnd(amtVal)}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (txType == "EXPENSE") Color(0xFFEF4444) else Color(0xFF10B981)
+                        color = if (txType == "EXPENSE") Color(0xFFDC2626) else Color(0xFF16A34A)
                     )
                 }
 
@@ -361,7 +407,8 @@ fun AddTransactionSheet(
                 Text(
                     text = "Chọn danh mục:",
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -380,7 +427,25 @@ fun AddTransactionSheet(
                                 focusManager.clearFocus()
                                 keyboardController?.hide()
                             },
-                            label = { Text("${cat.icon} ${cat.name}") }
+                            label = { 
+                                Text(
+                                    text = "${cat.icon} ${cat.name}",
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                ) 
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = Color.White,
+                                labelColor = Color(0xFF1E293B),
+                                selectedContainerColor = Color(0xFFDBEAFE),
+                                selectedLabelColor = Color(0xFF1D4ED8)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = Color(0xFFCBD5E1),
+                                selectedBorderColor = Color(0xFF3B82F6),
+                                borderWidth = if (isSelected) 1.5.dp else 1.dp
+                            )
                         )
                     }
 
@@ -396,10 +461,20 @@ fun AddTransactionSheet(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
+                                tint = Color(0xFF2563EB)
                             )
                         },
-                        label = { Text("Thêm mới", fontWeight = FontWeight.Medium) }
+                        label = { Text("Thêm mới", fontWeight = FontWeight.SemiBold, color = Color(0xFF2563EB)) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color(0xFFF1F5F9)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = false,
+                            borderColor = Color(0xFF93C5FD),
+                            borderWidth = 1.dp
+                        )
                     )
                 }
 
@@ -409,8 +484,18 @@ fun AddTransactionSheet(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("Ghi chú (tùy chọn)") },
-                    placeholder = { Text("Ví dụ: Ăn trưa cùng bạn, Đổ xăng...") },
+                    label = { Text("Ghi chú (tùy chọn)", color = Color(0xFF475569)) },
+                    placeholder = { Text("Ví dụ: Ăn trưa cùng bạn, Đổ xăng...", color = Color(0xFF94A3B8)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF0F172A),
+                        focusedBorderColor = Color(0xFF2563EB),
+                        unfocusedBorderColor = Color(0xFFCBD5E1),
+                        focusedLabelColor = Color(0xFF2563EB),
+                        unfocusedLabelColor = Color(0xFF475569)
+                    ),
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done
                     ),
@@ -428,7 +513,22 @@ fun AddTransactionSheet(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Nút Lưu
-                Button(
+                val canSaveManual = (amountText.toLongOrNull() ?: 0L) > 0 && selectedCategory != null
+                val manualGradient = if (txType == "EXPENSE") {
+                    listOf(Color(0xFFFF3366), Color(0xFFE11D48), Color(0xFFBE123C))
+                } else {
+                    listOf(Color(0xFF10B981), Color(0xFF059669), Color(0xFF047857))
+                }
+                val manualGlow = if (txType == "EXPENSE") NeonCoral else NeonEmerald
+
+                TactileGradientButton(
+                    text = if (editingTransaction == null) "Lưu Giao Dịch" else "Cập Nhật Giao Dịch",
+                    icon = Icons.Default.Check,
+                    gradientColors = manualGradient,
+                    glowColor = manualGlow,
+                    enabled = canSaveManual,
+                    modifier = Modifier.fillMaxWidth(),
+                    height = 52.dp,
                     onClick = {
                         focusManager.clearFocus()
                         keyboardController?.hide()
@@ -445,17 +545,8 @@ fun AddTransactionSheet(
                             )
                             onSave(newTx)
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    enabled = (amountText.toLongOrNull() ?: 0L) > 0 && selectedCategory != null
-                ) {
-                    Text(
-                        text = if (editingTransaction == null) "Lưu Giao Dịch" else "Cập Nhật Giao Dịch",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    }
+                )
             }
         }
     }

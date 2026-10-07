@@ -4,97 +4,116 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_widget_card"
-    android:padding="14dp">
+    android:padding="12dp">
 
-    <!-- Top Row: App Title + Month Tag + Refresh Button -->
-    <LinearLayout
+    <!-- Top Header: Title + Month + Budget Badge on Left, Refresh Button on Right -->
+    <RelativeLayout
         android:id="@+id/widget_header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/tv_app_title"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="💰 Sổ Thu Chi"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/btn_widget_refresh"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tv_widget_month"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/bg_widget_badge"
-            android:paddingStart="7dp"
-            android:paddingTop="2dp"
-            android:paddingEnd="7dp"
-            android:paddingBottom="2dp"
-            android:text="T10/2026"
-            android:textColor="#A1A1AA"
-            android:textSize="11sp" />
+            <TextView
+                android:id="@+id/tv_app_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💰 Sổ Thu Chi"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
+            <TextView
+                android:id="@+id/tv_widget_month"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_widget_badge"
+                android:paddingStart="6dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="2dp"
+                android:text="T10/2026"
+                android:textColor="#A1A1AA"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tv_widget_budget_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_widget_badge"
+                android:paddingStart="6dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="6dp"
+                android:paddingBottom="2dp"
+                android:text="Hạn mức"
+                android:textColor="#38BDF8"
+                android:textSize="11sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/btn_widget_refresh"
             android:layout_width="26dp"
             android:layout_height="26dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
             android:background="@drawable/bg_widget_refresh"
             android:gravity="center"
             android:text="⟳"
             android:textColor="#A1A1AA"
             android:textSize="14sp"
             android:textStyle="bold" />
-    </LinearLayout>
+    </RelativeLayout>
 
-    <!-- Center Section: Balance -->
+    <!-- Center Section: Balance on Left, Thu/Chi on Right -->
     <LinearLayout
-        android:id="@+id/widget_balance_section"
+        android:id="@+id/widget_stats_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/widget_header"
         android:layout_marginTop="8dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Số dư ròng tháng này"
-            android:textColor="#71717A"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/tv_widget_balance"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:text="+ 0 ₫"
-            android:textColor="#10B981"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </LinearLayout>
-
-    <!-- Bottom Row: Income / Expense + Quick Action Button -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/widget_balance_section"
-        android:layout_marginTop="10dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <!-- Income & Expense Sub-stats -->
+        <!-- Balance Column -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="1.1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Số dư ròng tháng"
+                android:textColor="#94A3B8"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/tv_widget_balance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:text="+ 0 ₫"
+                android:textColor="#10B981"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Income / Expense Column -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.9"
+            android:gravity="end"
             android:orientation="vertical">
 
             <TextView
@@ -103,7 +122,7 @@
                 android:layout_height="wrap_content"
                 android:text="Thu: +0 ₫"
                 android:textColor="#34D399"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -113,20 +132,46 @@
                 android:layout_marginTop="2dp"
                 android:text="Chi: -0 ₫"
                 android:textColor="#F87171"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
+    </LinearLayout>
 
-        <!-- Quick Add Button -->
+    <!-- Bottom Row: Recent Transaction + Quick Add Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/widget_stats_row"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_widget_recent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_widget_recent"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingStart="8dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="5dp"
+            android:text="⚡ Gần nhất: Chưa có giao dịch"
+            android:textColor="#CBD5E1"
+            android:textSize="11sp" />
+
         <TextView
             android:id="@+id/btn_widget_quick_add"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:background="@drawable/bg_widget_btn_add"
-            android:paddingStart="14dp"
-            android:paddingTop="7dp"
-            android:paddingEnd="14dp"
-            android:paddingBottom="7dp"
+            android:paddingStart="12dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="6dp"
             android:text="+ Ghi Chép"
             android:textColor="#FFFFFF"
             android:textSize="12sp"

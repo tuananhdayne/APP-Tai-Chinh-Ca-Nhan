@@ -28,6 +28,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Widgets
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.example.apptaichinh.widget.FinanceAppWidgetProvider
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -120,6 +124,24 @@ fun MoreScreen(
                     title = "Quản Lý Danh Mục",
                     subtitle = "${categories.size} nhóm thu chi (Thêm, sửa, đổi icon, màu sắc)",
                     onClick = onOpenCategories
+                )
+
+                // Mục Tiện ích Widget màn hình chính
+                val context = LocalContext.current
+                MoreFeatureItem(
+                    icon = Icons.Default.Widgets,
+                    iconTint = Color(0xFF10B981),
+                    iconBg = Color(0xFF10B981).copy(alpha = 0.12f),
+                    title = "Tiện Ích Widget Màn Hình Chính",
+                    subtitle = "Ghim widget số dư & ghi chép nhanh ra màn hình ngoài",
+                    onClick = {
+                        val pinned = FinanceAppWidgetProvider.requestPinWidget(context)
+                        if (pinned) {
+                            Toast.makeText(context, "Đã gửi yêu cầu thêm Widget ra màn hình chính!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Giữ tay vào màn hình chính -> chọn Widget -> Sổ Thu Chi Cá Nhân", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 )
 
                 // Mục Trợ lý AI thế hệ mới với biểu tượng phát sáng

@@ -138,9 +138,9 @@ fun DonutChart(
                         val arcSize = size.width - strokeWidth
                         val topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
 
-                        // 1. Rãnh nền tối lõm phía dưới (Recessed Base Ring)
+                        // 1. Rãnh nền sáng lõm phía dưới (Recessed Base Ring)
                         drawArc(
-                            color = Color(0xFF0C101A),
+                            color = Color(0xFFE2E8F0),
                             startAngle = 0f,
                             sweepAngle = 360f,
                             useCenter = false,
@@ -197,8 +197,8 @@ fun DonutChart(
                             .background(
                                 Brush.radialGradient(
                                     colors = listOf(
-                                        Color(0xFF1C2538),
-                                        Color(0xFF0D121D)
+                                        Color.White,
+                                        Color(0xFFF1F5F9)
                                     )
                                 )
                             )
@@ -240,8 +240,8 @@ fun DonutChart(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFF0F1522).copy(alpha = 0.7f))
-                                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                .background(Color(0xFFF8FAFC))
+                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(14.dp))
                                 .padding(horizontal = 12.dp, vertical = 9.dp)
                         ) {
                             Row(
@@ -280,7 +280,7 @@ fun DonutChart(
                                                 .width(80.dp)
                                                 .height(4.dp)
                                                 .clip(RoundedCornerShape(2.dp))
-                                                .background(Color(0xFF1E2638))
+                                                .background(Color(0xFFE2E8F0))
                                         ) {
                                             Box(
                                                 modifier = Modifier
@@ -378,8 +378,8 @@ fun IncomeVsExpenseComparison(
                     .fillMaxWidth()
                     .height(28.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF0C101A))
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+                    .background(Color(0xFFF1F5F9))
+                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(14.dp))
                     .padding(3.dp)
             ) {
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -451,8 +451,8 @@ fun IncomeVsExpenseComparison(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
+                        .background(Color(0xFFECFDF5))
+                        .border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(18.dp))
                         .padding(14.dp)
                 ) {
                     Column {
@@ -468,7 +468,8 @@ fun IncomeVsExpenseComparison(
                             Text(
                                 text = "Tổng thu nhập",
                                 fontSize = 12.sp,
-                                color = TextMuted
+                                color = Color(0xFF047857),
+                                fontWeight = FontWeight.Medium
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
@@ -486,8 +487,8 @@ fun IncomeVsExpenseComparison(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF0F1522).copy(alpha = 0.9f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(18.dp))
+                        .background(Color(0xFFFEF2F2))
+                        .border(1.dp, Color(0xFFFECDD3), RoundedCornerShape(18.dp))
                         .padding(14.dp)
                 ) {
                     Column {
@@ -503,7 +504,8 @@ fun IncomeVsExpenseComparison(
                             Text(
                                 text = "Tổng chi tiêu",
                                 fontSize = 12.sp,
-                                color = TextMuted
+                                color = Color(0xFFB91C1C),
+                                fontWeight = FontWeight.Medium
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
