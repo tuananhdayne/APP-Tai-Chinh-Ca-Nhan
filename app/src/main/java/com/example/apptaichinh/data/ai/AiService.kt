@@ -1,5 +1,6 @@
 package com.example.apptaichinh.data.ai
 
+import com.example.apptaichinh.data.ai.guardrails.JevGuardrailService
 import com.example.apptaichinh.data.ai.prompts.AgentPrompts
 import com.example.apptaichinh.data.ai.tools.LocalToolExecutor
 import com.example.apptaichinh.data.ai.tools.ToolDefinitions
@@ -33,7 +34,10 @@ sealed class AiResponse {
  * - Bước 3: Đề xuất Action Tools (kèm Preview Card an toàn cho người dùng duyệt).
  * - Bước 4: Tổng hợp câu trả lời hoàn chỉnh cuối cùng (Final Synthesis).
  */
-class AiService(private val dbHelper: FinanceDatabaseHelper) {
+class AiService(
+    private val dbHelper: FinanceDatabaseHelper,
+    private val jevGuardrailService: JevGuardrailService = JevGuardrailService()
+) {
 
     private val localToolExecutor = LocalToolExecutor(dbHelper)
 
@@ -78,6 +82,12 @@ class AiService(private val dbHelper: FinanceDatabaseHelper) {
         }
     }
 
+    suspend fun pingJevGuardrail(
+        endpointUrl: String = JevGuardrailService.DEFAULT_ENDPOINT,
+        apiKey: String,
+        model: String = JevGuardrailService.DEFAULT_MODEL
+    ): Result<String> = jevGuardrailService.pingJev(endpointUrl, apiKey, model)
+
     /**
      * Vòng lặp điều phối Đa Tác Tử (Multi-turn ReAct Loop).
      * Cho phép LLM tự động suy luận qua nhiều bước tra cứu dữ liệu trước khi kết luận.
@@ -91,6 +101,21 @@ class AiService(private val dbHelper: FinanceDatabaseHelper) {
         apiKey: String = ""
     ): AiResponse = withContext(Dispatchers.IO) {
         try {
+            // --- BƯỚC 0: JEV INPUT GUARDRAIL BẮT BUỘC (TypeSafe AI SystemOne) ---
+            // Luôn kích hoạt bảo vệ để chống lạm dụng token, người dùng không thể tắt
+            val jevKey = FinanceDatabaseHelper.DEFAULT_JEV_API_KEY
+            if (jevKey.isNotBlank()) {
+                val guardrailDecision = jevGuardrailService.checkInputGuardrail(
+                    userMessage = userMessage,
+                    endpointUrl = FinanceDatabaseHelper.DEFAULT_JEV_ENDPOINT_URL,
+                    apiKey = jevKey,
+                    model = FinanceDatabaseHelper.DEFAULT_JEV_MODEL
+                )
+                if (guardrailDecision.isOffTopic) {
+                    return@withContext AiResponse.TextReply(guardrailDecision.cannedResponse)
+                }
+            }
+
             val rawUrl = serverUrl.trim().trimEnd('/')
             if (rawUrl.isBlank()) {
                 return@withContext AiResponse.Error("Vui lòng cài đặt URL ngrok hoặc Server IP trước khi sử dụng.")
@@ -99,12 +124,13 @@ class AiService(private val dbHelper: FinanceDatabaseHelper) {
             val cleanBase = if (rawUrl.endsWith("/v1")) rawUrl.substringBeforeLast("/v1") else rawUrl
             val endpoint = "$cleanBase/v1/chat/completions"
 
-            // Mapping alias linh hoạt: tự động chuyển các cách gọi tên model sang mã định danh chuẩn
+            // Mapping alias linh hoạt: tự động chuyển các cách gọi tên model sang mã định danh chuẩn đang hoạt động
             val actualModel = when (modelName.trim().lowercase()) {
-                "gemini3.7flash", "gemini-3.7-flash", "gemini37flash", "gemini 3.7 flash", "gemini 3.7" -> "ag/gemini-3.7-flash-high"
-                "gemini3.8flash", "gemini-3.8-flash", "gemini 3.8 flash" -> "ag/gemini-3.8-flash-high"
-                "qwen2.5-3b-instruct", "qwen" -> "ag/gemini-3.7-flash-high"
-                "" -> "ag/gemini-3.7-flash-high"
+                "gemini3.7flash", "gemini-3.7-flash", "gemini37flash", "gemini 3.7 flash", "gemini 3.7",
+                "ag/gemini-3.7-flash-high", "ag/gemini-3.7-flash", "ag/gemini-3.7-flash-medium" -> "ag/gemini-3.8-flash"
+                "gemini3.8flash", "gemini-3.8-flash", "gemini38flash", "gemini 3.8 flash", "gemini 3.8" -> "ag/gemini-3.8-flash"
+                "qwen2.5-3b-instruct", "qwen" -> "ag/gemini-3.8-flash"
+                "" -> "ag/gemini-3.8-flash"
                 else -> modelName.trim()
             }
 

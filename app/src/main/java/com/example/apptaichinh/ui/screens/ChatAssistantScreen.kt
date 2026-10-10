@@ -24,6 +24,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Switch
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -218,9 +222,9 @@ fun ChatAssistantScreen(
                                 )
                             }
                             val displayModel = when {
-                                modelName.contains("gemini", ignoreCase = true) -> "Gemini 3.7 Flash • Function Calling"
+                                modelName.contains("gemini", ignoreCase = true) -> "Gemini 3.8 Flash • Function Calling"
                                 modelName.isNotBlank() -> "$modelName • Tool Calling"
-                                else -> "Gemini 3.7 Flash • Function Calling"
+                                else -> "Gemini 3.8 Flash • Function Calling"
                             }
                             Text(
                                 text = if (serverUrl.isBlank()) "Chưa cấu hình URL" else displayModel,
@@ -412,7 +416,7 @@ fun ChatAssistantScreen(
         )
     }
 
-    // Dialog Cài đặt Server AI (Cloudflare Tunnel URL)
+    // Dialog Cài đặt Server AI
     if (showSettingsDialog) {
         AiServerConfigDialog(
             currentUrl = serverUrl,
@@ -1770,7 +1774,7 @@ fun AiWelcomeHero(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Sức mạnh từ Gemini 3.7 Flash & Function Calling.\nNói hoặc gõ bằng tiếng Việt tự nhiên để thao tác siêu tốc.",
+            text = "Sức mạnh từ Gemini 3.8 Flash & Function Calling.\nNói hoặc gõ bằng tiếng Việt tự nhiên để thao tác siêu tốc.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.outline,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -1872,7 +1876,7 @@ fun AiThinkingBubble() {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Gemini 3.7 Flash đang phân tích câu nói...",
+                    text = "Gemini 3.8 Flash đang phân tích câu nói...",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline,
                     fontWeight = FontWeight.Medium

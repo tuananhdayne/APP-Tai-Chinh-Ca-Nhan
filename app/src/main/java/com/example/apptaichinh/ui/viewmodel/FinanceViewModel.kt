@@ -51,9 +51,19 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     val aiModelName: StateFlow<String> = repository.aiModelName
     val aiApiKey: StateFlow<String> = repository.aiApiKey
 
+    val useJevGuardrail: StateFlow<Boolean> = repository.useJevGuardrail
+    val jevApiKey: StateFlow<String> = repository.jevApiKey
+    val jevModel: StateFlow<String> = repository.jevModel
+    val jevEndpointUrl: StateFlow<String> = repository.jevEndpointUrl
+
     fun setAiServerUrl(url: String) = repository.setAiServerUrl(url)
     fun setAiModelName(model: String) = repository.setAiModelName(model)
     fun setAiApiKey(key: String) = repository.setAiApiKey(key)
+
+    fun setUseJevGuardrail(enabled: Boolean) = repository.setUseJevGuardrail(enabled)
+    fun setJevApiKey(key: String) = repository.setJevApiKey(key)
+    fun setJevModel(model: String) = repository.setJevModel(model)
+    fun setJevEndpointUrl(url: String) = repository.setJevEndpointUrl(url)
 
     // Chat Assistant Messages & Loading State
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(
@@ -75,6 +85,14 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
             val res = repository.aiService.pingServer(url, key)
             res.onSuccess { onResult(true, it) }
                 .onFailure { onResult(false, it.localizedMessage ?: "Lỗi kết nối") }
+        }
+    }
+
+    fun pingJevServer(endpointUrl: String, apiKey: String, model: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val res = repository.aiService.pingJevGuardrail(endpointUrl, apiKey, model)
+            res.onSuccess { onResult(true, it) }
+                .onFailure { onResult(false, it.localizedMessage ?: "Lỗi kết nối tới Jev") }
         }
     }
 

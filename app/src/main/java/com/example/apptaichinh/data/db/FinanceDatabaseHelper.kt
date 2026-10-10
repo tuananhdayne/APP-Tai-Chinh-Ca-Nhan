@@ -48,8 +48,18 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         const val SETTING_AI_MODEL = "ai_model_name"
         const val SETTING_AI_API_KEY = "ai_api_key"
         const val DEFAULT_AI_SERVER_URL = "https://chas-unshaped-jacalyn.ngrok-free.dev"
-        const val DEFAULT_AI_MODEL = "ag/gemini-3.7-flash-high"
+        const val DEFAULT_AI_MODEL = "ag/gemini-3.8-flash"
         const val DEFAULT_AI_API_KEY = "sk-22448938a29fd142-2n6cp2-d7842622"
+
+        // JEV Guardrail Settings (TypeSafe AI SystemOne)
+        const val SETTING_USE_JEV_GUARDRAIL = "use_jev_guardrail"
+        const val SETTING_JEV_API_KEY = "jev_api_key"
+        const val SETTING_JEV_MODEL = "jev_model"
+        const val SETTING_JEV_ENDPOINT_URL = "jev_endpoint_url"
+        const val DEFAULT_USE_JEV_GUARDRAIL = true
+        const val DEFAULT_JEV_API_KEY = "apikey_21677079ef842d934df99c5d5fe9455162dd_37d552fddae0819124ef94754f9a68f0a7dd718272ebfe54a404c7c65217d766"
+        const val DEFAULT_JEV_MODEL = "jev-latest"
+        const val DEFAULT_JEV_ENDPOINT_URL = "https://api.typesafe.ai/v1/systemone"
 
         @Volatile
         private var instance: FinanceDatabaseHelper? = null
@@ -513,6 +523,90 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
         val cv = ContentValues().apply {
             put(COL_SETTING_KEY, SETTING_AI_API_KEY)
             put(COL_SETTING_VAL, key.trim())
+        }
+        db.insertWithOnConflict(TABLE_SETTINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun getUseJevGuardrail(): Boolean {
+        val db = readableDatabase
+        val cursor = db.query(TABLE_SETTINGS, arrayOf(COL_SETTING_VAL), "$COL_SETTING_KEY = ?", arrayOf(SETTING_USE_JEV_GUARDRAIL), null, null, null)
+        cursor.use {
+            if (it.moveToFirst()) {
+                val value = it.getString(0)
+                if (value.isNotBlank()) return value.toBooleanStrictOrNull() ?: DEFAULT_USE_JEV_GUARDRAIL
+            }
+        }
+        return DEFAULT_USE_JEV_GUARDRAIL
+    }
+
+    fun setUseJevGuardrail(enabled: Boolean) {
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_SETTING_KEY, SETTING_USE_JEV_GUARDRAIL)
+            put(COL_SETTING_VAL, enabled.toString())
+        }
+        db.insertWithOnConflict(TABLE_SETTINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun getJevApiKey(): String {
+        val db = readableDatabase
+        val cursor = db.query(TABLE_SETTINGS, arrayOf(COL_SETTING_VAL), "$COL_SETTING_KEY = ?", arrayOf(SETTING_JEV_API_KEY), null, null, null)
+        cursor.use {
+            if (it.moveToFirst()) {
+                val key = it.getString(0)
+                if (key.isNotBlank()) return key
+            }
+        }
+        return DEFAULT_JEV_API_KEY
+    }
+
+    fun setJevApiKey(key: String) {
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_SETTING_KEY, SETTING_JEV_API_KEY)
+            put(COL_SETTING_VAL, key.trim())
+        }
+        db.insertWithOnConflict(TABLE_SETTINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun getJevModel(): String {
+        val db = readableDatabase
+        val cursor = db.query(TABLE_SETTINGS, arrayOf(COL_SETTING_VAL), "$COL_SETTING_KEY = ?", arrayOf(SETTING_JEV_MODEL), null, null, null)
+        cursor.use {
+            if (it.moveToFirst()) {
+                val model = it.getString(0)
+                if (model.isNotBlank()) return model
+            }
+        }
+        return DEFAULT_JEV_MODEL
+    }
+
+    fun setJevModel(model: String) {
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_SETTING_KEY, SETTING_JEV_MODEL)
+            put(COL_SETTING_VAL, model.trim())
+        }
+        db.insertWithOnConflict(TABLE_SETTINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun getJevEndpointUrl(): String {
+        val db = readableDatabase
+        val cursor = db.query(TABLE_SETTINGS, arrayOf(COL_SETTING_VAL), "$COL_SETTING_KEY = ?", arrayOf(SETTING_JEV_ENDPOINT_URL), null, null, null)
+        cursor.use {
+            if (it.moveToFirst()) {
+                val url = it.getString(0)
+                if (url.isNotBlank()) return url
+            }
+        }
+        return DEFAULT_JEV_ENDPOINT_URL
+    }
+
+    fun setJevEndpointUrl(url: String) {
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_SETTING_KEY, SETTING_JEV_ENDPOINT_URL)
+            put(COL_SETTING_VAL, url.trim())
         }
         db.insertWithOnConflict(TABLE_SETTINGS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
     }

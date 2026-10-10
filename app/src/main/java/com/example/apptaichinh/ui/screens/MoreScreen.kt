@@ -41,6 +41,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -191,7 +193,7 @@ fun MoreScreen(
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = "Gemini 3.7",
+                                            text = "Gemini 3.8",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF6366F1)
@@ -317,6 +319,8 @@ fun MoreScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                     }
 
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     if (saveSuccess) {
                         Text(
                             text = "✓ Đã lưu cấu hình AI thành công!",
@@ -348,7 +352,7 @@ fun MoreScreen(
                                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                                 Spacer(modifier = Modifier.width(6.dp))
                             }
-                            Text(if (isPinging) "Đang kiểm tra..." else "Kiểm Tra Kết Nối", fontSize = 12.sp)
+                            Text(if (isPinging) "Đang kiểm tra..." else "Kiểm Tra LLM", fontSize = 12.sp)
                         }
 
                         Button(

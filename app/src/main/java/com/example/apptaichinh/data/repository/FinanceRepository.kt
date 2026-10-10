@@ -65,6 +65,18 @@ class FinanceRepository private constructor(context: Context) {
     private val _aiApiKey = MutableStateFlow(dbHelper.getAiApiKey())
     val aiApiKey: StateFlow<String> = _aiApiKey.asStateFlow()
 
+    private val _useJevGuardrail = MutableStateFlow(dbHelper.getUseJevGuardrail())
+    val useJevGuardrail: StateFlow<Boolean> = _useJevGuardrail.asStateFlow()
+
+    private val _jevApiKey = MutableStateFlow(dbHelper.getJevApiKey())
+    val jevApiKey: StateFlow<String> = _jevApiKey.asStateFlow()
+
+    private val _jevModel = MutableStateFlow(dbHelper.getJevModel())
+    val jevModel: StateFlow<String> = _jevModel.asStateFlow()
+
+    private val _jevEndpointUrl = MutableStateFlow(dbHelper.getJevEndpointUrl())
+    val jevEndpointUrl: StateFlow<String> = _jevEndpointUrl.asStateFlow()
+
     fun setAiServerUrl(url: String) {
         dbHelper.setAiServerUrl(url)
         _aiServerUrl.value = url.trim()
@@ -78,6 +90,26 @@ class FinanceRepository private constructor(context: Context) {
     fun setAiApiKey(key: String) {
         dbHelper.setAiApiKey(key)
         _aiApiKey.value = key.trim()
+    }
+
+    fun setUseJevGuardrail(enabled: Boolean) {
+        dbHelper.setUseJevGuardrail(enabled)
+        _useJevGuardrail.value = enabled
+    }
+
+    fun setJevApiKey(key: String) {
+        dbHelper.setJevApiKey(key)
+        _jevApiKey.value = key.trim()
+    }
+
+    fun setJevModel(model: String) {
+        dbHelper.setJevModel(model)
+        _jevModel.value = model.trim()
+    }
+
+    fun setJevEndpointUrl(url: String) {
+        dbHelper.setJevEndpointUrl(url)
+        _jevEndpointUrl.value = url.trim()
     }
 
     fun searchTransactions(keyword: String, amount: Long? = null): List<Transaction> {
