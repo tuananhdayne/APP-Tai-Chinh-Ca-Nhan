@@ -1,7 +1,6 @@
 package com.example.apptaichinh.ui.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.apptaichinh.data.ai.AiResponse
 import com.example.apptaichinh.data.ai.CardStatus
@@ -9,6 +8,7 @@ import com.example.apptaichinh.data.ai.ChatMessage
 import com.example.apptaichinh.data.ai.MessageSender
 import com.example.apptaichinh.data.ai.ToolAction
 import com.example.apptaichinh.data.ai.ToolActionType
+import com.example.apptaichinh.data.ai.ReceiptDraftItem
 import com.example.apptaichinh.data.model.Category
 import com.example.apptaichinh.data.model.CategoryBudget
 import com.example.apptaichinh.data.model.CategoryStat
@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 data class ParsedTransaction(
     val amount: Long,
@@ -31,9 +33,10 @@ data class ParsedTransaction(
     val isValid: Boolean
 )
 
-class FinanceViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = FinanceRepository.getInstance(application)
+@HiltViewModel
+class FinanceViewModel @Inject constructor(
+    private val repository: FinanceRepository
+) : ViewModel() {
 
     val selectedYear: StateFlow<Int> = repository.selectedYear
     val selectedMonth: StateFlow<Int> = repository.selectedMonth
@@ -45,6 +48,13 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     val categoryBudgets: StateFlow<List<CategoryBudget>> = repository.categoryBudgets
     val categoryStats: StateFlow<List<CategoryStat>> = repository.categoryStats
     val categories: StateFlow<List<Category>> = repository.categories
+
+    private val _receiptItems = MutableStateFlow<List<ReceiptDraftItem>>(emptyList())
+    val receiptItems: StateFlow<List<ReceiptDraftItem>> = _receiptItems.asStateFlow()
+    private val _isAnalyzingReceipt = MutableStateFlow(false)
+    val isAnalyzingReceipt: StateFlow<Boolean> = _isAnalyzingReceipt.asStateFlow()
+    private val _receiptError = MutableStateFlow<String?>(null)
+    val receiptError: StateFlow<String?> = _receiptError.asStateFlow()
 
     // AI Configuration & State
     val aiServerUrl: StateFlow<String> = repository.aiServerUrl
@@ -64,6 +74,70 @@ class FinanceViewModel(application: Application) : AndroidViewModel(application)
     fun setJevApiKey(key: String) = repository.setJevApiKey(key)
     fun setJevModel(model: String) = repository.setJevModel(model)
     fun setJevEndpointUrl(url: String) = repository.setJevEndpointUrl(url)
+
+    fun analyzeReceipt(imageBytes: ByteArray) {
+        if (_isAnalyzingReceipt.value) return
+        _receiptError.value = null
+        _receiptItems.value = emptyList()
+        _isAnalyzingReceipt.value = true
+        viewModelScope.launch {
+            repository.aiService.analyzeReceipt(
+                imageBytes = imageBytes,
+                categories = categories.value,
+                serverUrl = aiServerUrl.value,
+                modelName = aiModelName.value,
+                apiKey = aiApiKey.value
+            ).onSuccess { _receiptItems.value = it }
+                .onFailure { _receiptError.value = it.localizedMessage ?: "Không thể đọc hóa đơn." }
+            _isAnalyzingReceipt.value = false
+        }
+    }
+
+    fun updateReceiptItem(item: ReceiptDraftItem) {
+        _receiptItems.value = _receiptItems.value.map { if (it.id == item.id) item else it }
+    }
+
+    fun removeReceiptItem(id: String) {
+        _receiptItems.value = _receiptItems.value.filterNot { it.id == id }
+    }
+
+    fun addEmptyReceiptItem() {
+        val fallback = categories.value.firstOrNull { it.type == "EXPENSE" }
+        _receiptItems.value = _receiptItems.value + ReceiptDraftItem(
+            description = "",
+            amount = 0L,
+            categoryId = fallback?.id ?: 0L,
+            categoryName = fallback?.name ?: "Khác"
+        )
+    }
+
+    fun clearReceipt() {
+        _receiptItems.value = emptyList()
+        _receiptError.value = null
+        _isAnalyzingReceipt.value = false
+    }
+
+    fun saveReceiptItems(onComplete: () -> Unit = {}) {
+        val validItems = _receiptItems.value.filter { it.amount > 0 && it.description.isNotBlank() }
+        if (validItems.isEmpty()) {
+            _receiptError.value = "Hóa đơn chưa có dòng hợp lệ để lưu."
+            return
+        }
+        viewModelScope.launch {
+            validItems.forEach { item ->
+                repository.addTransaction(Transaction(
+                    amount = item.amount,
+                    type = "EXPENSE",
+                    categoryId = item.categoryId,
+                    categoryName = item.categoryName,
+                    note = listOf(item.merchant, item.description).filter { it.isNotBlank() }.joinToString(" - "),
+                    dateEpoch = item.dateEpoch
+                ))
+            }
+            clearReceipt()
+            onComplete()
+        }
+    }
 
     // Chat Assistant Messages & Loading State
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(

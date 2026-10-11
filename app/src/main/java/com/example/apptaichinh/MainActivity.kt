@@ -14,7 +14,9 @@ import com.example.apptaichinh.theme.AppTaiChinhTheme
 import com.example.apptaichinh.ui.MainApp
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 import com.example.apptaichinh.widget.FinanceAppWidgetProvider
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: FinanceViewModel by viewModels()

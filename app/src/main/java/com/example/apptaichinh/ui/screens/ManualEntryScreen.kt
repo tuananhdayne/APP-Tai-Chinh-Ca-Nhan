@@ -60,6 +60,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,8 +75,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -101,7 +105,6 @@ import com.example.apptaichinh.ui.components.Formatters
 import com.example.apptaichinh.ui.components.Glyph3DIcon
 import com.example.apptaichinh.ui.components.NeumorphicGlassCard
 import com.example.apptaichinh.ui.components.TactileGradientButton
-import com.example.apptaichinh.ui.components.TactileKeyButton
 import com.example.apptaichinh.ui.components.TactilePillChip
 import com.example.apptaichinh.ui.components.TactileQuickChip
 import com.example.apptaichinh.ui.components.TactileTypeTab
@@ -109,6 +112,7 @@ import com.example.apptaichinh.ui.components.tactileBounceClickable
 import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 import com.example.apptaichinh.ui.viewmodel.ParsedTransaction
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -150,8 +154,15 @@ fun ManualEntryScreen(
     var amountText by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
 
-    // Hiển thị bàn phím Numpad xúc giác hay không
-    var showNumpad by remember { mutableStateOf(true) }
+    val amountFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(inputMode) {
+        if (inputMode == 0) {
+            delay(350)
+            amountFocusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     // Danh mục theo loại
     val filteredCategories = categories.filter { it.type == txType }
@@ -421,42 +432,41 @@ fun ManualEntryScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Màn hình hiển thị số lõm xuống (Recessed Display)
-                        Box(
+                        OutlinedTextField(
+                            value = amountText,
+                            onValueChange = { value ->
+                                amountText = value.filter(Char::isDigit).take(12)
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(CarbonSurfaceRecessed)
-                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(16.dp))
-                                .clickable { showNumpad = !showNumpad }
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (txType == "EXPENSE") "Chi tiêu" else "Thu vào",
-                                    fontSize = 12.sp,
-                                    color = TextMuted,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-
-                                Text(
-                                    text = if (amountLong > 0) {
-                                        "${if (txType == "EXPENSE") "-" else "+"}${Formatters.formatVnd(amountLong)}"
-                                    } else {
-                                        "0 đ"
-                                    },
-                                    fontSize = 26.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = if (amountLong == 0L) TextMuted else if (txType == "EXPENSE") NeonCoral else NeonEmerald,
-                                    letterSpacing = (-0.5).sp
-                                )
-                            }
-                        }
+                                .focusRequester(amountFocusRequester),
+                            label = { Text(if (txType == "EXPENSE") "Số tiền chi" else "Số tiền thu") },
+                            placeholder = { Text("Nhập số tiền") },
+                            prefix = { Text(if (txType == "EXPENSE") "− " else "+ ") },
+                            suffix = { Text("đ") },
+                            supportingText = {
+                                if (amountLong > 0) {
+                                    Text(Formatters.formatVnd(amountLong))
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(onNext = {
+                                focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down)
+                            }),
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = if (txType == "EXPENSE") NeonCoral else NeonEmerald,
+                                unfocusedBorderColor = Color(0xFFCBD5E1),
+                                focusedContainerColor = CarbonSurfaceRecessed,
+                                unfocusedContainerColor = CarbonSurfaceRecessed,
+                                focusedTextColor = if (txType == "EXPENSE") NeonCoral else NeonEmerald,
+                                unfocusedTextColor = TextHighContrast
+                            )
+                        )
 
                         Spacer(modifier = Modifier.height(10.dp))
 
@@ -490,63 +500,7 @@ fun ManualEntryScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 5. BÀN PHÍM SỐ XÚC GIÁC CAO CẤP (Tactile Skeuomorphic Numpad)
-                if (showNumpad) {
-                    NeumorphicGlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(22.dp),
-                        elevation = 6.dp,
-                        containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
-                        contentPadding = PaddingValues(12.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val keys = listOf(
-                                listOf("1", "2", "3"),
-                                listOf("4", "5", "6"),
-                                listOf("7", "8", "9"),
-                                listOf("C", "0", "⌫")
-                            )
-
-                            keys.forEach { rowKeys ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    rowKeys.forEach { keyLabel ->
-                                        TactileKeyButton(
-                                            label = keyLabel,
-                                            modifier = Modifier.weight(1f),
-                                            isActionKey = keyLabel == "⌫",
-                                            isDangerKey = keyLabel == "C",
-                                            onClick = {
-                                                when (keyLabel) {
-                                                    "C" -> amountText = ""
-                                                    "⌫" -> {
-                                                        if (amountText.isNotEmpty()) {
-                                                            amountText = amountText.dropLast(1)
-                                                        }
-                                                    }
-                                                    else -> {
-                                                        if (amountText.length < 12) {
-                                                            amountText += keyLabel
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-                }
-
-                // 6. LƯỚI THẺ DANH MỤC RỰC RỠ VỚI BIỂU TƯỢNG 3D (Vibrant Category Grid)
+                // 5. LƯỚI THẺ DANH MỤC RỰC RỠ VỚI BIỂU TƯỢNG 3D (Vibrant Category Grid)
                 NeumorphicGlassCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(22.dp),
