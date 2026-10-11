@@ -4,6 +4,17 @@ import com.example.apptaichinh.data.model.Category
 import com.example.apptaichinh.data.model.Transaction
 import java.util.UUID
 
+data class ReceiptDraftItem(
+    val id: String = UUID.randomUUID().toString(),
+    val description: String,
+    val amount: Long,
+    val quantity: Int = 1,
+    val categoryId: Long = 0L,
+    val categoryName: String = "Khác",
+    val merchant: String = "",
+    val dateEpoch: Long = System.currentTimeMillis()
+)
+
 enum class MessageSender {
     USER,
     ASSISTANT,

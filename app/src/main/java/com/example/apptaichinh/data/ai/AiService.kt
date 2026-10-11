@@ -16,6 +16,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import android.util.Base64
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 sealed class AiResponse {
     data class TextReply(val text: String) : AiResponse()
@@ -48,6 +51,107 @@ class AiService(
         .build()
 
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
+
+    suspend fun analyzeReceipt(
+        imageBytes: ByteArray,
+        categories: List<Category>,
+        serverUrl: String,
+        modelName: String,
+        apiKey: String = ""
+    ): Result<List<ReceiptDraftItem>> = withContext(Dispatchers.IO) {
+        runCatching {
+            require(imageBytes.isNotEmpty()) { "Ảnh hóa đơn trống." }
+            val rawUrl = serverUrl.trim().trimEnd('/')
+            require(rawUrl.isNotBlank()) { "Vui lòng cấu hình máy chủ AI trước." }
+            val cleanBase = if (rawUrl.endsWith("/v1")) rawUrl.substringBeforeLast("/v1") else rawUrl
+            val endpoint = "$cleanBase/v1/chat/completions"
+            val actualModel = modelName.trim().ifBlank { "ag/gemini-3.7-flash-high" }
+            val categoryNames = categories.filter { it.type == "EXPENSE" }.joinToString(", ") { it.name }
+            val encodedImage = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+
+            val prompt = """
+                Phân tích ảnh hóa đơn Việt Nam và chỉ trả về JSON hợp lệ, không markdown.
+                Schema bắt buộc:
+                {"merchant":"tên cửa hàng","date":"yyyy-MM-dd","items":[{"description":"tên mặt hàng","quantity":1,"amount":45000,"category_name":"Ăn uống"}]}
+                amount là THÀNH TIỀN của cả dòng, đơn vị VND, số nguyên không có dấu phân cách.
+                Chỉ lấy các mặt hàng/dịch vụ thực sự thanh toán. Không tạo thêm dòng Tổng cộng nếu đã có chi tiết mặt hàng.
+                Nếu không đọc được chi tiết nhưng đọc được tổng tiền, trả đúng một dòng description="Tổng hóa đơn".
+                Không suy đoán số tiền bị mờ. Danh mục chỉ chọn trong: $categoryNames.
+            """.trimIndent()
+
+            val messages = JSONArray().put(JSONObject().apply {
+                put("role", "user")
+                put("content", JSONArray()
+                    .put(JSONObject().apply {
+                        put("type", "text")
+                        put("text", prompt)
+                    })
+                    .put(JSONObject().apply {
+                        put("type", "image_url")
+                        put("image_url", JSONObject().put("url", "data:image/jpeg;base64,$encodedImage"))
+                    }))
+            })
+            val payload = JSONObject().apply {
+                put("model", actualModel)
+                put("stream", false)
+                put("temperature", 0.0)
+                put("messages", messages)
+            }
+            val requestBuilder = Request.Builder()
+                .url(endpoint)
+                .addHeader("ngrok-skip-browser-warning", "true")
+                .addHeader("User-Agent", "AppTaiChinh-Android/1.0")
+                .post(payload.toString().toRequestBody(jsonMediaType))
+            if (apiKey.isNotBlank()) requestBuilder.addHeader("Authorization", "Bearer ${apiKey.trim()}")
+
+            val responseText = client.newCall(requestBuilder.build()).execute().use { response ->
+                val body = response.body?.string().orEmpty()
+                if (!response.isSuccessful) throw IOException("Máy chủ AI trả về mã ${response.code}: $body")
+                body
+            }
+            val content = JSONObject(responseText)
+                .getJSONArray("choices")
+                .getJSONObject(0)
+                .getJSONObject("message")
+                .optString("content")
+                .trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
+            val receipt = JSONObject(content)
+            val merchant = receipt.optString("merchant").trim()
+            val parsedDate = receipt.optString("date").takeIf { it.isNotBlank() }?.let {
+                runCatching { SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(it)?.time }.getOrNull()
+            } ?: System.currentTimeMillis()
+            val items = receipt.optJSONArray("items") ?: JSONArray()
+            buildList {
+                for (index in 0 until items.length()) {
+                    val item = items.optJSONObject(index) ?: continue
+                    val amount = item.optLong("amount", 0L)
+                    if (amount <= 0L) continue
+                    val description = item.optString("description", "Mặt hàng").trim().ifBlank { "Mặt hàng" }
+                    val requestedCategory = item.optString("category_name").trim()
+                    val matched = categories.filter { it.type == "EXPENSE" }.firstOrNull {
+                        it.name.equals(requestedCategory, ignoreCase = true)
+                    } ?: LocalToolExecutor.matchBestCategory(
+                        "$merchant $description $requestedCategory",
+                        "EXPENSE",
+                        categories.filter { it.type == "EXPENSE" }
+                    ).first
+                    add(ReceiptDraftItem(
+                        description = description,
+                        amount = amount,
+                        quantity = item.optInt("quantity", 1).coerceAtLeast(1),
+                        categoryId = matched?.id ?: 0L,
+                        categoryName = matched?.name ?: "Khác",
+                        merchant = merchant,
+                        dateEpoch = parsedDate
+                    ))
+                }
+            }.also { require(it.isNotEmpty()) { "AI không đọc được dòng thanh toán nào từ hóa đơn." } }
+        }
+    }
 
     suspend fun pingServer(serverUrl: String, apiKey: String = ""): Result<String> = withContext(Dispatchers.IO) {
         try {

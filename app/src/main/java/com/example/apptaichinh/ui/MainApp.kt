@@ -68,9 +68,11 @@ import com.example.apptaichinh.ui.viewmodel.FinanceViewModel
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ReceiptLong
 import com.example.apptaichinh.ui.screens.CalendarScreen
 import com.example.apptaichinh.ui.screens.ManualEntryScreen
 import com.example.apptaichinh.ui.screens.MoreScreen
+import com.example.apptaichinh.ui.screens.ReceiptCaptureScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +88,9 @@ fun MainApp(
     // Dialog & Sheet States
     var showAddTxSheet by remember { mutableStateOf(false) }
     var editingTx by remember { mutableStateOf<Transaction?>(null) }
+    var showEntryOptions by remember { mutableStateOf(false) }
+    var showManualEntry by remember { mutableStateOf(false) }
+    var showReceiptCapture by remember { mutableStateOf(false) }
 
     var showOverallBudgetDialog by remember { mutableStateOf(false) }
     var editingCategoryBudget by remember { mutableStateOf<CategoryBudget?>(null) }
@@ -121,8 +126,8 @@ fun MainApp(
                 )
 
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.EditNote, contentDescription = "Nhập vào") },
-                    label = { Text("Nhập vào", fontWeight = if (currentTab == 0) FontWeight.Bold else FontWeight.Normal) },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Trang chủ") },
+                    label = { Text("Trang chủ", fontWeight = if (currentTab == 0) FontWeight.Bold else FontWeight.Normal) },
                     selected = currentTab == 0,
                     onClick = { viewModel.setCurrentTab(0) },
                     colors = itemColors
@@ -158,8 +163,7 @@ fun MainApp(
             }
         },
         floatingActionButton = {
-            if (currentTab != 0) {
-                Box(
+            Box(
                     modifier = Modifier
                         .size(56.dp)
                         .shadow(
@@ -179,14 +183,12 @@ fun MainApp(
                         )
                         .border(1.2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
                         .clickable {
-                            editingTx = null
-                            showAddTxSheet = true
+                            showEntryOptions = true
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Thêm Giao Dịch", tint = Color.White, modifier = Modifier.size(28.dp))
                 }
-            }
         }
     ) { innerPadding ->
         BoxWithConstraints(
@@ -195,9 +197,14 @@ fun MainApp(
                 .padding(innerPadding)
         ) {
             when (currentTab) {
-                0 -> ManualEntryScreen(
+                0 -> HomeScreen(
                     viewModel = viewModel,
-                    onNavigateToCalendar = { viewModel.setCurrentTab(1) }
+                    onEditTransaction = { tx ->
+                        editingTx = tx
+                        showAddTxSheet = true
+                    },
+                    onOpenBudgetEdit = { showOverallBudgetDialog = true },
+                    onOpenChat = { showAiChatWindow = true }
                 )
 
                 1 -> CalendarScreen(
@@ -234,6 +241,86 @@ fun MainApp(
                     containerHeight = maxHeight,
                     onClick = { showAiChatWindow = true },
                     isThinking = isAiThinking
+                )
+            }
+        }
+    }
+
+    if (showEntryOptions) {
+        ModalBottomSheet(
+            onDismissRequest = { showEntryOptions = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+            ) {
+                Text("Thêm giao dịch", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("Chọn cách bạn muốn ghi nhận khoản thu chi", color = TextMuted)
+                androidx.compose.material3.OutlinedButton(
+                    onClick = {
+                        showEntryOptions = false
+                        showManualEntry = true
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Icon(Icons.Default.EditNote, contentDescription = null)
+                    androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
+                    Text("Nhập thủ công")
+                }
+                androidx.compose.material3.Button(
+                    onClick = {
+                        showEntryOptions = false
+                        showReceiptCapture = true
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Icon(Icons.Default.ReceiptLong, contentDescription = null)
+                    androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
+                    Text("Chụp hóa đơn")
+                }
+            }
+        }
+    }
+
+    if (showManualEntry) {
+        ModalBottomSheet(
+            onDismissRequest = { showManualEntry = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            dragHandle = null
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.94f)) {
+                ManualEntryScreen(
+                    viewModel = viewModel,
+                    onNavigateToCalendar = {
+                        showManualEntry = false
+                        viewModel.setCurrentTab(1)
+                    }
+                )
+            }
+        }
+    }
+
+    if (showReceiptCapture) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                viewModel.clearReceipt()
+                showReceiptCapture = false
+            },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            dragHandle = null
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.96f)) {
+                ReceiptCaptureScreen(
+                    viewModel = viewModel,
+                    onClose = { showReceiptCapture = false },
+                    onSaved = {
+                        showReceiptCapture = false
+                        viewModel.setCurrentTab(0)
+                    }
                 )
             }
         }

@@ -1,6 +1,7 @@
 package com.example.apptaichinh.data.repository
 
 import android.content.Context
+import com.example.apptaichinh.data.ai.AiService
 import com.example.apptaichinh.data.db.FinanceDatabaseHelper
 import com.example.apptaichinh.data.model.Category
 import com.example.apptaichinh.data.model.CategoryBudget
@@ -16,11 +17,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FinanceRepository private constructor(context: Context) {
+@Singleton
+class FinanceRepository @Inject constructor(
+    @ApplicationContext context: Context,
+    private val dbHelper: FinanceDatabaseHelper,
+    val aiService: AiService
+) {
 
     private val appContext = context.applicationContext
-    private val dbHelper = FinanceDatabaseHelper.getInstance(context)
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val calendar = Calendar.getInstance()
@@ -53,8 +61,6 @@ class FinanceRepository private constructor(context: Context) {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories: StateFlow<List<Category>> = _categories.asStateFlow()
-
-    val aiService = com.example.apptaichinh.data.ai.AiService(dbHelper)
 
     private val _aiServerUrl = MutableStateFlow(dbHelper.getAiServerUrl())
     val aiServerUrl: StateFlow<String> = _aiServerUrl.asStateFlow()
@@ -118,17 +124,6 @@ class FinanceRepository private constructor(context: Context) {
 
     init {
         refreshAll()
-    }
-
-    companion object {
-        @Volatile
-        private var instance: FinanceRepository? = null
-
-        fun getInstance(context: Context): FinanceRepository {
-            return instance ?: synchronized(this) {
-                instance ?: FinanceRepository(context.applicationContext).also { instance = it }
-            }
-        }
     }
 
     fun setMonth(year: Int, month: Int) {
