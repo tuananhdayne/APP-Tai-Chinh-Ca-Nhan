@@ -56,6 +56,12 @@ class FinanceRepository @Inject constructor(
     private val _categoryBudgets = MutableStateFlow<List<CategoryBudget>>(emptyList())
     val categoryBudgets: StateFlow<List<CategoryBudget>> = _categoryBudgets.asStateFlow()
 
+    private val _categoryExpenseStats = MutableStateFlow<List<CategoryStat>>(emptyList())
+    val categoryExpenseStats: StateFlow<List<CategoryStat>> = _categoryExpenseStats.asStateFlow()
+
+    private val _categoryIncomeStats = MutableStateFlow<List<CategoryStat>>(emptyList())
+    val categoryIncomeStats: StateFlow<List<CategoryStat>> = _categoryIncomeStats.asStateFlow()
+
     private val _categoryStats = MutableStateFlow<List<CategoryStat>>(emptyList())
     val categoryStats: StateFlow<List<CategoryStat>> = _categoryStats.asStateFlow()
 
@@ -178,14 +184,17 @@ class FinanceRepository @Inject constructor(
         val summary = dbHelper.getMonthSummary(y, m)
         val overall = dbHelper.getOverallBudget(y, m)
         val catBudgets = dbHelper.getCategoryBudgets(y, m)
-        val stats = dbHelper.getCategoryExpenseStats(y, m)
+        val expenseStats = dbHelper.getCategoryStats(y, m, "EXPENSE")
+        val incomeStats = dbHelper.getCategoryStats(y, m, "INCOME")
         val allCats = dbHelper.getAllCategories()
 
         _transactions.value = txList
         _monthSummary.value = summary
         _overallBudget.value = overall
         _categoryBudgets.value = catBudgets
-        _categoryStats.value = stats
+        _categoryExpenseStats.value = expenseStats
+        _categoryIncomeStats.value = incomeStats
+        _categoryStats.value = expenseStats
         _categories.value = allCats
 
         try {

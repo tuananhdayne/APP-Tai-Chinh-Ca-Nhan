@@ -60,7 +60,14 @@ import com.example.apptaichinh.theme.TextMuted
 fun DonutChart(
     stats: List<CategoryStat>,
     totalExpense: Long,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    title: String = "Cơ Cấu Chi Tiêu",
+    subtitle: String = "Phân bổ theo từng nhóm danh mục",
+    centerLabel: String = "TỔNG CHI",
+    centerColor: Color = NeonCoral,
+    emptyMessage: String = "Chưa có phát sinh chi tiêu trong tháng này",
+    iconEmoji: String = "📊",
+    accentColor: Color = NeonAzure
 ) {
     val animatedProgress = remember { Animatable(0f) }
 
@@ -89,17 +96,17 @@ fun DonutChart(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Glyph3DIcon(icon = "📊", accentColor = NeonAzure, size = 36.dp, fontSize = 17f)
+                    Glyph3DIcon(icon = iconEmoji, accentColor = accentColor, size = 36.dp, fontSize = 17f)
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "Cơ Cấu Chi Tiêu",
+                            text = title,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = TextHighContrast
                         )
                         Text(
-                            text = "Phân bổ theo từng nhóm danh mục",
+                            text = subtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = TextMediumContrast
                         )
@@ -107,7 +114,7 @@ fun DonutChart(
                 }
                 TactilePillChip(
                     text = "${stats.size} nhóm",
-                    accentColor = NeonAzure,
+                    accentColor = accentColor,
                     leadingDot = false
                 )
             }
@@ -122,7 +129,7 @@ fun DonutChart(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Chưa có phát sinh chi tiêu trong tháng này",
+                        text = emptyMessage,
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextMuted
                     )
@@ -207,7 +214,7 @@ fun DonutChart(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "TỔNG CHI",
+                                text = centerLabel,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,
@@ -218,7 +225,7 @@ fun DonutChart(
                                 text = Formatters.formatVnd(totalExpense),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = NeonCoral,
+                                color = centerColor,
                                 maxLines = 1
                             )
                         }

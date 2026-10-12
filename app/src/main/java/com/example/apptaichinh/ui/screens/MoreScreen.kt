@@ -73,17 +73,6 @@ fun MoreScreen(
     val transactions by viewModel.transactions.collectAsState()
     val overallBudget by viewModel.overallBudget.collectAsState()
 
-    val currentAiUrl by viewModel.aiServerUrl.collectAsState()
-    val currentAiModel by viewModel.aiModelName.collectAsState()
-    val currentAiApiKey by viewModel.aiApiKey.collectAsState()
-
-    var serverUrlInput by remember(currentAiUrl) { mutableStateOf(currentAiUrl) }
-    var modelNameInput by remember(currentAiModel) { mutableStateOf(currentAiModel) }
-    var apiKeyInput by remember(currentAiApiKey) { mutableStateOf(currentAiApiKey) }
-
-    var isPinging by remember { mutableStateOf(false) }
-    var pingResult by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
-    var saveSuccess by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -100,7 +89,7 @@ fun MoreScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Tùy chỉnh danh mục, trợ lý AI và thiết lập ứng dụng",
+                    text = "Tùy chỉnh danh mục, tiện ích widget và thông tin ứng dụng",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -193,7 +182,7 @@ fun MoreScreen(
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = "Gemini 3.8",
+                                            text = "Thông Minh",
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color(0xFF6366F1)
@@ -217,162 +206,7 @@ fun MoreScreen(
                 }
             }
         }
-
-        // 3. Nhóm Cấu hình Kết nối Máy chủ AI
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Tune,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Cấu Hình Máy Chủ AI (Gemini / Ngrok / LM Studio)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = serverUrlInput,
-                        onValueChange = {
-                            serverUrlInput = it
-                            saveSuccess = false
-                            pingResult = null
-                        },
-                        label = { Text("URL Máy Chủ AI (hoặc Cloudflare / Ngrok)") },
-                        placeholder = { Text("https://chas-unshaped-jacalyn.ngrok-free.dev") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = modelNameInput,
-                        onValueChange = {
-                            modelNameInput = it
-                            saveSuccess = false
-                            pingResult = null
-                        },
-                        label = { Text("Tên Mô Hình AI") },
-                        placeholder = { Text("ag/gemini-3.7-flash-high") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedTextField(
-                        value = apiKeyInput,
-                        onValueChange = {
-                            apiKeyInput = it
-                            saveSuccess = false
-                            pingResult = null
-                        },
-                        label = { Text("API Key (Bearer Token)") },
-                        placeholder = { Text("sk-...") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Trạng thái kết quả Ping
-                    pingResult?.let { (success, msg) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (success) Color(0xFF10B981).copy(alpha = 0.12f) else Color(0xFFEF4444).copy(alpha = 0.12f))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = if (success) Icons.Default.CheckCircle else Icons.Default.Error,
-                                contentDescription = null,
-                                tint = if (success) Color(0xFF10B981) else Color(0xFFEF4444),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (success) "Kết nối thành công! ($msg)" else "Lỗi kết nối: $msg",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = if (success) Color(0xFF047857) else Color(0xFFB91C1C)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    if (saveSuccess) {
-                        Text(
-                            text = "✓ Đã lưu cấu hình AI thành công!",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10B981)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                isPinging = true
-                                pingResult = null
-                                viewModel.pingAiServer(serverUrlInput, apiKeyInput) { success, msg ->
-                                    isPinging = false
-                                    pingResult = Pair(success, msg)
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            enabled = !isPinging && serverUrlInput.isNotBlank()
-                        ) {
-                            if (isPinging) {
-                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
-                            Text(if (isPinging) "Đang kiểm tra..." else "Kiểm Tra LLM", fontSize = 12.sp)
-                        }
-
-                        Button(
-                            onClick = {
-                                viewModel.setAiServerUrl(serverUrlInput)
-                                viewModel.setAiModelName(modelNameInput)
-                                viewModel.setAiApiKey(apiKeyInput)
-                                saveSuccess = true
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Lưu Cấu Hình", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        // 4. Nhóm Thống kê tổng quan sổ
+        // 3. Nhóm Thống kê tổng quan sổ
         item {
             Text(
                 text = "Tổng Quan Sổ Dữ Liệu",

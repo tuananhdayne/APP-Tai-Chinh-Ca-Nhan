@@ -589,7 +589,8 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
             val lower = text.lowercase().trim()
             val incomeKeywords = listOf(
                 "nhận lương", "bắn lương", "lương", "thưởng", "thu nhập", "cổ tức", "tiền lãi",
-                "lãi suất", "ting ting", "được cho", "được tặng", "kiếm được", "nhận tiền", "bán"
+                "lãi suất", "ting ting", "được cho", "được tặng", "kiếm được", "nhận tiền", "bán",
+                "làm thêm", "tiền làm thêm", "thù lao", "tiền công", "freelance", "tiền tip", "lì xì"
             )
             val expenseKeywords = listOf(
                 "chi", "tiêu", "hết", "mua", "ăn", "uống", "đóng", "trả", "nộp", "thanh toán",
@@ -637,7 +638,8 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                             "thuê nhà", "thuê phòng", "tiền rác", "phí chung cư", "điện nước", "vnpt", "fpt", "viettel",
                             "thợ sửa", "thợ", "sửa chữa", "đường ống", "ống nước", "vòi sen", "bình gas", "bóng đèn", "đèn led",
                             "cước", "tiền cước", "cước điện thoại", "nạp điện thoại", "tiền điện thoại", "nạp thẻ điện thoại",
-                            "thuê trọ", "tiền thuê trọ", "phí thuê nhà", "trả tiền thuê", "tiền phòng trọ", "nhà trọ", "phòng trọ sinh viên"
+                            "thuê trọ", "tiền thuê trọ", "phí thuê nhà", "trả tiền thuê", "tiền phòng trọ", "nhà trọ", "phòng trọ sinh viên",
+                            "sinh hoạt", "tiền sinh hoạt", "hóa đơn sinh hoạt"
                         ),
                         "Mua sắm" to listOf(
                             "mua sắm", "shopping", "quần áo", "áo", "quần", "giày", "dép", "shopee", "tiki", "lazada",

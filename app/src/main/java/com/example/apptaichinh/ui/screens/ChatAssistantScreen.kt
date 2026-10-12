@@ -221,13 +221,9 @@ fun ChatAssistantScreen(
                                         .background(if (serverUrl.isNotBlank()) Color(0xFF10B981) else Color(0xFFEF4444))
                                 )
                             }
-                            val displayModel = when {
-                                modelName.contains("gemini", ignoreCase = true) -> "Gemini 3.8 Flash • Function Calling"
-                                modelName.isNotBlank() -> "$modelName • Tool Calling"
-                                else -> "Gemini 3.8 Flash • Function Calling"
-                            }
+                            val displayStatus = if (serverUrl.isBlank()) "Chưa cấu hình máy chủ" else "Trực tuyến • Sẵn sàng hỗ trợ"
                             Text(
-                                text = if (serverUrl.isBlank()) "Chưa cấu hình URL" else displayModel,
+                                text = displayStatus,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (serverUrl.isBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                             )
@@ -1774,7 +1770,7 @@ fun AiWelcomeHero(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Sức mạnh từ Gemini 3.8 Flash & Function Calling.\nNói hoặc gõ bằng tiếng Việt tự nhiên để thao tác siêu tốc.",
+            text = "Trợ lý phân tích & ghi chép thu chi thông minh.\nNói hoặc gõ bằng tiếng Việt tự nhiên để thao tác siêu tốc.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.outline,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -1876,7 +1872,7 @@ fun AiThinkingBubble() {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Gemini 3.8 Flash đang phân tích câu nói...",
+                    text = "Trợ lý đang phân tích câu nói...",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline,
                     fontWeight = FontWeight.Medium
@@ -1935,17 +1931,7 @@ fun AiServerConfigDialog(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
 
-                OutlinedTextField(
-                    value = modelText,
-                    onValueChange = { modelText = it },
-                    label = { Text("Model Identifier") },
-                    placeholder = { Text("ag/gemini-3.7-flash-high") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
-                )
 
                 Spacer(modifier = Modifier.height(10.dp))
 

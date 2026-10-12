@@ -713,7 +713,7 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
 
     // --- Thống kê biểu đồ (Analytics) ---
 
-    fun getCategoryExpenseStats(year: Int, month: Int): List<CategoryStat> {
+    fun getCategoryStats(year: Int, month: Int, type: String = "EXPENSE"): List<CategoryStat> {
         val (startTime, endTime) = getMonthTimestamps(year, month)
         val db = readableDatabase
 
@@ -721,28 +721,28 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
             SELECT c.$COL_CAT_NAME, c.$COL_CAT_ICON, c.$COL_CAT_COLOR, SUM(t.$COL_TX_AMOUNT) as total
             FROM $TABLE_TRANSACTIONS t
             INNER JOIN $TABLE_CATEGORIES c ON t.$COL_TX_CAT_ID = c.$COL_CAT_ID
-            WHERE t.$COL_TX_TYPE = 'EXPENSE' AND t.$COL_TX_DATE >= ? AND t.$COL_TX_DATE <= ?
+            WHERE t.$COL_TX_TYPE = ? AND t.$COL_TX_DATE >= ? AND t.$COL_TX_DATE <= ?
             GROUP BY c.$COL_CAT_ID
             ORDER BY total DESC
         """.trimIndent()
 
         val rawStats = mutableListOf<Triple<String, Pair<String, String>, Long>>()
-        var overallExpense = 0L
+        var overallAmount = 0L
 
-        val cursor = db.rawQuery(sql, arrayOf(startTime.toString(), endTime.toString()))
+        val cursor = db.rawQuery(sql, arrayOf(type, startTime.toString(), endTime.toString()))
         cursor.use {
             while (it.moveToNext()) {
                 val name = it.getString(it.getColumnIndexOrThrow(COL_CAT_NAME))
                 val icon = it.getString(it.getColumnIndexOrThrow(COL_CAT_ICON))
                 val color = it.getString(it.getColumnIndexOrThrow(COL_CAT_COLOR))
                 val total = it.getLong(it.getColumnIndexOrThrow("total"))
-                overallExpense += total
+                overallAmount += total
                 rawStats.add(Triple(name, Pair(icon, color), total))
             }
         }
 
         return rawStats.map { (name, iconColor, amount) ->
-            val pct = if (overallExpense > 0) (amount.toFloat() / overallExpense.toFloat()) else 0f
+            val pct = if (overallAmount > 0) (amount.toFloat() / overallAmount.toFloat()) else 0f
             CategoryStat(
                 categoryName = name,
                 categoryIcon = iconColor.first,
@@ -752,4 +752,10 @@ class FinanceDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABA
             )
         }
     }
+
+    fun getCategoryExpenseStats(year: Int, month: Int): List<CategoryStat> =
+        getCategoryStats(year, month, "EXPENSE")
+
+    fun getCategoryIncomeStats(year: Int, month: Int): List<CategoryStat> =
+        getCategoryStats(year, month, "INCOME")
 }

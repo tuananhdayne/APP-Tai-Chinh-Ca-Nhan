@@ -46,6 +46,8 @@ class FinanceViewModel @Inject constructor(
     val monthSummary: StateFlow<MonthSummary> = repository.monthSummary
     val overallBudget: StateFlow<OverallBudget> = repository.overallBudget
     val categoryBudgets: StateFlow<List<CategoryBudget>> = repository.categoryBudgets
+    val categoryExpenseStats: StateFlow<List<CategoryStat>> = repository.categoryExpenseStats
+    val categoryIncomeStats: StateFlow<List<CategoryStat>> = repository.categoryIncomeStats
     val categoryStats: StateFlow<List<CategoryStat>> = repository.categoryStats
     val categories: StateFlow<List<Category>> = repository.categories
 
