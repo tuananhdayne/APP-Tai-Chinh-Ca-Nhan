@@ -69,7 +69,9 @@ fun TransactionItemView(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 10.dp)
             ) {
                 // Biểu tượng 3D Glyph của danh mục
                 Glyph3DIcon(
@@ -81,7 +83,7 @@ fun TransactionItemView(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Column {
+                Column(modifier = Modifier.weight(1f, fill = false)) {
                     Text(
                         text = if (transaction.note.isNotBlank()) transaction.note else transaction.categoryName,
                         style = MaterialTheme.typography.bodyLarge,
@@ -100,13 +102,20 @@ fun TransactionItemView(
                 }
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(start = 2.dp)
+            ) {
                 Text(
                     text = "${if (isIncome) "+" else "-"}${Formatters.formatVnd(transaction.amount)}",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.ExtraBold,
-                    color = amountColor
+                    color = amountColor,
+                    maxLines = 1,
+                    softWrap = false
                 )
+
+                Spacer(modifier = Modifier.width(4.dp))
 
                 IconButton(
                     onClick = onDelete,

@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.MonthSummary
@@ -176,12 +177,12 @@ fun BalanceSummaryCard(
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color(0xFFECFDF5))
                         .border(1.dp, Color(0xFFA7F3D0), RoundedCornerShape(16.dp))
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .padding(horizontal = 9.dp, vertical = 10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(30.dp)
+                                .size(28.dp)
                                 .clip(CircleShape)
                                 .background(NeonEmerald.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center
@@ -190,21 +191,25 @@ fun BalanceSummaryCard(
                                 imageVector = Icons.Default.ArrowDownward,
                                 contentDescription = null,
                                 tint = NeonEmerald,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(15.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column(modifier = Modifier.weight(1f, fill = false)) {
                             Text(
                                 text = "Thu nhập",
-                                fontSize = 11.5.sp,
-                                color = TextMuted
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                maxLines = 1
                             )
                             Text(
                                 text = Formatters.formatVnd(summary.totalIncome),
-                                fontSize = 13.5.sp,
+                                fontSize = 12.8.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = NeonEmerald
+                                color = NeonEmerald,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -217,12 +222,12 @@ fun BalanceSummaryCard(
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color(0xFFFEF2F2))
                         .border(1.dp, Color(0xFFFECDD3), RoundedCornerShape(16.dp))
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .padding(horizontal = 9.dp, vertical = 10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(30.dp)
+                                .size(28.dp)
                                 .clip(CircleShape)
                                 .background(NeonCoral.copy(alpha = 0.18f)),
                             contentAlignment = Alignment.Center
@@ -231,21 +236,25 @@ fun BalanceSummaryCard(
                                 imageVector = Icons.Default.ArrowUpward,
                                 contentDescription = null,
                                 tint = NeonCoral,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(15.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column(modifier = Modifier.weight(1f, fill = false)) {
                             Text(
                                 text = "Chi tiêu",
-                                fontSize = 11.5.sp,
-                                color = TextMuted
+                                fontSize = 11.sp,
+                                color = TextMuted,
+                                maxLines = 1
                             )
                             Text(
                                 text = Formatters.formatVnd(summary.totalExpense),
-                                fontSize = 13.5.sp,
+                                fontSize = 12.8.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = NeonCoral
+                                color = NeonCoral,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }

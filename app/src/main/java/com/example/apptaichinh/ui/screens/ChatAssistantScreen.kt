@@ -79,6 +79,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.ai.CardStatus
@@ -221,10 +222,12 @@ fun ChatAssistantScreen(
                                         .background(if (serverUrl.isNotBlank()) Color(0xFF10B981) else Color(0xFFEF4444))
                                 )
                             }
-                            val displayStatus = if (serverUrl.isBlank()) "Chưa cấu hình máy chủ" else "Trực tuyến • Sẵn sàng hỗ trợ"
+                            val displayStatus = if (serverUrl.isBlank()) "Chưa cấu hình máy chủ" else "Trực tuyến • Sẵn sàng"
                             Text(
                                 text = displayStatus,
                                 style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 color = if (serverUrl.isBlank()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                             )
                         }

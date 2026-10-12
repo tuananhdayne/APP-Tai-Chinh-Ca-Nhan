@@ -22,6 +22,7 @@ object Formatters {
         return when {
             showSign && isIncome -> "+$formatted ₫"
             showSign && !isIncome -> "-$formatted ₫"
+            amount < 0 -> "-$formatted ₫"
             else -> "$formatted ₫"
         }
     }

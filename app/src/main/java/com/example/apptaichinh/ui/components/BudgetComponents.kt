@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.model.CategoryBudget
@@ -319,9 +320,12 @@ fun OverallBudgetCard(
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = Formatters.formatVnd(budget.totalExpense),
-                            fontSize = 15.sp,
+                            fontSize = 14.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = NeonCoral
+                            color = NeonCoral,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -359,9 +363,12 @@ fun OverallBudgetCard(
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = Formatters.formatVnd(Math.abs(budget.remaining)),
-                            fontSize = 15.sp,
+                            fontSize = 14.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isRemainingPositive) NeonEmerald else NeonCoral
+                            color = if (isRemainingPositive) NeonEmerald else NeonCoral,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -435,7 +442,9 @@ fun CategoryBudgetCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp)
                 ) {
                     // Biểu tượng 3D Glyph của danh mục
                     Glyph3DIcon(
@@ -447,12 +456,14 @@ fun CategoryBudgetCard(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f, fill = false)) {
                         Text(
                             text = categoryBudget.category.name,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
-                            color = TextHighContrast
+                            color = TextHighContrast,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = if (categoryBudget.budgetAmount > 0) {
@@ -461,7 +472,9 @@ fun CategoryBudgetCard(
                                 "Chưa đặt ngân sách"
                             },
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextMediumContrast
+                            color = TextMediumContrast,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -472,7 +485,9 @@ fun CategoryBudgetCard(
                         text = Formatters.formatVnd(categoryBudget.spentAmount),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (categoryBudget.isOverBudget) NeonCoral else TextHighContrast
+                        color = if (categoryBudget.isOverBudget) NeonCoral else TextHighContrast,
+                        maxLines = 1,
+                        softWrap = false
                     )
                     if (categoryBudget.budgetAmount > 0) {
                         val pctStr = String.format("%.0f%%", categoryBudget.percentage * 100)

@@ -321,7 +321,9 @@ fun TactilePillChip(
                 text = text,
                 color = TextHighContrast,
                 fontSize = 11.5.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }

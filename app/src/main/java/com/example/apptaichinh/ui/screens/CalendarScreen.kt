@@ -125,7 +125,7 @@ fun CalendarScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 95.dp, top = 8.dp, start = 14.dp, end = 14.dp),
+        contentPadding = PaddingValues(bottom = 115.dp, top = 8.dp, start = 14.dp, end = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // 1. THANH CHỌN THÁNG DẠNG KÍNH (Month Selector Header)
@@ -493,19 +493,24 @@ fun CalendarScreen(
                         }
 
                         // 3. Chênh lệch / Dư
+                        val isNegativeBalance = curBalance < 0
+                        val balanceColor = if (isNegativeBalance) NeonCoral else NeonAzure
+                        val balanceBg = if (isNegativeBalance) Color(0xFFFEF2F2) else Color(0xFFEFF6FF)
+                        val balanceBorder = if (isNegativeBalance) Color(0xFFFECDD3) else Color(0xFFBFDBFE)
+
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFFEFF6FF))
-                                .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(14.dp))
+                                .background(balanceBg)
+                                .border(1.dp, balanceBorder, RoundedCornerShape(14.dp))
                                 .padding(horizontal = 8.dp, vertical = 10.dp)
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                                 Text(
                                     text = "Số dư ròng",
                                     fontSize = 11.sp,
-                                    color = if (curBalance >= 0) NeonAzure else NeonAmber,
+                                    color = balanceColor,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(modifier = Modifier.height(3.dp))
@@ -513,7 +518,7 @@ fun CalendarScreen(
                                     text = Formatters.formatVnd(curBalance),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (curBalance >= 0) NeonAzure else NeonAmber,
+                                    color = balanceColor,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
