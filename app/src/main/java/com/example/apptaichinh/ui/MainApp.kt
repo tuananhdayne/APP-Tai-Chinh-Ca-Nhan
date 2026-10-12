@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.widthIn
 import com.example.apptaichinh.data.model.Category
 import com.example.apptaichinh.data.model.CategoryBudget
 import com.example.apptaichinh.data.model.Transaction
@@ -105,90 +106,99 @@ fun MainApp(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 3.dp,
+            Box(
                 modifier = Modifier
-                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp), ambientColor = Color(0xFF64748B).copy(alpha = 0.12f))
-                    .border(
-                        width = 1.dp,
-                        brush = SpecularBorderBrush,
-                        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-                    )
-                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                    .fillMaxWidth()
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
             ) {
-                val itemColors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = NeonAzure,
-                    selectedTextColor = NeonAzure,
-                    unselectedIconColor = TextMuted,
-                    unselectedTextColor = TextMuted,
-                    indicatorColor = NeonAzure.copy(alpha = 0.12f)
-                )
+                NavigationBar(
+                    containerColor = Color.White,
+                    tonalElevation = 3.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 760.dp)
+                        .shadow(elevation = 8.dp, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp), ambientColor = Color(0xFF64748B).copy(alpha = 0.12f))
+                        .border(
+                            width = 1.dp,
+                            brush = SpecularBorderBrush,
+                            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                        )
+                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                ) {
+                    val itemColors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = NeonAzure,
+                        selectedTextColor = NeonAzure,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                        indicatorColor = NeonAzure.copy(alpha = 0.12f)
+                    )
 
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Trang chủ") },
-                    label = { Text("Trang chủ", fontWeight = if (currentTab == 0) FontWeight.Bold else FontWeight.Normal) },
-                    selected = currentTab == 0,
-                    onClick = { viewModel.setCurrentTab(0) },
-                    colors = itemColors
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.CalendarMonth, contentDescription = "Lịch") },
-                    label = { Text("Lịch", fontWeight = if (currentTab == 1) FontWeight.Bold else FontWeight.Normal) },
-                    selected = currentTab == 1,
-                    onClick = { viewModel.setCurrentTab(1) },
-                    colors = itemColors
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.PieChart, contentDescription = "Thống Kê") },
-                    label = { Text("Thống Kê", fontWeight = if (currentTab == 2) FontWeight.Bold else FontWeight.Normal) },
-                    selected = currentTab == 2,
-                    onClick = { viewModel.setCurrentTab(2) },
-                    colors = itemColors
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Savings, contentDescription = "Ngân Sách") },
-                    label = { Text("Ngân Sách", fontWeight = if (currentTab == 3) FontWeight.Bold else FontWeight.Normal) },
-                    selected = currentTab == 3,
-                    onClick = { viewModel.setCurrentTab(3) },
-                    colors = itemColors
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Cài Đặt") },
-                    label = { Text("Cài Đặt", fontWeight = if (currentTab == 4) FontWeight.Bold else FontWeight.Normal) },
-                    selected = currentTab == 4,
-                    onClick = { viewModel.setCurrentTab(4) },
-                    colors = itemColors
-                )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Trang chủ") },
+                        label = { Text("Trang chủ", fontWeight = if (currentTab == 0) FontWeight.Bold else FontWeight.Normal) },
+                        selected = currentTab == 0,
+                        onClick = { viewModel.setCurrentTab(0) },
+                        colors = itemColors
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.CalendarMonth, contentDescription = "Lịch") },
+                        label = { Text("Lịch", fontWeight = if (currentTab == 1) FontWeight.Bold else FontWeight.Normal) },
+                        selected = currentTab == 1,
+                        onClick = { viewModel.setCurrentTab(1) },
+                        colors = itemColors
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.PieChart, contentDescription = "Thống Kê") },
+                        label = { Text("Thống Kê", fontWeight = if (currentTab == 2) FontWeight.Bold else FontWeight.Normal) },
+                        selected = currentTab == 2,
+                        onClick = { viewModel.setCurrentTab(2) },
+                        colors = itemColors
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Savings, contentDescription = "Ngân Sách") },
+                        label = { Text("Ngân Sách", fontWeight = if (currentTab == 3) FontWeight.Bold else FontWeight.Normal) },
+                        selected = currentTab == 3,
+                        onClick = { viewModel.setCurrentTab(3) },
+                        colors = itemColors
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Settings, contentDescription = "Cài Đặt") },
+                        label = { Text("Cài Đặt", fontWeight = if (currentTab == 4) FontWeight.Bold else FontWeight.Normal) },
+                        selected = currentTab == 4,
+                        onClick = { viewModel.setCurrentTab(4) },
+                        colors = itemColors
+                    )
+                }
             }
         },
         floatingActionButton = {
             Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = CircleShape,
-                            ambientColor = NeonAzure.copy(alpha = 0.35f),
-                            spotColor = NeonIndigo.copy(alpha = 0.3f)
-                        )
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    NeonAzure,
-                                    NeonIndigo
-                                )
+                modifier = Modifier
+                    .size(56.dp)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = CircleShape,
+                        ambientColor = NeonAzure.copy(alpha = 0.35f),
+                        spotColor = NeonIndigo.copy(alpha = 0.3f)
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                NeonAzure,
+                                NeonIndigo
                             )
                         )
-                        .border(1.2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
-                        .clickable {
-                            showEntryOptions = true
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Thêm Giao Dịch", tint = Color.White, modifier = Modifier.size(28.dp))
-                }
+                    )
+                    .border(1.2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
+                    .clickable {
+                        showEntryOptions = true
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Thêm Giao Dịch", tint = Color.White, modifier = Modifier.size(28.dp))
+            }
         }
     ) { innerPadding ->
         BoxWithConstraints(
@@ -196,42 +206,58 @@ fun MainApp(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (currentTab) {
-                0 -> HomeScreen(
-                    viewModel = viewModel,
-                    onEditTransaction = { tx ->
-                        editingTx = tx
-                        showAddTxSheet = true
-                    },
-                    onOpenBudgetEdit = { showOverallBudgetDialog = true },
-                    onOpenChat = { showAiChatWindow = true }
-                )
-
-                1 -> CalendarScreen(
-                    viewModel = viewModel,
-                    onEditTransaction = { tx ->
-                        editingTx = tx
-                        showAddTxSheet = true
+            val isTablet = maxWidth >= 600.dp
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Box(
+                    modifier = if (isTablet) {
+                        Modifier
+                            .fillMaxHeight()
+                            .widthIn(max = 760.dp)
+                    } else {
+                        Modifier.fillMaxSize()
                     }
-                )
+                ) {
+                    when (currentTab) {
+                        0 -> HomeScreen(
+                            viewModel = viewModel,
+                            onEditTransaction = { tx ->
+                                editingTx = tx
+                                showAddTxSheet = true
+                            },
+                            onOpenBudgetEdit = { showOverallBudgetDialog = true },
+                            onOpenChat = { showAiChatWindow = true }
+                        )
 
-                2 -> AnalyticsScreen(
-                    viewModel = viewModel
-                )
+                        1 -> CalendarScreen(
+                            viewModel = viewModel,
+                            onEditTransaction = { tx ->
+                                editingTx = tx
+                                showAddTxSheet = true
+                            }
+                        )
 
-                3 -> BudgetScreen(
-                    viewModel = viewModel,
-                    onEditOverallBudget = { showOverallBudgetDialog = true },
-                    onEditCategoryBudget = { catBudget ->
-                        editingCategoryBudget = catBudget
+                        2 -> AnalyticsScreen(
+                            viewModel = viewModel
+                        )
+
+                        3 -> BudgetScreen(
+                            viewModel = viewModel,
+                            onEditOverallBudget = { showOverallBudgetDialog = true },
+                            onEditCategoryBudget = { catBudget ->
+                                editingCategoryBudget = catBudget
+                            }
+                        )
+
+                        4 -> MoreScreen(
+                            viewModel = viewModel,
+                            onOpenCategories = { showCategorySheet = true },
+                            onOpenAiChat = { showAiChatWindow = true }
+                        )
                     }
-                )
-
-                4 -> MoreScreen(
-                    viewModel = viewModel,
-                    onOpenCategories = { showCategorySheet = true },
-                    onOpenAiChat = { showAiChatWindow = true }
-                )
+                }
             }
 
             // Bong bóng Trợ Lý AI nổi trên màn hình (Floating Chat Bubble - Tự do kéo di chuyển)
@@ -252,33 +278,41 @@ fun MainApp(
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text("Thêm giao dịch", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("Chọn cách bạn muốn ghi nhận khoản thu chi", color = TextMuted)
-                androidx.compose.material3.OutlinedButton(
-                    onClick = {
-                        showEntryOptions = false
-                        showManualEntry = true
-                    },
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 560.dp)
+                        .padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(Icons.Default.EditNote, contentDescription = null)
-                    androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
-                    Text("Nhập thủ công")
-                }
-                androidx.compose.material3.Button(
-                    onClick = {
-                        showEntryOptions = false
-                        showReceiptCapture = true
-                    },
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                ) {
-                    Icon(Icons.Default.ReceiptLong, contentDescription = null)
-                    androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
-                    Text("Chụp hóa đơn")
+                    Text("Thêm giao dịch", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Chọn cách bạn muốn ghi nhận khoản thu chi", color = TextMuted)
+                    androidx.compose.material3.OutlinedButton(
+                        onClick = {
+                            showEntryOptions = false
+                            showManualEntry = true
+                        },
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                    ) {
+                        Icon(Icons.Default.EditNote, contentDescription = null)
+                        androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
+                        Text("Nhập thủ công")
+                    }
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            showEntryOptions = false
+                            showReceiptCapture = true
+                        },
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                    ) {
+                        Icon(Icons.Default.ReceiptLong, contentDescription = null)
+                        androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
+                        Text("Chụp hóa đơn")
+                    }
                 }
             }
         }
@@ -291,14 +325,19 @@ fun MainApp(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = null
         ) {
-            Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.94f)) {
-                ManualEntryScreen(
-                    viewModel = viewModel,
-                    onNavigateToCalendar = {
-                        showManualEntry = false
-                        viewModel.setCurrentTab(1)
-                    }
-                )
+            Box(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.94f),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(modifier = Modifier.fillMaxSize().widthIn(max = 680.dp)) {
+                    ManualEntryScreen(
+                        viewModel = viewModel,
+                        onNavigateToCalendar = {
+                            showManualEntry = false
+                            viewModel.setCurrentTab(1)
+                        }
+                    )
+                }
             }
         }
     }
@@ -313,15 +352,20 @@ fun MainApp(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = null
         ) {
-            Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.96f)) {
-                ReceiptCaptureScreen(
-                    viewModel = viewModel,
-                    onClose = { showReceiptCapture = false },
-                    onSaved = {
-                        showReceiptCapture = false
-                        viewModel.setCurrentTab(0)
-                    }
-                )
+            Box(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.96f),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(modifier = Modifier.fillMaxSize().widthIn(max = 680.dp)) {
+                    ReceiptCaptureScreen(
+                        viewModel = viewModel,
+                        onClose = { showReceiptCapture = false },
+                        onSaved = {
+                            showReceiptCapture = false
+                            viewModel.setCurrentTab(0)
+                        }
+                    )
+                }
             }
         }
     }
@@ -339,12 +383,15 @@ fun MainApp(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.92f)
+                    .fillMaxHeight(0.92f),
+                contentAlignment = Alignment.Center
             ) {
-                ChatAssistantScreen(
-                    viewModel = viewModel,
-                    onClose = { showAiChatWindow = false }
-                )
+                Box(modifier = Modifier.fillMaxSize().widthIn(max = 680.dp)) {
+                    ChatAssistantScreen(
+                        viewModel = viewModel,
+                        onClose = { showAiChatWindow = false }
+                    )
+                }
             }
         }
     }
@@ -361,19 +408,22 @@ fun MainApp(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.92f)
+                    .fillMaxHeight(0.92f),
+                contentAlignment = Alignment.Center
             ) {
-                CategoryScreen(
-                    viewModel = viewModel,
-                    onAddCategory = {
-                        editingCategory = null
-                        showAddCategoryDialog = true
-                    },
-                    onEditCategory = { cat ->
-                        editingCategory = cat
-                        showAddCategoryDialog = true
-                    }
-                )
+                Box(modifier = Modifier.fillMaxSize().widthIn(max = 680.dp)) {
+                    CategoryScreen(
+                        viewModel = viewModel,
+                        onAddCategory = {
+                            editingCategory = null
+                            showAddCategoryDialog = true
+                        },
+                        onEditCategory = { cat ->
+                            editingCategory = cat
+                            showAddCategoryDialog = true
+                        }
+                    )
+                }
             }
         }
     }

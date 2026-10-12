@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -108,13 +109,18 @@ fun AddTransactionSheet(
         containerColor = Color(0xFFF8FAFC),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFFCBD5E1)) }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 36.dp)
-                .verticalScroll(rememberScrollState())
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 640.dp)
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 36.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
             // Title
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -549,6 +555,7 @@ fun AddTransactionSheet(
                 )
             }
         }
+    }
     }
 
     // Dialog thêm danh mục nhanh ngay trong sheet

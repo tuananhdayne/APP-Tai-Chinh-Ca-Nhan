@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -214,149 +215,156 @@ fun CalendarScreen(
                 containerColor = CarbonSurfaceGlass.copy(alpha = 0.88f),
                 contentPadding = PaddingValues(12.dp)
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // Tiêu đề các thứ trong tuần
-                    val daysOfWeek = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        daysOfWeek.forEachIndexed { idx, dayName ->
-                            val isSunday = idx == 6
-                            Text(
-                                text = dayName,
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Center,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSunday) NeonCoral else TextMediumContrast
-                            )
-                        }
-                    }
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val isWide = maxWidth > 500.dp
+                    val cellHeight = if (isWide) 64.dp else 58.dp
+                    val dayFontSize = if (isWide) 13.5.sp else 12.5.sp
+                    val dotSize = if (isWide) 6.dp else 5.dp
 
-                    // Lưới các ô ngày
-                    val totalCells = startDayOfWeek + daysInMonth
-                    val totalRows = (totalCells + 6) / 7
-
-                    for (rowIndex in 0 until totalRows) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Tiêu đề các thứ trong tuần
+                        val daysOfWeek = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 2.dp),
+                                .padding(bottom = 8.dp),
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
-                            for (colIndex in 0..6) {
-                                val cellIndex = rowIndex * 7 + colIndex
-                                val dayNumber = cellIndex - startDayOfWeek + 1
+                            daysOfWeek.forEachIndexed { idx, dayName ->
+                                val isSunday = idx == 6
+                                Text(
+                                    text = dayName,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.Center,
+                                    fontSize = if (isWide) 13.sp else 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSunday) NeonCoral else TextMediumContrast
+                                )
+                            }
+                        }
 
-                                if (dayNumber in 1..daysInMonth) {
-                                    val isSelected = dayNumber == selectedDay
-                                    val isToday = year == todayYear && month == todayMonth && dayNumber == todayDay
-                                    val dayTx = transactionsByDay[dayNumber] ?: emptyList()
-                                    val hasIncome = dayTx.any { it.type == "INCOME" }
-                                    val hasExpense = dayTx.any { it.type == "EXPENSE" }
+                        // Lưới các ô ngày
+                        val totalCells = startDayOfWeek + daysInMonth
+                        val totalRows = (totalCells + 6) / 7
 
-                                    val scale by animateFloatAsState(
-                                        targetValue = if (isSelected) 1.05f else 1f,
-                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                                        label = "cellScale"
-                                    )
+                        for (rowIndex in 0 until totalRows) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                for (colIndex in 0..6) {
+                                    val cellIndex = rowIndex * 7 + colIndex
+                                    val dayNumber = cellIndex - startDayOfWeek + 1
 
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(58.dp)
-                                            .padding(2.dp)
-                                            .scale(scale)
-                                            .shadow(
-                                                elevation = if (isSelected) 4.dp else 1.dp,
-                                                shape = RoundedCornerShape(12.dp),
-                                                ambientColor = if (isSelected) NeonAzure.copy(alpha = 0.35f) else Color(0xFF64748B).copy(alpha = 0.10f)
-                                            )
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(
-                                                when {
-                                                    isSelected -> Brush.verticalGradient(
-                                                        colors = listOf(
-                                                            Color(0xFF2563EB),
-                                                            Color(0xFF1D4ED8)
+                                    if (dayNumber in 1..daysInMonth) {
+                                        val isSelected = dayNumber == selectedDay
+                                        val isToday = year == todayYear && month == todayMonth && dayNumber == todayDay
+                                        val dayTx = transactionsByDay[dayNumber] ?: emptyList()
+                                        val hasIncome = dayTx.any { it.type == "INCOME" }
+                                        val hasExpense = dayTx.any { it.type == "EXPENSE" }
+
+                                        val scale by animateFloatAsState(
+                                            targetValue = if (isSelected) 1.05f else 1f,
+                                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                            label = "cellScale"
+                                        )
+
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(cellHeight)
+                                                .padding(2.dp)
+                                                .scale(scale)
+                                                .shadow(
+                                                    elevation = if (isSelected) 4.dp else 1.dp,
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    ambientColor = if (isSelected) NeonAzure.copy(alpha = 0.35f) else Color(0xFF64748B).copy(alpha = 0.10f)
+                                                )
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(
+                                                    when {
+                                                        isSelected -> Brush.verticalGradient(
+                                                            colors = listOf(
+                                                                Color(0xFF2563EB),
+                                                                Color(0xFF1D4ED8)
+                                                            )
                                                         )
-                                                    )
-                                                    isToday -> Brush.verticalGradient(
-                                                        colors = listOf(
-                                                            Color(0xFFEFF6FF),
-                                                            Color(0xFFDBEAFE)
+                                                        isToday -> Brush.verticalGradient(
+                                                            colors = listOf(
+                                                                Color(0xFFEFF6FF),
+                                                                Color(0xFFDBEAFE)
+                                                            )
                                                         )
-                                                    )
-                                                    else -> Brush.verticalGradient(
-                                                        colors = listOf(
-                                                            Color.White,
-                                                            Color(0xFFF8FAFC)
+                                                        else -> Brush.verticalGradient(
+                                                            colors = listOf(
+                                                                Color.White,
+                                                                Color(0xFFF8FAFC)
+                                                            )
                                                         )
-                                                    )
-                                                }
-                                            )
-                                            .border(
-                                                width = if (isSelected) 1.5.dp else if (isToday) 1.dp else 0.8.dp,
-                                                brush = when {
-                                                    isSelected -> Brush.linearGradient(listOf(Color(0xFF2563EB), Color(0xFF1D4ED8)))
-                                                    isToday -> Brush.linearGradient(listOf(Color(0xFF3B82F6), Color(0xFF60A5FA)))
-                                                    else -> Brush.linearGradient(listOf(Color(0xFFE2E8F0), Color(0xFFCBD5E1)))
-                                                },
-                                                shape = RoundedCornerShape(12.dp)
-                                            )
-                                            .clickable { selectedDay = dayNumber }
-                                            .padding(top = 4.dp, bottom = 4.dp),
-                                        contentAlignment = Alignment.TopCenter
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.SpaceBetween,
-                                            modifier = Modifier.fillMaxSize()
+                                                    }
+                                                )
+                                                .border(
+                                                    width = if (isSelected) 1.5.dp else if (isToday) 1.dp else 0.8.dp,
+                                                    brush = when {
+                                                        isSelected -> Brush.linearGradient(listOf(Color(0xFF2563EB), Color(0xFF1D4ED8)))
+                                                        isToday -> Brush.linearGradient(listOf(Color(0xFF3B82F6), Color(0xFF60A5FA)))
+                                                        else -> Brush.linearGradient(listOf(Color(0xFFE2E8F0), Color(0xFFCBD5E1)))
+                                                    },
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
+                                                .clickable { selectedDay = dayNumber }
+                                                .padding(top = 4.dp, bottom = 4.dp),
+                                            contentAlignment = Alignment.TopCenter
                                         ) {
-                                            // Số ngày
-                                            Text(
-                                                text = "$dayNumber",
-                                                fontSize = 12.5.sp,
-                                                fontWeight = if (isSelected || isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
-                                                color = when {
-                                                    isSelected -> Color.White
-                                                    isToday -> Color(0xFF1D4ED8)
-                                                    colIndex == 6 -> NeonCoral
-                                                    else -> TextHighContrast
-                                                }
-                                            )
-
-                                            // Các hạt ngọc giao dịch (Jewel Dots)
-                                            Row(
-                                                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                                                verticalAlignment = Alignment.CenterVertically
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.SpaceBetween,
+                                                modifier = Modifier.fillMaxSize()
                                             ) {
-                                                if (hasIncome) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(5.dp)
-                                                            .clip(CircleShape)
-                                                            .background(NeonEmerald)
-                                                            .shadow(elevation = 2.dp, shape = CircleShape)
-                                                    )
-                                                }
-                                                if (hasExpense) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(5.dp)
-                                                            .clip(CircleShape)
-                                                            .background(NeonCoral)
-                                                            .shadow(elevation = 2.dp, shape = CircleShape)
-                                                    )
+                                                // Số ngày
+                                                Text(
+                                                    text = "$dayNumber",
+                                                    fontSize = dayFontSize,
+                                                    fontWeight = if (isSelected || isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                                    color = when {
+                                                        isSelected -> Color.White
+                                                        isToday -> Color(0xFF1D4ED8)
+                                                        colIndex == 6 -> NeonCoral
+                                                        else -> TextHighContrast
+                                                    }
+                                                )
+
+                                                // Các hạt ngọc giao dịch (Jewel Dots)
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    if (hasIncome) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(dotSize)
+                                                                .clip(CircleShape)
+                                                                .background(NeonEmerald)
+                                                                .shadow(elevation = 2.dp, shape = CircleShape)
+                                                        )
+                                                    }
+                                                    if (hasExpense) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(dotSize)
+                                                                .clip(CircleShape)
+                                                                .background(NeonCoral)
+                                                                .shadow(elevation = 2.dp, shape = CircleShape)
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
+                                    } else {
+                                        Spacer(modifier = Modifier.weight(1f))
                                     }
-                                } else {
-                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
                         }
