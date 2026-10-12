@@ -9,7 +9,7 @@
   * **Tier 1 (Input Guardrail):** JEV Guardrail (TypeSafe AI SystemOne) lọc câu hỏi ngoài lề (off-topic) siêu tốc, tiết kiệm 100% token.
   * **Tier 2 (Core Reasoning):** **Gemini 3.7 / 3.8 Flash** (`ag/gemini-3.7-flash-high`) qua Proxy & Ngrok Tunnel với Bearer API Key và hệ thống 16 Function Calling Tools.
   * **Vision Multimodal OCR:** Gemini Multimodal bóc tách hóa đơn tiếng Việt từ Camera / Thư viện ảnh.
-* **Trạng Thái Kiểm Thử:** **112 / 112 Unit Tests PASS 100%** (Thời gian thực thi: ~1.0 giây, 9 Test Suites)
+* **Trạng Thái Kiểm Thử:** **126 / 126 Unit Tests PASS 100%** (Thời gian thực thi: ~1.2 giây, 10 Test Suites bao gồm bộ kiểm thử vòng lặp AI)
 * **Trạng Thái Biên Dịch:** `BUILD SUCCESSFUL` (File APK Debug đã hoàn thành đóng gói: `app-debug.apk` ~21MB)
 * **Thời Điểm Cập Nhật:** Tháng 10/2026
 
@@ -22,6 +22,7 @@
 3. [Kiến Trúc Hệ Thống & Ngăn Xếp Công Nghệ (Tech Stack)](#3-kiến-trúc-hệ-thống--ngăn-xếp-công-nghệ)
 4. [Thiết Kế Cơ Sở Dữ Liệu SQLite / Room DB & Sơ Đồ ERD](#4-thiết-kế-cơ-sở-dữ-liệu-sqlite--room-db--sơ-đồ-erd)
 5. [Sơ Đồ Luồng Hoạt Động Tổng Thể Của Toàn Bộ Ứng Dụng](#5-sơ-đồ-luồng-hoạt-động-tổng-thể-của-toàn-bộ-ứng-dụng)
+   * 5.1. [Hệ Thống 6 Sơ Đồ Use Case Nghiệp Vụ (UML Use Case Diagrams)](#51-hệ-thống-6-sơ-đồ-use-case-nghiệp-vụ-uml-use-case-diagrams)
 6. [Chi Tiết 5 Phân Hệ Giao Diện & Tiện Ích Mở Rộng](#6-chi-tiết-5-phân-hệ-giao-diện--tiện-ích-mở-rộng)
 7. [Chuyên Sâu Kiến Trúc Trợ Lý AI: Phòng Thủ 2 Tầng & ReAct Engine](#7-chuyên-sâu-kiến-trúc-trợ-lý-ai-phòng-thủ-2-tầng--react-engine)
 8. [Phân Hệ Vision Multimodal: Quét Hóa Đơn Tự Động (Receipt OCR)](#8-phân-hệ-vision-multimodal-quét-hóa-đơn-tự-động-receipt-ocr)
@@ -29,7 +30,7 @@
 10. [Hệ Thống 16 Công Cụ Nghiệp Vụ (Function Calling Tools)](#10-hệ-thống-16-công-cụ-nghiệp-vụ-function-calling-tools)
 11. [Các Chốt Chặn Phòng Vệ Ngôn Ngữ & Dữ Liệu (Local Guardrails)](#11-các-chốt-chặn-phòng-vệ-ngôn-ngữ--dữ-liệu-local-guardrails)
 12. [Hệ Thống Biểu Đồ & Ma Trận Kiểm Thử Tự Động (Test Case Suite)](#12-hệ-thống-biểu-đồ--ma-trận-kiểm-thử-tự-động-test-case-suite)
-13. [Bảng Thống Kê Chi Tiết 112/112 Unit Test Cases (PASS 100%)](#13-bảng-thống-kê-chi-tiết-112112-unit-test-cases-pass-100)
+13. [Bảng Thống Kê Chi Tiết 126/126 Unit Test Cases (PASS 100%)](#13-bảng-thống-kê-chi-tiết-126126-unit-test-cases-pass-100)
 14. [Chỉ Số Hiệu Năng & Đo Lường Kỹ Thuật (Benchmarks)](#14-chỉ-số-hiệu-năng--đo-lường-kỹ-thuật-benchmarks)
 15. [Hướng Dẫn Triển Khai, Vận Hành & Khởi Chạy (DevOps & Testing)](#15-hướng-dẫn-triển-khai-vận-hành--khởi-chạy-devops--testing)
 16. [Kế Hoạch Mở Rộng & Đánh Giá Tổng Kết](#16-kế-hoạch-mở-rộng--đánh-giá-tổng-kết)
@@ -246,6 +247,388 @@ flowchart TD
     SaveConfirm --> NotifyUpdate
     NotifyUpdate --> Dashboard
 ```
+
+---
+
+## 5.1 HỆ THỐNG 6 SƠ ĐỒ USE CASE NGHIỆP VỤ (UML USE CASE DIAGRAMS)
+
+### 5.1.1 Sơ Đồ Use Case 1: Tổng Quát Toàn Bộ Hệ Thống (System Overview Use Case)
+
+#### A. Bảng Đặc Tả Tác Nhân Hệ Thống (Actors Matrix)
+| Tác Nhân (Actor) | Loại Tác Nhân | Vai Trò & Quyền Hạn Trong Hệ Thống |
+| :--- | :--- | :--- |
+| **Người Dùng (User)** | Primary Actor | Tác nhân chính trực tiếp vận hành ứng dụng: thêm thu chi, tra cứu lịch, xem biểu đồ phân tích, thiết lập ngân sách và duyệt các hành động do AI đề xuất. |
+| **Trợ Lý AI (AI Assistant)** | Supporting Actor | Tác nhân thông minh phân tích câu nói tự nhiên, bóc tách hóa đơn OCR, tổng hợp số liệu tài chính và sinh thẻ đề xuất giao dịch an toàn (Preview Cards). |
+| **Hệ Điều Hành Android** | System Platform | Cung cấp các dịch vụ hệ thống cấp thấp: Nhận dạng giọng nói (`SpeechRecognizer`), Khóa vân tay (`BiometricPrompt`), Quản lý tệp (`SAF`), Đồng bộ App Widget (`AppWidgetManager`). |
+
+#### B. Sơ Đồ Mermaid Use Case Tổng Quát
+```mermaid
+flowchart LR
+    %% Actors
+    User(["🧑 Người Dùng (Primary Actor)"])
+    AI(["🤖 Trợ Lý AI (Supporting Actor)"])
+    OS(["📱 Android OS (System Platform)"])
+
+    subgraph System["ỨNG DỤNG SỔ THU CHI & QUẢN LÝ TÀI CHÍNH CÁ NHÂN"]
+        direction TB
+
+        subgraph PKG1["1. Quản Lý Giao Dịch"]
+            UC_TX(["Ghi Chép Thu / Chi"])
+            UC_VOICE(["Nhập Liệu Giọng Nói (STT)"])
+            UC_OCR(["Quét Hóa Đơn Tự Động (OCR)"])
+        end
+
+        subgraph PKG2["2. Lịch & Lịch Sử Giao Dịch"]
+            UC_CAL(["Xem Lưới Lịch Dòng Tiền 7 Cột"])
+            UC_FILTER(["Tra Cứu & Lọc Giao Dịch"])
+        end
+
+        subgraph PKG3["3. Thống Kê Tài Chính"]
+            UC_ANALYTICS(["Phân Tích Cơ Cấu Thu / Chi"])
+            UC_TREND(["So Sánh Xu Hướng Dòng Tiền"])
+        end
+
+        subgraph PKG4["4. Quản Lý Ngân Sách"]
+            UC_BUDGET(["Thiết Lập Ngân Sách Tháng & Danh Mục"])
+            UC_ALERT(["Cảnh Báo Vượt Hạn Mức"])
+        end
+
+        subgraph PKG5["5. Cài Đặt & Tiện Ích"]
+            UC_CAT(["Tùy Biến Danh Mục (Icon, Màu, Tên)"])
+            UC_WIDGET(["Đồng Bộ App Widget Màn Hình Chính"])
+            UC_SEC(["Bảo Mật Vân Tay / Sinh Trắc Học"])
+            UC_EXPORT(["Sao Lưu & Xuất Báo Cáo CSV"])
+        end
+
+        subgraph PKG6["6. Trợ Lý AI Tự Động Hóa"]
+            UC_AI_CHAT(["Trò Chuyện & Phân Tích Tài Chính"])
+            UC_AI_CARD(["Duyệt Thẻ Hành Động An Toàn"])
+        end
+    end
+
+    User --> UC_TX
+    User --> UC_VOICE
+    User --> UC_OCR
+    User --> UC_CAL
+    User --> UC_FILTER
+    User --> UC_ANALYTICS
+    User --> UC_TREND
+    User --> UC_BUDGET
+    User --> UC_CAT
+    User --> UC_SEC
+    User --> UC_EXPORT
+    User --> UC_AI_CHAT
+    User --> UC_AI_CARD
+
+    AI --> UC_AI_CHAT
+    AI --> UC_AI_CARD
+    AI --> UC_ALERT
+
+    OS --> UC_VOICE
+    OS --> UC_OCR
+    OS --> UC_WIDGET
+    OS --> UC_SEC
+```
+
+---
+
+### 5.1.2 Sơ Đồ Use Case 2: Phân Hệ Quản Lý Giao Dịch (Transaction Management)
+
+#### A. Bảng Đặc Tả Chi Tiết Các Use Case Giao Dịch
+| Mã UC | Tên Use Case | Tác Nhân | Điều Kiện Tiên Quyết | Luồng Nghiệp Vụ Chính |
+| :---: | :--- | :--- | :--- | :--- |
+| **UC01** | Thêm Khoản Chi Tiêu | Người dùng | Người dùng mở form nhập | Chọn loại Chi tiêu $\rightarrow$ Nhập số tiền $\rightarrow$ Chọn danh mục $\rightarrow$ Ghi chú $\rightarrow$ Lưu SQLite. |
+| **UC02** | Thêm Khoản Thu Nhập | Người dùng | Người dùng mở form nhập | Chọn loại Thu nhập $\rightarrow$ Nhập số tiền $\rightarrow$ Chọn nguồn thu $\rightarrow$ Lưu SQLite. |
+| **UC03** | Bàn Phím Số & Phím Tắt | Người dùng | Đang nhập tiền | Chạm các nút cộng dồn nhanh (`+10k`, `+50k`, `+100k`, `+500k`, `+1M`) để cập nhật số tiền tức thì. |
+| **UC06** | Nhập Bằng Giọng Nói | Người dùng, OS | Cấp quyền Microphone | Nhấn nút Mic $\rightarrow$ Nói tiếng Việt $\rightarrow$ Nhận diện văn bản $\rightarrow$ NLP tự động bóc tách số tiền & danh mục. |
+| **UC07** | Quét Hóa Đơn Tự Động | Người dùng, OS | Cấp quyền Camera | Chụp hoặc chọn ảnh hóa đơn $\rightarrow$ Gemini Multimodal bóc tách danh sách mặt hàng $\rightarrow$ Lưu hàng loạt. |
+| **UC08** | Chỉnh Sửa Giao Dịch | Người dùng | Có giao dịch sẵn | Mở BottomSheet chỉnh sửa $\rightarrow$ Cập nhật tiền/ghi chú/danh mục $\rightarrow$ Lưu DB & tính lại số dư. |
+| **UC09** | Xóa Giao Dịch | Người dùng | Có giao dịch sẵn | Chọn xóa $\rightarrow$ Xác nhận hộp thoại $\rightarrow$ Xóa khỏi DB $\rightarrow$ Hoàn trả số dư ròng & hạn mức ngân sách. |
+| **UC10** | Duyệt Thẻ Đề Xuất AI | Người dùng, AI | AI sinh Preview Card | Người dùng kiểm tra thông tin $\rightarrow$ Nhấn nút tick xanh [Xác nhận lưu] $\rightarrow$ Thẻ chuyển CONFIRMED $\rightarrow$ Lưu DB. |
+
+#### B. Sơ Đồ Mermaid Phân Hệ Giao Dịch
+```mermaid
+flowchart LR
+    User(["🧑 Người Dùng"])
+    OS(["📱 Android OS"])
+    AI(["🤖 Trợ Lý AI"])
+
+    subgraph Sub_TX["PHÂN HỆ QUẢN LÝ GIAO DỊCH (TRANSACTION MANAGEMENT)"]
+        direction TB
+        UC_ADD_EXP(["UC01: Thêm Khoản Chi Tiêu"])
+        UC_ADD_INC(["UC02: Thêm Khoản Thu Nhập"])
+        UC_KEYPAD(["UC03: Nhập Nhanh Số Tiền Bằng Phím Tắt"])
+        UC_SEL_CAT(["UC04: Chọn Danh Mục Giao Dịch"])
+        UC_NOTE_DATE(["UC05: Nhập Ghi Chú & Ngày Giao Dịch"])
+        UC_VOICE(["UC06: Nhập Liệu Giọng Nói (STT)"])
+        UC_OCR(["UC07: Quét Hóa Đơn Tự Động (OCR)"])
+        UC_EDIT_TX(["UC08: Chỉnh Sửa Giao Dịch"])
+        UC_DEL_TX(["UC09: Xóa Giao Dịch"])
+        UC_APPROVE_AI(["UC10: Phê Duyệt Thẻ Đề Xuất Từ AI"])
+
+        UC_VAL(["UC11: Kiểm Tra Hợp Lệ Dữ Liệu"]):::internal
+        UC_WARN(["UC12: Cảnh Báo Chạm/Vượt Hạn Mức"]):::internal
+        UC_RESTORE(["UC13: Hoàn Lại Số Dư & Ngân Sách"]):::internal
+    end
+
+    User --> UC_ADD_EXP
+    User --> UC_ADD_INC
+    User --> UC_VOICE
+    User --> UC_OCR
+    User --> UC_EDIT_TX
+    User --> UC_DEL_TX
+    User --> UC_APPROVE_AI
+
+    OS --> UC_VOICE
+    OS --> UC_OCR
+    AI --> UC_APPROVE_AI
+
+    UC_ADD_EXP -.->|"<<include>>"| UC_VAL
+    UC_ADD_INC -.->|"<<include>>"| UC_VAL
+    UC_ADD_EXP -.->|"<<include>>"| UC_SEL_CAT
+    UC_ADD_INC -.->|"<<include>>"| UC_SEL_CAT
+    UC_ADD_EXP -.->|"<<include>>"| UC_NOTE_DATE
+    UC_ADD_INC -.->|"<<include>>"| UC_NOTE_DATE
+
+    UC_KEYPAD -.->|"<<extend>>"| UC_ADD_EXP
+    UC_KEYPAD -.->|"<<extend>>"| UC_ADD_INC
+
+    UC_ADD_EXP -.->|"<<extend>>"| UC_WARN
+
+    UC_DEL_TX -.->|"<<include>>"| UC_RESTORE
+```
+
+* **Quan hệ `<<include>>`:**
+  * Thêm chi tiêu (UC01) và Thu nhập (UC02) bắt buộc bao hàm: Kiểm tra tính hợp lệ dữ liệu (UC11, số tiền > 0), Chọn danh mục (UC04) và Gán ngày ghi nhận (UC05).
+  * Xóa giao dịch (UC09) bắt buộc bao hàm Hoàn lại số dư ròng và ngân sách (UC13).
+* **Quan hệ `<<extend>>`:**
+  * Bàn phím số mở rộng (UC03) mở rộng cho quá trình nhập số tiền.
+  * Cảnh báo vượt hạn mức (UC12) mở rộng cho UC01 khi phát hiện tổng chi tiêu chạm hoặc vượt ngân sách tháng.
+
+---
+
+### 5.1.3 Sơ Đồ Use Case 3: Phân Hệ Lịch & Lịch Sử Giao Dịch (Calendar & History)
+
+#### A. Bảng Đặc Tả Use Case Lịch & Lịch Sử
+| Mã UC | Tên Use Case | Tác Nhân | Mô Tả Luồng Nghiệp Vụ |
+| :---: | :--- | :--- | :--- |
+| **UC14** | Xem Lưới Lịch 7 Cột | Người dùng | Render ma trận 7 cột theo tháng, hiển thị chấm tròn tổng thu (xanh lục) và tổng chi (đỏ) dưới từng ngày. |
+| **UC15** | Xem Dòng Tiền Tháng | Người dùng | Thanh tóm tắt đầu trang hiển thị: Tổng thu tháng, Tổng chi tháng và Số dư ròng tích lũy. |
+| **UC16** | Xem Giao Dịch Ngày | Người dùng | Chạm vào một ngày cụ thể trên lịch để hiển thị danh sách tất cả các khoản thu chi phát sinh trong ngày đó. |
+| **UC17** | Chuyển Đổi Tháng | Người dùng | Nhấn nút mũi tên sang trái/phải hoặc chọn năm để tra cứu lịch sử các tháng trước hoặc tháng sau. |
+| **UC18** | Tìm Kiếm Từ Khóa | Người dùng | Nhập từ khóa ghi chú (ví dụ: *"xăng"*, *"buffet"*, *"tiền phòng"*) để lọc các giao dịch khớp nội dung. |
+| **UC19** | Lọc Thu / Chi | Người dùng | Chuyển bộ lọc hiển thị: Tất cả giao dịch, Chỉ hiển thị Chi tiêu, hoặc Chỉ hiển thị Thu nhập. |
+| **UC20** | Xem Chi Tiết Giao Dịch | Người dùng | Chạm vào một dòng giao dịch để mở BottomSheet hiển thị thời gian, số tiền, danh mục, icon và ghi chú. |
+| **UC21** | Chỉnh Sửa Từ Lịch | Người dùng | Mở form chỉnh sửa trực tiếp từ BottomSheet của lịch. |
+| **UC22** | Xóa Từ Lịch | Người dùng | Xóa giao dịch từ BottomSheet, hệ thống tự động tính lại số tiền thu chi trên ô lịch ngày (UC23). |
+
+#### B. Sơ Đồ Mermaid Phân Hệ Lịch & Lịch Sử
+```mermaid
+flowchart LR
+    User(["🧑 Người Dùng"])
+
+    subgraph Sub_CAL["PHÂN HỆ LỊCH VÀ LỊCH SỬ GIAO DỊCH (CALENDAR & HISTORY)"]
+        direction TB
+        UC_CAL_VIEW(["UC14: Xem Lưới Lịch Tháng 7 Cột"])
+        UC_CAL_SUM(["UC15: Xem Tổng Thu, Tổng Chi & Số Dư Tháng"])
+        UC_CAL_DAY(["UC16: Chọn Ngày Xem Giao Dịch Trong Ngày"])
+        UC_CAL_NAV(["UC17: Chuyển Đổi Tháng (Trước / Sau / Hiện Tại)"])
+        UC_CAL_SEARCH(["UC18: Tìm Kiếm Giao Dịch Theo Từ Khóa"])
+        UC_CAL_FILTER(["UC19: Lọc Giao Dịch Theo Loại (Thu / Chi)"])
+        UC_CAL_DETAIL(["UC20: Xem Chi Tiết Giao Dịch (BottomSheet)"])
+        UC_CAL_EDIT(["UC21: Chỉnh Sửa Giao Dịch Từ Lịch"])
+        UC_CAL_DEL(["UC22: Xóa Giao Dịch Từ Lịch"])
+
+        UC_CAL_RECALC(["UC23: Cập Nhật Chỉ Số Lịch & Số Dư"]):::internal
+    end
+
+    User --> UC_CAL_VIEW
+    User --> UC_CAL_SUM
+    User --> UC_CAL_DAY
+    User --> UC_CAL_NAV
+    User --> UC_CAL_SEARCH
+    User --> UC_CAL_FILTER
+    User --> UC_CAL_DETAIL
+
+    UC_CAL_VIEW -.->|"<<include>>"| UC_CAL_SUM
+    UC_CAL_DAY -.->|"<<extend>>"| UC_CAL_VIEW
+    UC_CAL_DETAIL -.->|"<<extend>>"| UC_CAL_EDIT
+    UC_CAL_DETAIL -.->|"<<extend>>"| UC_CAL_DEL
+    UC_CAL_DEL -.->|"<<include>>"| UC_CAL_RECALC
+```
+
+* **Quan hệ `<<include>>`:** Xem lưới lịch (UC14) luôn bao hàm hiển thị tổng kết dòng tiền tháng (UC15); Thao tác xóa giao dịch (UC22) bắt buộc kích hoạt cập nhật lại các chỉ số tổng hợp trên ô ngày tương ứng (UC23).
+* **Quan hệ `<<extend>>`:** Chạm vào ô ngày mở rộng hiển thị danh sách ngày (UC16); Xem BottomSheet (UC20) mở rộng cho phép thực hiện chỉnh sửa (UC21) hoặc xóa (UC22).
+
+---
+
+### 5.1.4 Sơ Đồ Use Case 4: Phân Hệ Thống Kê Tài Chính (Financial Analytics)
+
+#### A. Bảng Đặc Tả Use Case Thống Kê
+| Mã UC | Tên Use Case | Tác Nhân | Mô Tả Luồng Nghiệp Vụ |
+| :---: | :--- | :--- | :--- |
+| **UC24** | Xem Dòng Tiền Tổng Quan | Người dùng | Thẻ tổng quan hiển thị 3 chỉ số lớn: Tổng thu tháng, Tổng chi tháng và Số dư ròng kèm màu sắc trực quan. |
+| **UC25** | Chuyển Đổi Chi / Thu | Người dùng | Nút gạt chuyển đổi (Segmented Control) cho phép xem phân tích riêng về cơ cấu **Chi tiêu** hoặc cơ cấu **Thu nhập**. |
+| **UC26** | Biểu Đồ Tròn (Donut Chart) | Người dùng | Vẽ biểu đồ tròn thể hiện tỷ trọng phần trăm của từng nhóm danh mục với màu sắc tương ứng. |
+| **UC27** | Danh Sách Cơ Cấu % | Người dùng | Bảng phân tích chi tiết: Icon, Tên danh mục, Số tiền đã tiêu/thu và tỷ lệ phần trăm đóng góp. |
+| **UC28** | Biểu Đồ Xu Hướng | Người dùng | Biểu đồ thanh đối chiếu trực quan cán cân tiền vào và tiền ra trong kỳ. |
+| **UC29** | Xếp Hạng Top Chi Tiêu | Người dùng | Liệt kê các khoản chi tiêu có giá trị lớn nhất trong tháng để nhận diện khoản chi đột biến. |
+| **UC30** | Chọn Mốc Thời Gian | Người dùng | Lựa chọn tháng hoặc năm cần thống kê để đối chiếu dữ liệu lịch sử. |
+| **UC31** | Xem Giao Dịch Thành Phần | Người dùng | Nhấn vào một lát cắt trên biểu đồ Donut để xem danh sách các giao dịch cụ thể cấu thành nên danh mục đó. |
+
+#### B. Sơ Đồ Mermaid Phân Hệ Thống Kê
+```mermaid
+flowchart LR
+    User(["🧑 Người Dùng"])
+
+    subgraph Sub_STAT["PHÂN HỆ THỐNG KÊ TÀI CHÍNH (FINANCIAL ANALYTICS)"]
+        direction TB
+        UC_STAT_FLOW(["UC24: Xem Tổng Quan Dòng Tiền Tháng"])
+        UC_STAT_SWITCH(["UC25: Chuyển Đổi Xem Chi Tiêu Hoặc Thu Nhập"])
+        UC_STAT_DONUT(["UC26: Xem Biểu Đồ Tròn (Donut Chart) Tỷ Trọng"])
+        UC_STAT_LIST(["UC27: Xem Danh Sách Cơ Cấu % Từng Danh Mục"])
+        UC_STAT_BAR(["UC28: Xem Biểu Đồ So Sánh Xu Hướng Thu - Chi"])
+        UC_STAT_TOP(["UC29: Xem Xếp Hạng Top Chi Tiêu Lớn Nhất"])
+        UC_STAT_PERIOD(["UC30: Chọn Mốc Thời Gian Phân Tích (Tháng / Năm)"])
+        UC_STAT_DRILL(["UC31: Chạm Lát Biểu Đồ Xem Giao Dịch Thành Phần"])
+
+        UC_STAT_CALC(["UC32: Tính Toán Tỷ Trọng Danh Mục"]):::internal
+    end
+
+    User --> UC_STAT_FLOW
+    User --> UC_STAT_SWITCH
+    User --> UC_STAT_DONUT
+    User --> UC_STAT_BAR
+    User --> UC_STAT_TOP
+    User --> UC_STAT_PERIOD
+
+    UC_STAT_DONUT -.->|"<<include>>"| UC_STAT_CALC
+    UC_STAT_DONUT -.->|"<<include>>"| UC_STAT_LIST
+    UC_STAT_SWITCH -.->|"<<include>>"| UC_STAT_CALC
+    UC_STAT_DONUT -.->|"<<extend>>"| UC_STAT_DRILL
+```
+
+* **Quan hệ `<<include>>`:** Hiển thị biểu đồ Donut (UC26) và chuyển đổi chế độ xem (UC25) bắt buộc bao hàm tính toán lại tỷ trọng phần trăm từ SQLite (UC32) và kết xuất danh sách chi tiết (UC27).
+* **Quan hệ `<<extend>>`:** Chạm vào biểu đồ (UC26) mở rộng hành động xem danh sách giao dịch thành phần (UC31).
+
+---
+
+### 5.1.5 Sơ Đồ Use Case 5: Phân Hệ Quản Lý Ngân Sách (Budget Management)
+
+#### A. Bảng Đặc Tả Use Case Ngân Sách
+| Mã UC | Tên Use Case | Tác Nhân | Mô Tả Luồng Nghiệp Vụ |
+| :---: | :--- | :--- | :--- |
+| **UC33** | Xem Ngân Sách Tổng Thể | Người dùng | Hiển thị: Tổng hạn mức chi tiêu tháng, Tổng số tiền đã chi, Số tiền còn lại và phần trăm hoàn thành. |
+| **UC34** | Đặt Ngân Sách Tổng | Người dùng | Nhập số tiền hạn mức chi tiêu chung của tháng và lưu vào bảng `tb_settings`. |
+| **UC35** | Xem Tiến Độ Ngân Sách Danh Mục | Người dùng | Danh sách tất cả các danh mục kèm thanh tiến độ riêng, số tiền đã tiêu, hạn mức và trạng thái. |
+| **UC36** | Đặt Hạn Mức Từng Danh Mục | Người dùng | Thiết lập hạn mức chi tiêu tối đa cho từng nhóm (Ăn uống, Đi lại, Mua sắm...). |
+| **UC37** | Theo Dõi Thanh Tiến Độ | Người dùng | Thanh Progress Bar trực quan tự động đổi màu theo tỷ lệ: Xanh lục ($<80\%$), Cam ($80\% - 100\%$), Đỏ ($>100\%$). |
+| **UC38** | Cảnh Báo Chạm Ngưỡng (80%) | Hệ thống | Hiển thị thông báo màu Cam cảnh báo người dùng đã chi tiêu gần hết hạn mức cho phép. |
+| **UC39** | Cảnh Báo Vượt Hạn Mức (>100%) | Hệ thống | Đổi màu toàn bộ thẻ sang Đỏ Báo Động kèm nhãn **ĐÃ VƯỢT HẠN MỨC** và số tiền vượt cụ thể. |
+| **UC40** | Đề Xuất Điều Chỉnh Từ AI | Người dùng, AI | Khi danh mục bị vượt ngân sách, Trợ lý AI tự động sinh thẻ đề xuất nâng hạn mức phù hợp. |
+
+#### B. Sơ Đồ Mermaid Phân Hệ Ngân Sách
+```mermaid
+flowchart LR
+    User(["🧑 Người Dùng"])
+    AI(["🤖 Trợ Lý AI"])
+
+    subgraph Sub_BUD["PHÂN HỆ QUẢN LÝ NGÂN SÁCH (BUDGET MANAGEMENT)"]
+        direction TB
+        UC_BUD_OVERVIEW(["UC33: Xem Ngân Sách Tổng Thể Tháng"])
+        UC_BUD_SET_TOTAL(["UC34: Thiết Lập Hạn Mức Ngân Sách Tổng"])
+        UC_BUD_CAT_LIST(["UC35: Xem Danh Sách Tiến Độ Ngân Sách Danh Mục"])
+        UC_BUD_SET_CAT(["UC36: Thiết Lập Hạn Mức Từng Danh Mục Riêng"])
+        UC_BUD_PROGRESS(["UC37: Theo Dõi Thanh Tiến Độ (Progress Bar)"])
+        UC_BUD_WARN_75(["UC38: Cảnh Báo Chạm Ngưỡng (80% - Màu Cam)"])
+        UC_BUD_OVER_100(["UC39: Cảnh Báo Vượt Hạn Mức (>100% - Màu Đỏ)"])
+        UC_BUD_AI_SUGGEST(["UC40: Nhận Đề Xuất Điều Chỉnh Ngân Sách Từ AI"])
+
+        UC_BUD_PERSIST(["UC41: Lưu Thiết Lập Vào Bảng Settings & Categories"]):::internal
+    end
+
+    User --> UC_BUD_OVERVIEW
+    User --> UC_BUD_SET_TOTAL
+    User --> UC_BUD_CAT_LIST
+    User --> UC_BUD_SET_CAT
+    User --> UC_BUD_PROGRESS
+    User --> UC_BUD_AI_SUGGEST
+
+    AI --> UC_BUD_AI_SUGGEST
+
+    UC_BUD_SET_TOTAL -.->|"<<include>>"| UC_BUD_PERSIST
+    UC_BUD_SET_CAT -.->|"<<include>>"| UC_BUD_PERSIST
+
+    UC_BUD_PROGRESS -.->|"<<extend>>"| UC_BUD_WARN_75
+    UC_BUD_PROGRESS -.->|"<<extend>>"| UC_BUD_OVER_100
+    UC_BUD_OVER_100 -.->|"<<extend>>"| UC_BUD_AI_SUGGEST
+```
+
+* **Quan hệ `<<include>>`:** Thiết lập ngân sách tổng (UC34) và ngân sách danh mục (UC36) bắt buộc bao hàm ghi nhận cấu hình vào cơ sở dữ liệu (UC41).
+* **Quan hệ `<<extend>>`:** Theo dõi tiến độ (UC37) mở rộng kích hoạt trạng thái Cảnh báo màu Cam (UC38) hoặc Báo động Đỏ vượt hạn mức (UC39); Khi bị vượt hạn mức, mở rộng cho AI tự động sinh đề xuất nâng ngân sách (UC40).
+
+---
+
+### 5.1.6 Sơ Đồ Use Case 6: Phân Hệ Cài Đặt & Tiện Ích (Settings & Utilities)
+
+#### A. Bảng Đặc Tả Use Case Cài Đặt & Tiện Ích
+| Mã UC | Tên Use Case | Tác Nhân | Mô Tả Luồng Nghiệp Vụ |
+| :---: | :--- | :--- | :--- |
+| **UC42** | Quản Lý Danh Mục | Người dùng | Xem danh sách danh mục thu/chi, thêm danh mục mới, chỉnh sửa hoặc xóa danh mục không dùng. |
+| **UC43** | Tùy Biến Thuộc Tính | Người dùng | Chọn biểu tượng Emoji trực quan, chọn mã màu sắc hiển thị (HEX Color Picker), gán hạn mức mặc định. |
+| **UC44** | Khóa Sinh Trắc Học | Người dùng, OS | Bật/tắt bảo vệ mở ứng dụng bằng cảm biến vân tay qua `BiometricPrompt` của Android. |
+| **UC45** | Chuyển Đổi Giao Diện | Người dùng | Lựa chọn chế độ hiển thị: Giao diện Sáng (Light Theme), Giao diện Tối (Dark Theme) hoặc Theo hệ thống. |
+| **UC46** | Xem App Widget Màn Hình Chính | Người dùng, OS | Widget ngoài màn hình chính Android hiển thị: Số dư ròng tháng, Tổng thu, Tổng chi và phím tắt `[+ Ghi Chép]`. |
+| **UC47** | Tự Động Đồng Bộ Widget | Hệ thống OS | Bất kỳ khi nào có giao dịch mới (thêm, sửa, xóa), hệ thống phát Broadcast cập nhật Widget tức thì. |
+| **UC48** | Xuất Báo Cáo CSV | Người dùng, OS | Kết xuất toàn bộ lịch sử giao dịch ra định dạng file `.csv` chuẩn UTF-8 qua Android SAF. |
+| **UC49** | Sao Lưu & Phục Hồi DB | Người dùng | Sao lưu tệp SQLite cục bộ vào bộ nhớ an toàn và phục hồi lại dữ liệu khi đổi thiết bị. |
+| **UC50** | Giới Thiệu Ứng Dụng | Người dùng | Xem phiên bản phát hành, triết lý thiết kế bảo mật Offline-First và hướng dẫn sử dụng ứng dụng **Sổ Thu Chi**. |
+
+#### B. Sơ Đồ Mermaid Phân Hệ Cài Đặt & Tiện Ích
+```mermaid
+flowchart LR
+    User(["🧑 Người Dùng"])
+    OS(["📱 Android OS"])
+
+    subgraph Sub_MORE["PHÂN HỆ CÀI ĐẶT VÀ TIỆN ÍCH (SETTINGS & UTILITIES)"]
+        direction TB
+        UC_SET_CAT_CRUD(["UC42: Quản Lý Danh Mục (Thêm, Sửa, Xóa)"])
+        UC_SET_CAT_PROP(["UC43: Tùy Biến Tên, Emoji, Mã Màu & Hạn Mức"])
+        UC_SET_BIOMETRIC(["UC44: Khóa Bảo Mật Bằng Vân Tay (Biometric)"])
+        UC_SET_THEME(["UC45: Cài Đặt Giao Diện Sáng / Tối"])
+        UC_SET_WIDGET_VIEW(["UC46: Xem Số Dư & Phím Tắt Trên App Widget"])
+        UC_SET_WIDGET_SYNC(["UC47: Tự Động Đồng Bộ Dữ Liệu App Widget"])
+        UC_SET_EXPORT(["UC48: Xuất Dữ Liệu Ra File CSV / Excel"])
+        UC_SET_BACKUP(["UC49: Sao Lưu & Phục Hồi Dữ Liệu SQLite"])
+        UC_SET_ABOUT(["UC50: Xem Thông Tin Ứng Dụng Sổ Thu Chi"])
+
+        UC_OS_BIO(["UC51: Xác Thực BiometricPrompt"]):::internal
+        UC_OS_SAF(["UC52: Quản Lý Tệp Storage Access Framework"]):::internal
+    end
+
+    User --> UC_SET_CAT_CRUD
+    User --> UC_SET_BIOMETRIC
+    User --> UC_SET_THEME
+    User --> UC_SET_WIDGET_VIEW
+    User --> UC_SET_EXPORT
+    User --> UC_SET_BACKUP
+    User --> UC_SET_ABOUT
+
+    OS --> UC_SET_BIOMETRIC
+    OS --> UC_SET_WIDGET_VIEW
+    OS --> UC_SET_WIDGET_SYNC
+    OS --> UC_SET_EXPORT
+
+    UC_SET_CAT_CRUD -.->|"<<include>>"| UC_SET_CAT_PROP
+    UC_SET_BIOMETRIC -.->|"<<include>>"| UC_OS_BIO
+    UC_SET_EXPORT -.->|"<<include>>"| UC_OS_SAF
+```
+
+* **Quan hệ `<<include>>`:**
+  * Quản lý danh mục (UC42) bao hàm tùy biến thuộc tính định danh (UC43: Emoji, màu HEX, tên, hạn mức).
+  * Kích hoạt bảo mật vân tay (UC44) bao hàm gọi API sinh trắc học hệ thống Android (UC51).
+  * Xuất file CSV (UC48) bao hàm tương tác với bộ khung quản lý lưu trữ Android Storage Access Framework (UC52).
+* **Cơ chế nền tảng:** Mỗi khi có thay đổi trong SQLite qua bất kỳ phân hệ nào, hệ thống tự động bắn broadcast cập nhật trạng thái mới nhất lên App Widget ngoài màn hình chính (UC47).
 
 ---
 
