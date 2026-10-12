@@ -583,10 +583,28 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
         }
 
         /**
+         * Chuyển chuỗi tiếng Việt có dấu thành không dấu (lowercase, bỏ dấu thanh, đ -> d)
+         * để đối chiếu thông minh ngay cả khi người dùng gõ không dấu (VD: "an pho" -> "ăn phở", "do xang" -> "đổ xăng")
+         */
+        fun removeDiacritics(str: String): String {
+            if (str.isBlank()) return ""
+            val nfd = java.text.Normalizer.normalize(str, java.text.Normalizer.Form.NFD)
+            val noMarks = Regex("\\p{InCombiningDiacriticalMarks}+").replace(nfd, "")
+            return noMarks
+                .replace('đ', 'd')
+                .replace('Đ', 'd')
+                .lowercase()
+        }
+
+        /**
          * Phân loại nhanh ý định người dùng là Thu nhập (INCOME) hay Chi tiêu (EXPENSE).
          */
         fun isIncomeIntent(text: String): Boolean {
             val lower = text.lowercase().trim()
+            val lowerNo = removeDiacritics(lower)
+            val tokens = lower.split(" ", ",", ".", "!", "?", "-", ":", ";", "/", "\n").filter { it.isNotBlank() }
+            val tokensNo = lowerNo.split(" ", ",", ".", "!", "?", "-", ":", ";", "/", "\n").filter { it.isNotBlank() }
+
             val incomeKeywords = listOf(
                 "nhận lương", "bắn lương", "lương", "thưởng", "thu nhập", "cổ tức", "tiền lãi",
                 "lãi suất", "ting ting", "được cho", "được tặng", "kiếm được", "nhận tiền", "bán",
@@ -596,14 +614,29 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                 "chi", "tiêu", "hết", "mua", "ăn", "uống", "đóng", "trả", "nộp", "thanh toán",
                 "tốn", "mất", "đổ xăng", "gửi xe", "vé", "thuê", "phí", "sắm"
             )
-            val incomeScore = incomeKeywords.count { lower.contains(it) }
-            val expenseScore = expenseKeywords.count { lower.contains(it) }
+            val incomeScore = incomeKeywords.count { kw ->
+                val kwNo = removeDiacritics(kw)
+                if (kwNo.contains(" ")) {
+                    lower.contains(kw) || lowerNo.contains(kwNo)
+                } else {
+                    tokens.contains(kw) || tokensNo.contains(kwNo)
+                }
+            }
+            val expenseScore = expenseKeywords.count { kw ->
+                val kwNo = removeDiacritics(kw)
+                if (kwNo.contains(" ")) {
+                    lower.contains(kw) || lowerNo.contains(kwNo)
+                } else {
+                    tokens.contains(kw) || tokensNo.contains(kwNo)
+                }
+            }
             return incomeScore > expenseScore
         }
 
         /**
          * Đối chiếu toàn văn câu nói của người dùng với danh sách danh mục có sẵn trong DB
-         * để tìm ra danh mục tương thích nhất.
+         * để tìm ra danh mục tương thích nhất (hỗ trợ cả tiếng Việt có dấu và không dấu).
+         * Ưu tiên tuyệt đối danh mục chuẩn có sẵn, chỉ fallback về "Khác" khi nội dung hoàn toàn không khớp.
          */
         fun matchBestCategory(
             userText: String,
@@ -613,7 +646,9 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
             val targetCats = availableCategories.filter { it.type.equals(type, ignoreCase = true) }
                 .ifEmpty { availableCategories }
             if (targetCats.isEmpty()) return Pair(null, false)
+
             val text = userText.lowercase().trim()
+            val textNo = removeDiacritics(text)
 
             if (text.isNotBlank()) {
                 val semanticMap: Map<String, List<String>> = if (type == "EXPENSE") {
@@ -624,13 +659,14 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                             "lẩu", "đồ ăn", "trà sữa", "thịt", "rau", "gà", "cá", "hủ tiếu", "chè", "đói", "bánh cuốn",
                             "bánh", "buffet", "kem", "cháo", "xôi", "trái cây", "hoa quả", "trà đá", "nước mía", "bánh bao",
                             "chợ", "đi chợ", "thực phẩm", "rau củ", "thịt cá", "tà tưa", "cành", "mì tôm", "mì gói",
-                            "bún bò", "bún đậu", "cơm tấm", "bánh xèo", "sữa chua", "pizza", "pizaa", "kfc", "lotteria", "gà rán", "burger"
+                            "bún bò", "bún đậu", "cơm tấm", "bánh xèo", "sữa chua", "pizza", "pizaa", "kfc", "lotteria", "gà rán", "burger",
+                            "hải sản", "ốc", "lẩu nướng", "bbq", "đồ ngọt", "trà chanh", "bánh tráng", "nem", "giò", "ăn phở"
                         ),
                         "Đi lại" to listOf(
                             "xăng", "xe", "grab", "grab bike", "bike", "đi làm", "taxi", "bắt taxi", "đi taxi", "gửi xe", "vé xe", "bến xe", "sửa xe", "bảo dưỡng",
                             "vé tàu", "vé máy bay", "be", "gojek", "xanh sm", "cầu đường", "rửa xe", "nhớt", "xăng xe", "săm lốp", "vá xe",
                             "dầu nhớt", "máy bay", "tàu hỏa", "xe bus", "xe buýt", "phí cầu đường", "grab car", "be car", "be bike",
-                            "trạm thu phí", "thu phí", "cao tốc", "bot", "vé cầu đường", "phí đường bộ"
+                            "trạm thu phí", "thu phí", "cao tốc", "bot", "vé cầu đường", "phí đường bộ", "đổ xăng", "thay nhớt"
                         ),
                         "Nhà ở" to listOf(
                             "tiền nhà", "tiền điện", "tiền nước", "mạng", "wifi", "tiền phòng", "phòng trọ", "tiền trọ",
@@ -649,8 +685,8 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                         ),
                         "Giải trí" to listOf(
                             "cà phê", "cafe", "uống cà phê", "đi cà phê", "highland", "starbucks", "chém gió", "tụ tập",
-                            "phim", "cinema", "nhậu", "bida", "karaoke", "du lịch", "chơi", "kịch", "xem kịch", "kịch nghệ",
-                            "game", "nạp game", "bar", "pub", "hát", "nghỉ dưỡng", "vé xem phim", "vé ca nhạc", "bơi",
+                            "phim", "cinema", "nhậu", "nhậu nhẹt", "bida", "karaoke", "du lịch", "chơi", "kịch", "xem kịch", "kịch nghệ",
+                            "game", "nạp game", "bar", "pub", "hát", "nghỉ dưỡng", "vé xem phim", "vé ca nhạc", "đi bơi", "hồ bơi", "vé bơi",
                             "bia hơi", "cafe muối", "uống cafe", "rạp chiếu phim", "nạp thẻ", "garena", "bowling", "hát hò",
                             "hát karaoke", "đi hát karaoke", "đi hát", "phòng hát"
                         ),
@@ -659,17 +695,17 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                             "bệnh viện", "xét nghiệm", "viện phí", "tiêm", "panadol", "khám răng", "nha sĩ",
                             "mua thuốc", "nhà thuốc", "pharmacity", "long châu", "hạ sốt", "hapacol", "kháng sinh",
                             "khám bệnh", "nhổ răng", "nhổ răng khôn", "lấy cao răng", "đi khám", "tiền khám",
-                            "khám tổng quát", "phòng khám", "chữa bệnh", "đi viện"
+                            "khám tổng quát", "phòng khám", "chữa bệnh", "đi viện", "thuốc men", "khám mắt", "kính cận"
                         ),
                         "Giáo dục" to listOf(
                             "sách", "học", "khóa học", "học phí", "bút", "vở", "giáo trình", "tiếng anh",
                             "trường", "lớp", "đào tạo", "gia sư", "dụng cụ học tập", "tiền học", "sách giáo khoa",
-                            "sách vở", "dạy kèm", "ielts", "toeic"
+                            "sách vở", "dạy kèm", "ielts", "toeic", "quỹ lớp"
                         ),
                         "Hiếu hỉ" to listOf(
                             "cưới", "hỏi", "sinh nhật", "mừng", "thăm", "thăm người ốm", "thăm bệnh", "thăm ốm",
                             "giỏ hoa quả", "tiệc", "phúng", "ma", "đám ma", "đám cưới", "tiệc cưới", "mừng cưới",
-                            "phong bì cưới", "đầy tháng", "quà biếu", "lì xì", "phong bì", "chúc mừng", "thôi nôi", "viếng"
+                            "phong bì cưới", "đầy tháng", "quà biếu", "lì xì", "phong bì", "chúc mừng", "thôi nôi", "viếng", "đám tang"
                         ),
                         "Tiết kiệm" to listOf(
                             "tiết kiệm", "gửi bank", "sổ tiết kiệm", "tích lũy", "gửi tiết kiệm", "gửi tích lũy",
@@ -692,34 +728,58 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                 var bestCategory: Category? = null
                 var maxScore = 0
 
-                val textTokens = text.split(" ", ",", ".", "!", "?", "-", ":", ";").filter { it.isNotBlank() }
+                val textTokens = text.split(" ", ",", ".", "!", "?", "-", ":", ";", "/", "\n").filter { it.isNotBlank() }
+                val textNoTokens = textNo.split(" ", ",", ".", "!", "?", "-", ":", ";", "/", "\n").filter { it.isNotBlank() }
 
                 for (cat in targetCats) {
-                    var score = 0
-                    val nameLower = cat.name.lowercase()
+                    val nameLower = cat.name.lowercase().trim()
+                    val nameNo = removeDiacritics(nameLower)
 
-                    // Điểm trực tiếp từ tên danh mục (ưu tiên nếu xuất hiện nguyên văn)
-                    if (nameLower != "khác" && text.contains(nameLower)) {
-                        score += nameLower.length * 5
+                    // Danh mục "Khác" TUYỆT ĐỐI không tích điểm tự động để không bao giờ lấn át danh mục sẵn có.
+                    // Chỉ dùng khi maxScore == 0 (không khớp danh mục nào) hoặc người dùng nói đích danh "khác".
+                    if (nameLower == "khác" || nameNo == "khac") {
+                        continue
                     }
 
+                    var score = 0
+
+                    // 1. Điểm trực tiếp từ tên danh mục (ưu tiên nếu xuất hiện nguyên văn hoặc cụm từ)
+                    if (nameNo.contains(" ")) {
+                        if (text.contains(nameLower) || textNo.contains(nameNo)) {
+                            score += nameNo.length * 6
+                        }
+                    } else {
+                        if (textTokens.contains(nameLower) || textNoTokens.contains(nameNo)) {
+                            score += nameNo.length * 6
+                        }
+                    }
+
+                    // 2. Điểm từ từ khóa đặc trưng (semanticMap)
                     val keywords = semanticMap[cat.name] ?: emptyList()
                     for (kw in keywords) {
-                        val isMatched = if (kw.length <= 2) {
-                            textTokens.contains(kw)
+                        val kwLower = kw.lowercase().trim()
+                        val kwNo = removeDiacritics(kwLower)
+
+                        val isMatched = if (kwNo.contains(" ")) {
+                            // Cụm nhiều từ: an toàn khi kiểm tra substring
+                            text.contains(kwLower) || textNo.contains(kwNo)
                         } else {
-                            text.contains(kw)
+                            // Từ đơn: BẮT BUỘC so khớp token chính xác (tránh "nhậu" khớp "nhà", "trình" khớp "trí", "bàn" khớp "ăn")
+                            textTokens.contains(kwLower) || textNoTokens.contains(kwNo)
                         }
+
                         if (isMatched) {
-                            score += kw.length
+                            score += kwNo.length * 2
                         }
                     }
 
-                    // Hỗ trợ thêm cho các danh mục tùy chỉnh do người dùng tự đặt tên (loại trừ từ quá chung chung)
-                    val catWords = cat.name.lowercase().split(" ", "_", "-")
-                    for (w in catWords) {
-                        if (w.length >= 3 && w !in setOf("khác", "mua", "sắm", "tiền", "khoản", "làm", "uống", "sinh", "hoạt") && text.contains(w)) {
-                            score += w.length * 3
+                    // 3. Hỗ trợ cho các danh mục tùy chỉnh người dùng tự thêm (so khớp theo từng từ đơn lẻ)
+                    val catWords = nameNo.split(" ", "_", "-").filter { it.isNotBlank() }
+                    for (wNo in catWords) {
+                        if (wNo.length >= 2 && wNo !in setOf("khac", "mua", "sam", "tien", "khoan", "lam", "uong", "sinh", "hoat", "tri", "giai", "o", "duc", "lai", "an")) {
+                            if (textNoTokens.contains(wNo)) {
+                                score += wNo.length * 3
+                            }
                         }
                     }
 
@@ -729,13 +789,21 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                     }
                 }
 
-                if (bestCategory != null) {
+                if (bestCategory != null && maxScore > 0) {
                     return Pair(bestCategory, false)
+                }
+
+                // Nếu người dùng chủ đích nói "khác" / "chi khác" / "khoản khác"
+                if (textNoTokens.contains("khac") || text.contains("khác")) {
+                    val explicitKhac = targetCats.find { it.name.equals("Khác", ignoreCase = true) || removeDiacritics(it.name) == "khac" }
+                    if (explicitKhac != null) {
+                        return Pair(explicitKhac, false)
+                    }
                 }
             }
 
-            // 3. Fallback an toàn: Về danh mục "Khác" nếu không khớp
-            val fallback = targetCats.find { it.name.equals("Khác", ignoreCase = true) }
+            // 4. Fallback an toàn: Chỉ về danh mục "Khác" khi hoàn toàn không khớp bất kỳ danh mục sẵn có nào
+            val fallback = targetCats.find { it.name.equals("Khác", ignoreCase = true) || removeDiacritics(it.name) == "khac" }
                 ?: targetCats.firstOrNull()
             return Pair(fallback, true)
         }

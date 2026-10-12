@@ -25,15 +25,19 @@ object AgentPrompts {
             - Khoản Thu nhập (INCOME): $incomeList
             
             QUY TẮC QUAN TRỌNG VỀ DANH MỤC & ĐỀ XUẤT TẠO MỚI:
-            1. ƯU TIÊN TUYỆT ĐỐI CÁC DANH MỤC CÓ SẴN Ở TRÊN:
-               - Khi người dùng nhắc đến "khám bệnh", "mua thuốc", "khám răng", "nha khoa", "đi viện", "bác sĩ", "xét nghiệm":
-                 -> ĐÃ CÓ DANH MỤC 'Sức khỏe' 🩺 (hoặc 💊). BẮT BUỘC dùng danh mục 'Sức khỏe', TUYỆT ĐỐI CẤM đề xuất tạo danh mục mới!
-               - Các ví dụ khớp chuẩn khác:
-                 * "ăn uống", "phở", "cơm", "bún", "pizza", "trà sữa" -> 'Ăn uống' 🍜
-                 * "đổ xăng", "grab", "xe buýt", "gửi xe", "taxi" -> 'Đi lại' 🛵
-                 * "tiền nhà", "tiền trọ", "tiền điện", "tiền nước", "internet" -> 'Nhà ở' 🏠
-                 * "quần áo", "giày dép", "shopee", "mỹ phẩm" -> 'Mua sắm' 🛍️
-                 * "cà phê", "nhậu", "xem phim", "karaoke" -> 'Giải trí' 🎮
+            1. ƯU TIÊN TUYỆT ĐỐI CÁC DANH MỤC CÓ SẴN Ở TRÊN (HỖ TRỢ CẢ TIẾNG VIỆT CÓ DẤU VÀ KHÔNG DẤU):
+               - Người dùng có thể gõ tiếng Việt KHÔNG DẤU (telex, viết tắt nhanh trên điện thoại):
+                 * "an pho", "pho", "an trua", "an sang", "an toi", "com tam", "bun bo", "tra sua" -> BẮT BUỘC CHỌN 'Ăn uống' 🍜 (TUYỆT ĐỐI CẤM CHỌN 'Khác' 📦).
+                 * "do xang", "xang xe", "gui xe", "ve xe", "grab", "taxi", "xe bus" -> BẮT BUỘC CHỌN 'Đi lại' 🛵 (TUYỆT ĐỐI CẤM CHỌN 'Khác' 📦).
+                 * "tien nha", "tien tro", "tien dien", "tien nuoc", "wifi", "internet" -> BẮT BUỘC CHỌN 'Nhà ở' 🏠.
+                 * "mua ao", "mua quan", "giay dep", "shopee", "lazada", "my pham" -> BẮT BUỘC CHỌN 'Mua sắm' 🛍️.
+                 * "kham rang", "mua thuoc", "kham benh", "bac si", "di vien" -> BẮT BUỘC CHỌN 'Sức khỏe' 🩺.
+                 * "uong cafe", "di cafe", "xem phim", "nhau", "karaoke" -> BẮT BUỘC CHỌN 'Giải trí' 🎮.
+                 * "nhan luong", "ban luong", "luong thang" -> BẮT BUỘC CHỌN 'Lương' 💵.
+                 * "thuong kpi", "thuong tet", "hoa hong" -> BẮT BUỘC CHỌN 'Thưởng' 🎁.
+               - Khi người dùng nhắc đến bất kỳ chi tiêu hay thu nhập sinh hoạt nào, BẮT BUỘC ghép vào danh mục phù hợp nhất có sẵn ở trên.
+               - TUYỆT ĐỐI KHÔNG chọn danh mục "Khác" nếu câu nói có liên quan đến các nhu cầu ăn uống, đi lại, nhà ở, mua sắm, sức khỏe, giải trí, giáo dục, hiếu hỉ, tiết kiệm, trả nợ.
+               - Danh mục "Khác" CHỈ ĐƯỢC PHÉP DÙNG khi khoản thu/chi hoàn toàn xa lạ, không hề liên quan đến bất kỳ danh mục sẵn có nào.
             2. CHỈ ĐỀ XUẤT TẠO DANH MỤC MỚI ('create_category') KHI QUÁ KHÁC BIỆT:
                - CHỈ KHI NÀO khoản chi/thu hoàn toàn mới lạ, QUÁ KHÁC BIỆT với mọi danh mục có sẵn ở trên (VD: người dùng yêu cầu rõ "tạo danh mục nuôi mèo 🐱", hoặc "mua cát vệ sinh nuôi mèo" khi chưa có danh mục thú cưng), bạn mới gọi 'create_category'.
                - Nếu đã có danh mục bao hàm hoặc tương tự, BẮT BUỘC dùng danh mục có sẵn!

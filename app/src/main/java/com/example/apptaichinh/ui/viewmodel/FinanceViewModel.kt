@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import com.example.apptaichinh.data.ai.tools.LocalToolExecutor
 
 data class ParsedTransaction(
     val amount: Long,
@@ -564,96 +565,16 @@ class FinanceViewModel @Inject constructor(
 
         if (amount <= 0) return null
 
-        // 2. Nhận diện loại thu nhập hay chi tiêu
-        val isIncome = lower.contains("lương") || lower.contains("thưởng") ||
-                lower.contains("tiền vào") || lower.contains("thu nhập") ||
-                lower.contains("freelance") || lower.contains("làm thêm") ||
-                lower.contains("bán được") || lower.contains("cổ tức") ||
-                lower.contains("lãi") || lower.contains("đầu tư")
-
+        // 2. Nhận diện loại thu nhập hay chi tiêu (hỗ trợ cả tiếng Việt có dấu và không dấu)
+        val isIncome = LocalToolExecutor.isIncomeIntent(trimmed)
         val type = if (isIncome) "INCOME" else "EXPENSE"
 
-        // 3. Ghép danh mục phù hợp nhất từ danh sách hiện có
+        // 3. Ghép danh mục phù hợp nhất từ danh sách hiện có (hỗ trợ cả có dấu và không dấu, ưu tiên danh mục sẵn)
         val allCats = categories.value.filter { it.type == type }
-        var matchedCat: Category? = null
-
-        if (isIncome) {
-            when {
-                lower.contains("thưởng") || lower.contains("bonus") || lower.contains("kpi") ->
-                    allCats.find { it.name.contains("thưởng", true) }?.let { matchedCat = it }
-
-                lower.contains("lương") || lower.contains("salary") ->
-                    allCats.find { it.name.contains("lương", true) }?.let { matchedCat = it }
-
-                lower.contains("làm thêm") || lower.contains("freelance") || lower.contains("ot") ||
-                lower.contains("part-time") || lower.contains("tăng ca") || lower.contains("dự án") ->
-                    allCats.find { it.name.contains("làm thêm", true) }?.let { matchedCat = it }
-
-                lower.contains("đầu tư") || lower.contains("cổ tức") || lower.contains("chứng khoán") ||
-                lower.contains("tiền lãi") || lower.contains("lãi") || lower.contains("crypto") ->
-                    allCats.find { it.name.contains("đầu tư", true) }?.let { matchedCat = it }
-
-                else ->
-                    allCats.find { it.name.contains("khác", true) } ?: allCats.firstOrNull()
-            }
-        } else {
-            when {
-                lower.contains("ăn") || lower.contains("uống") || lower.contains("phở") ||
-                lower.contains("bún") || lower.contains("cơm") || lower.contains("bánh") ||
-                lower.contains("lẩu") || lower.contains("trưa") || lower.contains("sáng") ||
-                lower.contains("tối") || lower.contains("thịt") || lower.contains("chợ") ||
-                lower.contains("cà phê") || lower.contains("cafe") || lower.contains("trà") ->
-                    allCats.find { it.name.contains("ăn uống", true) }?.let { matchedCat = it }
-
-                lower.contains("nhà") || lower.contains("phòng") || lower.contains("thuê nhà") ||
-                lower.contains("điện") || lower.contains("nước") || lower.contains("wifi") ||
-                lower.contains("mạng") || lower.contains("chung cư") || lower.contains("tiền phòng") ->
-                    allCats.find { it.name.contains("nhà ở", true) }?.let { matchedCat = it }
-
-                lower.contains("xăng") || lower.contains("xe") || lower.contains("grab") ||
-                lower.contains("taxi") || lower.contains("vé") || lower.contains("bus") ||
-                lower.contains("gửi xe") || lower.contains("đi lại") || lower.contains("sửa xe") ->
-                    allCats.find { it.name.contains("đi lại", true) }?.let { matchedCat = it }
-
-                lower.contains("mua") || lower.contains("áo") || lower.contains("quần") ||
-                lower.contains("giày") || lower.contains("shopee") || lower.contains("lazada") ||
-                lower.contains("tiki") || lower.contains("sắm") || lower.contains("đồ") ->
-                    allCats.find { it.name.contains("mua sắm", true) }?.let { matchedCat = it }
-
-                lower.contains("giải trí") || lower.contains("phim") || lower.contains("game") ||
-                lower.contains("nhậu") || lower.contains("karaoke") || lower.contains("du lịch") ||
-                lower.contains("hát") || lower.contains("xem phim") ->
-                    allCats.find { it.name.contains("giải trí", true) }?.let { matchedCat = it }
-
-                lower.contains("học") || lower.contains("sách") || lower.contains("khóa học") ||
-                lower.contains("giáo dục") || lower.contains("học phí") || lower.contains("trường") ->
-                    allCats.find { it.name.contains("giáo dục", true) }?.let { matchedCat = it }
-
-                lower.contains("thuốc") || lower.contains("khám") || lower.contains("bệnh") ||
-                lower.contains("sức khỏe") || lower.contains("bác sĩ") || lower.contains("nha khoa") ||
-                lower.contains("vitamin") || lower.contains("y tế") ->
-                    allCats.find { it.name.contains("sức khỏe", true) }?.let { matchedCat = it }
-
-                lower.contains("cưới") || lower.contains("hỉ") || lower.contains("hiếu") ||
-                lower.contains("đám ma") || lower.contains("tang") || lower.contains("sinh nhật") ||
-                lower.contains("thôi nôi") || lower.contains("mừng") || lower.contains("phong bì") ->
-                    allCats.find { it.name.contains("hiếu hỉ", true) }?.let { matchedCat = it }
-
-                lower.contains("tiết kiệm") || lower.contains("gửi tiết kiệm") || lower.contains("bỏ lợn") ||
-                lower.contains("tích lũy") || lower.contains("heo đất") ->
-                    allCats.find { it.name.contains("tiết kiệm", true) }?.let { matchedCat = it }
-
-                lower.contains("nợ") || lower.contains("trả góp") || lower.contains("vay") ||
-                lower.contains("thẻ tín dụng") || lower.contains("trả nợ") || lower.contains("lãi vay") ->
-                    allCats.find { it.name.contains("trả nợ", true) }?.let { matchedCat = it }
-
-                else ->
-                    allCats.firstOrNull()
-            }
-        }
+        val (matchedCat, _) = LocalToolExecutor.matchBestCategory(trimmed, type, allCats)
 
         val catId = matchedCat?.id ?: 0L
-        val catName = matchedCat?.name ?: (if (type == "EXPENSE") "Chi tiêu khác" else "Thu nhập khác")
+        val catName = matchedCat?.name ?: (if (type == "EXPENSE") "Khác" else "Khác")
 
         return ParsedTransaction(
             amount = amount,
