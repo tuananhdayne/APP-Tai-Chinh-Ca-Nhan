@@ -37,6 +37,25 @@ object Formatters {
         }
     }
 
+    fun formatCalendarAmount(amount: Long, isIncome: Boolean): String {
+        val abs = Math.abs(amount)
+        if (abs == 0L) return ""
+        val prefix = if (isIncome) "+" else "-"
+        val numStr = when {
+            abs >= 1_000_000_000 -> {
+                val v = abs / 1_000_000_000.0
+                if (v % 1.0 == 0.0) "${v.toLong()}B" else String.format(Locale("vi", "VN"), "%.1fB", v).replace(",0", "").replace(".0", "")
+            }
+            abs >= 1_000_000 -> {
+                val v = abs / 1_000_000.0
+                if (v % 1.0 == 0.0) "${v.toLong()}tr" else String.format(Locale("vi", "VN"), "%.1ftr", v).replace(",0", "").replace(".0", "")
+            }
+            abs >= 1_000 -> "${abs / 1_000}k"
+            else -> "$abs"
+        }
+        return "$prefix$numStr"
+    }
+
     fun formatDate(dateEpoch: Long): String {
         val nowCal = Calendar.getInstance()
         val txCal = Calendar.getInstance().apply { timeInMillis = dateEpoch }

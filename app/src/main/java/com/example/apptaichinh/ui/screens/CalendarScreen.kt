@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -217,9 +218,9 @@ fun CalendarScreen(
             ) {
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                     val isWide = maxWidth > 500.dp
-                    val cellHeight = if (isWide) 64.dp else 58.dp
-                    val dayFontSize = if (isWide) 13.5.sp else 12.5.sp
-                    val dotSize = if (isWide) 6.dp else 5.dp
+                    val cellHeight = if (isWide) 72.dp else 64.dp
+                    val dayFontSize = if (isWide) 12.5.sp else 11.sp
+                    val amountFontSize = if (isWide) 9.5.sp else 8.sp
 
                     Column(modifier = Modifier.fillMaxWidth()) {
                         // Tiêu đề các thứ trong tuần
@@ -262,8 +263,8 @@ fun CalendarScreen(
                                         val isSelected = dayNumber == selectedDay
                                         val isToday = year == todayYear && month == todayMonth && dayNumber == todayDay
                                         val dayTx = transactionsByDay[dayNumber] ?: emptyList()
-                                        val hasIncome = dayTx.any { it.type == "INCOME" }
-                                        val hasExpense = dayTx.any { it.type == "EXPENSE" }
+                                        val dayIncome = dayTx.filter { it.type == "INCOME" }.sumOf { it.amount }
+                                        val dayExpense = dayTx.filter { it.type == "EXPENSE" }.sumOf { it.amount }
 
                                         val scale by animateFloatAsState(
                                             targetValue = if (isSelected) 1.05f else 1f,
@@ -275,7 +276,7 @@ fun CalendarScreen(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .height(cellHeight)
-                                                .padding(2.dp)
+                                                .padding(1.5.dp)
                                                 .scale(scale)
                                                 .shadow(
                                                     elevation = if (isSelected) 4.dp else 1.dp,
@@ -315,19 +316,23 @@ fun CalendarScreen(
                                                     shape = RoundedCornerShape(12.dp)
                                                 )
                                                 .clickable { selectedDay = dayNumber }
-                                                .padding(top = 4.dp, bottom = 4.dp),
+                                                .padding(top = 2.5.dp, bottom = 2.dp, start = 1.dp, end = 1.dp),
                                             contentAlignment = Alignment.TopCenter
                                         ) {
                                             Column(
                                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                                verticalArrangement = Arrangement.SpaceBetween,
-                                                modifier = Modifier.fillMaxSize()
+                                                verticalArrangement = Arrangement.spacedBy(0.5.dp, Alignment.Top),
+                                                modifier = Modifier.fillMaxWidth()
                                             ) {
                                                 // Số ngày
                                                 Text(
                                                     text = "$dayNumber",
                                                     fontSize = dayFontSize,
                                                     fontWeight = if (isSelected || isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                                    style = LocalTextStyle.current.copy(
+                                                        platformStyle = @Suppress("DEPRECATION") androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
+                                                        lineHeight = if (isWide) 14.sp else 12.sp
+                                                    ),
                                                     color = when {
                                                         isSelected -> Color.White
                                                         isToday -> Color(0xFF1D4ED8)
@@ -336,29 +341,40 @@ fun CalendarScreen(
                                                     }
                                                 )
 
-                                                // Các hạt ngọc giao dịch (Jewel Dots)
-                                                Row(
-                                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    if (hasIncome) {
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .size(dotSize)
-                                                                .clip(CircleShape)
-                                                                .background(NeonEmerald)
-                                                                .shadow(elevation = 2.dp, shape = CircleShape)
-                                                        )
-                                                    }
-                                                    if (hasExpense) {
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .size(dotSize)
-                                                                .clip(CircleShape)
-                                                                .background(NeonCoral)
-                                                                .shadow(elevation = 2.dp, shape = CircleShape)
-                                                        )
-                                                    }
+                                                // Số tiền thu (xanh trên)
+                                                if (dayIncome > 0) {
+                                                    Text(
+                                                        text = Formatters.formatCalendarAmount(dayIncome, isIncome = true),
+                                                        fontSize = amountFontSize,
+                                                        fontWeight = FontWeight.Bold,
+                                                        style = LocalTextStyle.current.copy(
+                                                            platformStyle = @Suppress("DEPRECATION") androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
+                                                            lineHeight = if (isWide) 11.sp else 9.5.sp
+                                                        ),
+                                                        color = if (isSelected) Color(0xFF6EE7B7) else NeonEmerald,
+                                                        maxLines = 1,
+                                                        softWrap = false,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+
+                                                // Số tiền chi (đỏ dưới)
+                                                if (dayExpense > 0) {
+                                                    Text(
+                                                        text = Formatters.formatCalendarAmount(dayExpense, isIncome = false),
+                                                        fontSize = amountFontSize,
+                                                        fontWeight = FontWeight.Bold,
+                                                        style = LocalTextStyle.current.copy(
+                                                            platformStyle = @Suppress("DEPRECATION") androidx.compose.ui.text.PlatformTextStyle(includeFontPadding = false),
+                                                            lineHeight = if (isWide) 11.sp else 9.5.sp
+                                                        ),
+                                                        color = if (isSelected) Color(0xFFFECDD3) else NeonCoral,
+                                                        maxLines = 1,
+                                                        softWrap = false,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        textAlign = TextAlign.Center
+                                                    )
                                                 }
                                             }
                                         }
