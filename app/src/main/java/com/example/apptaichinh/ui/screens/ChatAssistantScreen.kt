@@ -74,12 +74,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptaichinh.data.ai.CardStatus
@@ -177,10 +182,11 @@ fun ChatAssistantScreen(
         }
     }
 
-    // Tự động cuộn xuống tin nhắn mới nhất
+    // Tự động cuộn xuống tin nhắn mới nhất (chỉ cuộn khi người dùng không đang chủ động vuốt danh sách)
     LaunchedEffect(messages.size, isThinking) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
+        val targetIndex = if (isThinking) messages.size else (messages.size - 1)
+        if (targetIndex >= 0 && !listState.isScrollInProgress) {
+            listState.animateScrollToItem(targetIndex)
         }
     }
 
@@ -259,17 +265,41 @@ fun ChatAssistantScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Kết nối NestedScrollConnection để tiêu thụ triệt để delta cuộn thừa khi chạm đáy/đỉnh,
+            // ngăn xung đột kéo giật nảy với ModalBottomSheet bên ngoài
+            val chatNestedScrollConnection = remember {
+                object : NestedScrollConnection {
+                    override fun onPostScroll(
+                        consumed: Offset,
+                        available: Offset,
+                        source: NestedScrollSource
+                    ): Offset {
+                        // Tiêu thụ phần cuộn thừa theo chiều dọc khi vuốt chạm đáy / đỉnh
+                        return Offset(0f, available.y)
+                    }
+
+                    override suspend fun onPostFling(
+                        consumed: Velocity,
+                        available: Velocity
+                    ): Velocity {
+                        // Tiêu thụ quán tính trượt dư thừa để danh sách dừng êm ái
+                        return Velocity(0f, available.y)
+                    }
+                }
+            }
+
             // Danh sách tin nhắn cuộc trò chuyện
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    .fillMaxWidth()
+                    .nestedScroll(chatNestedScrollConnection),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 if (messages.isEmpty() && !isThinking) {
-                    item {
+                    item(key = "ai_welcome_hero") {
                         AiWelcomeHero(
                             onSelectPrompt = { selectedPrompt ->
                                 viewModel.sendAiChatMessage(selectedPrompt)
@@ -295,7 +325,7 @@ fun ChatAssistantScreen(
                 }
 
                 if (isThinking) {
-                    item {
+                    item(key = "ai_thinking_bubble") {
                         AiThinkingBubble()
                     }
                 }

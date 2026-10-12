@@ -261,73 +261,76 @@ flowchart TD
 | **Trợ Lý AI (AI Assistant)** | Supporting Actor | Tác nhân thông minh phân tích câu nói tự nhiên, bóc tách hóa đơn OCR, tổng hợp số liệu tài chính và sinh thẻ đề xuất giao dịch an toàn (Preview Cards). |
 | **Hệ Điều Hành Android** | System Platform | Cung cấp các dịch vụ hệ thống cấp thấp: Nhận dạng giọng nói (`SpeechRecognizer`), Khóa vân tay (`BiometricPrompt`), Quản lý tệp (`SAF`), Đồng bộ App Widget (`AppWidgetManager`). |
 
-#### B. Sơ Đồ Mermaid Use Case Tổng Quát
-```mermaid
-flowchart LR
-    %% Actors
-    User(["🧑 Người Dùng (Primary Actor)"])
-    AI(["🤖 Trợ Lý AI (Supporting Actor)"])
-    OS(["📱 Android OS (System Platform)"])
+#### B. Mã Nguồn UML (PlantUML) Use Case Tổng Quát
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
 
-    subgraph System["ỨNG DỤNG SỔ THU CHI & QUẢN LÝ TÀI CHÍNH CÁ NHÂN"]
-        direction TB
+actor "Người Dùng\n(Primary Actor)" as User
+actor "Trợ Lý AI\n(Supporting Actor)" as AI
+actor "Android OS\n(System Platform)" as OS
 
-        subgraph PKG1["1. Quản Lý Giao Dịch"]
-            UC_TX(["Ghi Chép Thu / Chi"])
-            UC_VOICE(["Nhập Liệu Giọng Nói (STT)"])
-            UC_OCR(["Quét Hóa Đơn Tự Động (OCR)"])
-        end
+rectangle "ỨNG DỤNG SỔ THU CHI & QUẢN LÝ TÀI CHÍNH CÁ NHÂN" {
+  package "1. Quản Lý Giao Dịch" {
+    usecase "Ghi Chép Thu / Chi" as UC_TX
+    usecase "Nhập Liệu Giọng Nói (STT)" as UC_VOICE
+    usecase "Quét Hóa Đơn Tự Động (OCR)" as UC_OCR
+  }
 
-        subgraph PKG2["2. Lịch & Lịch Sử Giao Dịch"]
-            UC_CAL(["Xem Lưới Lịch Dòng Tiền 7 Cột"])
-            UC_FILTER(["Tra Cứu & Lọc Giao Dịch"])
-        end
+  package "2. Lịch & Lịch Sử Giao Dịch" {
+    usecase "Xem Lưới Lịch Dòng Tiền 7 Cột" as UC_CAL
+    usecase "Tra Cứu & Lọc Giao Dịch" as UC_FILTER
+  }
 
-        subgraph PKG3["3. Thống Kê Tài Chính"]
-            UC_ANALYTICS(["Phân Tích Cơ Cấu Thu / Chi"])
-            UC_TREND(["So Sánh Xu Hướng Dòng Tiền"])
-        end
+  package "3. Thống Kê Tài Chính" {
+    usecase "Phân Tích Cơ Cấu Thu / Chi" as UC_ANALYTICS
+    usecase "So Sánh Xu Hướng Dòng Tiền" as UC_TREND
+  }
 
-        subgraph PKG4["4. Quản Lý Ngân Sách"]
-            UC_BUDGET(["Thiết Lập Ngân Sách Tháng & Danh Mục"])
-            UC_ALERT(["Cảnh Báo Vượt Hạn Mức"])
-        end
+  package "4. Quản Lý Ngân Sách" {
+    usecase "Thiết Lập Ngân Sách Tháng & Danh Mục" as UC_BUDGET
+    usecase "Cảnh Báo Vượt Hạn Mức" as UC_ALERT
+  }
 
-        subgraph PKG5["5. Cài Đặt & Tiện Ích"]
-            UC_CAT(["Tùy Biến Danh Mục (Icon, Màu, Tên)"])
-            UC_WIDGET(["Đồng Bộ App Widget Màn Hình Chính"])
-            UC_SEC(["Bảo Mật Vân Tay / Sinh Trắc Học"])
-            UC_EXPORT(["Sao Lưu & Xuất Báo Cáo CSV"])
-        end
+  package "5. Cài Đặt & Tiện Ích" {
+    usecase "Tùy Biến Danh Mục (Icon, Màu, Tên)" as UC_CAT
+    usecase "Đồng Bộ App Widget Màn Hình Chính" as UC_WIDGET
+    usecase "Bảo Mật Vân Tay / Sinh Trắc Học" as UC_SEC
+    usecase "Sao Lưu & Xuất Báo Cáo CSV" as UC_EXPORT
+  }
 
-        subgraph PKG6["6. Trợ Lý AI Tự Động Hóa"]
-            UC_AI_CHAT(["Trò Chuyện & Phân Tích Tài Chính"])
-            UC_AI_CARD(["Duyệt Thẻ Hành Động An Toàn"])
-        end
-    end
+  package "6. Trợ Lý AI Tự Động Hóa" {
+    usecase "Trò Chuyện & Phân Tích Tài Chính" as UC_AI_CHAT
+    usecase "Duyệt Thẻ Hành Động An Toàn" as UC_AI_CARD
+  }
+}
 
-    User --> UC_TX
-    User --> UC_VOICE
-    User --> UC_OCR
-    User --> UC_CAL
-    User --> UC_FILTER
-    User --> UC_ANALYTICS
-    User --> UC_TREND
-    User --> UC_BUDGET
-    User --> UC_CAT
-    User --> UC_SEC
-    User --> UC_EXPORT
-    User --> UC_AI_CHAT
-    User --> UC_AI_CARD
+User --> UC_TX
+User --> UC_VOICE
+User --> UC_OCR
+User --> UC_CAL
+User --> UC_FILTER
+User --> UC_ANALYTICS
+User --> UC_TREND
+User --> UC_BUDGET
+User --> UC_CAT
+User --> UC_SEC
+User --> UC_EXPORT
+User --> UC_AI_CHAT
+User --> UC_AI_CARD
 
-    AI --> UC_AI_CHAT
-    AI --> UC_AI_CARD
-    AI --> UC_ALERT
+AI --> UC_AI_CHAT
+AI --> UC_AI_CARD
+AI --> UC_ALERT
 
-    OS --> UC_VOICE
-    OS --> UC_OCR
-    OS --> UC_WIDGET
-    OS --> UC_SEC
+OS --> UC_VOICE
+OS --> UC_OCR
+OS --> UC_WIDGET
+OS --> UC_SEC
+@enduml
 ```
 
 ---
@@ -346,56 +349,61 @@ flowchart LR
 | **UC09** | Xóa Giao Dịch | Người dùng | Có giao dịch sẵn | Chọn xóa $\rightarrow$ Xác nhận hộp thoại $\rightarrow$ Xóa khỏi DB $\rightarrow$ Hoàn trả số dư ròng & hạn mức ngân sách. |
 | **UC10** | Duyệt Thẻ Đề Xuất AI | Người dùng, AI | AI sinh Preview Card | Người dùng kiểm tra thông tin $\rightarrow$ Nhấn nút tick xanh [Xác nhận lưu] $\rightarrow$ Thẻ chuyển CONFIRMED $\rightarrow$ Lưu DB. |
 
-#### B. Sơ Đồ Mermaid Phân Hệ Giao Dịch
-```mermaid
-flowchart LR
-    User(["🧑 Người Dùng"])
-    OS(["📱 Android OS"])
-    AI(["🤖 Trợ Lý AI"])
+#### B. Mã Nguồn UML (PlantUML) Phân Hệ Giao Dịch
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
 
-    subgraph Sub_TX["PHÂN HỆ QUẢN LÝ GIAO DỊCH (TRANSACTION MANAGEMENT)"]
-        direction TB
-        UC_ADD_EXP(["UC01: Thêm Khoản Chi Tiêu"])
-        UC_ADD_INC(["UC02: Thêm Khoản Thu Nhập"])
-        UC_KEYPAD(["UC03: Nhập Nhanh Số Tiền Bằng Phím Tắt"])
-        UC_SEL_CAT(["UC04: Chọn Danh Mục Giao Dịch"])
-        UC_NOTE_DATE(["UC05: Nhập Ghi Chú & Ngày Giao Dịch"])
-        UC_VOICE(["UC06: Nhập Liệu Giọng Nói (STT)"])
-        UC_OCR(["UC07: Quét Hóa Đơn Tự Động (OCR)"])
-        UC_EDIT_TX(["UC08: Chỉnh Sửa Giao Dịch"])
-        UC_DEL_TX(["UC09: Xóa Giao Dịch"])
-        UC_APPROVE_AI(["UC10: Phê Duyệt Thẻ Đề Xuất Từ AI"])
+actor "Người Dùng" as User
+actor "Android OS" as OS
+actor "Trợ Lý AI" as AI
 
-        UC_VAL(["UC11: Kiểm Tra Hợp Lệ Dữ Liệu"]):::internal
-        UC_WARN(["UC12: Cảnh Báo Chạm/Vượt Hạn Mức"]):::internal
-        UC_RESTORE(["UC13: Hoàn Lại Số Dư & Ngân Sách"]):::internal
-    end
+rectangle "PHÂN HỆ QUẢN LÝ GIAO DỊCH (TRANSACTION MANAGEMENT)" {
+  usecase "UC01: Thêm Khoản Chi Tiêu" as UC_ADD_EXP
+  usecase "UC02: Thêm Khoản Thu Nhập" as UC_ADD_INC
+  usecase "UC03: Nhập Nhanh Số Tiền Bằng Phím Tắt" as UC_KEYPAD
+  usecase "UC04: Chọn Danh Mục Giao Dịch" as UC_SEL_CAT
+  usecase "UC05: Nhập Ghi Chú & Ngày Giao Dịch" as UC_NOTE_DATE
+  usecase "UC06: Nhập Liệu Giọng Nói (STT)" as UC_VOICE
+  usecase "UC07: Quét Hóa Đơn Tự Động (OCR)" as UC_OCR
+  usecase "UC08: Chỉnh Sửa Giao Dịch" as UC_EDIT_TX
+  usecase "UC09: Xóa Giao Dịch" as UC_DEL_TX
+  usecase "UC10: Phê Duyệt Thẻ Đề Xuất Từ AI" as UC_APPROVE_AI
 
-    User --> UC_ADD_EXP
-    User --> UC_ADD_INC
-    User --> UC_VOICE
-    User --> UC_OCR
-    User --> UC_EDIT_TX
-    User --> UC_DEL_TX
-    User --> UC_APPROVE_AI
+  usecase "UC11: Kiểm Tra Hợp Lệ Dữ Liệu" as UC_VAL
+  usecase "UC12: Cảnh Báo Chạm/Vượt Hạn Mức" as UC_WARN
+  usecase "UC13: Hoàn Lại Số Dư & Ngân Sách" as UC_RESTORE
+}
 
-    OS --> UC_VOICE
-    OS --> UC_OCR
-    AI --> UC_APPROVE_AI
+User --> UC_ADD_EXP
+User --> UC_ADD_INC
+User --> UC_VOICE
+User --> UC_OCR
+User --> UC_EDIT_TX
+User --> UC_DEL_TX
+User --> UC_APPROVE_AI
 
-    UC_ADD_EXP -.->|"<<include>>"| UC_VAL
-    UC_ADD_INC -.->|"<<include>>"| UC_VAL
-    UC_ADD_EXP -.->|"<<include>>"| UC_SEL_CAT
-    UC_ADD_INC -.->|"<<include>>"| UC_SEL_CAT
-    UC_ADD_EXP -.->|"<<include>>"| UC_NOTE_DATE
-    UC_ADD_INC -.->|"<<include>>"| UC_NOTE_DATE
+OS --> UC_VOICE
+OS --> UC_OCR
+AI --> UC_APPROVE_AI
 
-    UC_KEYPAD -.->|"<<extend>>"| UC_ADD_EXP
-    UC_KEYPAD -.->|"<<extend>>"| UC_ADD_INC
+UC_ADD_EXP ..> UC_VAL : <<include>>
+UC_ADD_INC ..> UC_VAL : <<include>>
+UC_ADD_EXP ..> UC_SEL_CAT : <<include>>
+UC_ADD_INC ..> UC_SEL_CAT : <<include>>
+UC_ADD_EXP ..> UC_NOTE_DATE : <<include>>
+UC_ADD_INC ..> UC_NOTE_DATE : <<include>>
 
-    UC_ADD_EXP -.->|"<<extend>>"| UC_WARN
+UC_KEYPAD ..> UC_ADD_EXP : <<extend>>
+UC_KEYPAD ..> UC_ADD_INC : <<extend>>
 
-    UC_DEL_TX -.->|"<<include>>"| UC_RESTORE
+UC_WARN ..> UC_ADD_EXP : <<extend>>
+
+UC_DEL_TX ..> UC_RESTORE : <<include>>
+@enduml
 ```
 
 * **Quan hệ `<<include>>`:**
@@ -422,39 +430,44 @@ flowchart LR
 | **UC21** | Chỉnh Sửa Từ Lịch | Người dùng | Mở form chỉnh sửa trực tiếp từ BottomSheet của lịch. |
 | **UC22** | Xóa Từ Lịch | Người dùng | Xóa giao dịch từ BottomSheet, hệ thống tự động tính lại số tiền thu chi trên ô lịch ngày (UC23). |
 
-#### B. Sơ Đồ Mermaid Phân Hệ Lịch & Lịch Sử
-```mermaid
-flowchart LR
-    User(["🧑 Người Dùng"])
+#### B. Mã Nguồn UML (PlantUML) Phân Hệ Lịch & Lịch Sử
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
 
-    subgraph Sub_CAL["PHÂN HỆ LỊCH VÀ LỊCH SỬ GIAO DỊCH (CALENDAR & HISTORY)"]
-        direction TB
-        UC_CAL_VIEW(["UC14: Xem Lưới Lịch Tháng 7 Cột"])
-        UC_CAL_SUM(["UC15: Xem Tổng Thu, Tổng Chi & Số Dư Tháng"])
-        UC_CAL_DAY(["UC16: Chọn Ngày Xem Giao Dịch Trong Ngày"])
-        UC_CAL_NAV(["UC17: Chuyển Đổi Tháng (Trước / Sau / Hiện Tại)"])
-        UC_CAL_SEARCH(["UC18: Tìm Kiếm Giao Dịch Theo Từ Khóa"])
-        UC_CAL_FILTER(["UC19: Lọc Giao Dịch Theo Loại (Thu / Chi)"])
-        UC_CAL_DETAIL(["UC20: Xem Chi Tiết Giao Dịch (BottomSheet)"])
-        UC_CAL_EDIT(["UC21: Chỉnh Sửa Giao Dịch Từ Lịch"])
-        UC_CAL_DEL(["UC22: Xóa Giao Dịch Từ Lịch"])
+actor "Người Dùng" as User
 
-        UC_CAL_RECALC(["UC23: Cập Nhật Chỉ Số Lịch & Số Dư"]):::internal
-    end
+rectangle "PHÂN HỆ LỊCH VÀ LỊCH SỬ GIAO DỊCH (CALENDAR & HISTORY)" {
+  usecase "UC14: Xem Lưới Lịch Tháng 7 Cột" as UC_CAL_VIEW
+  usecase "UC15: Xem Tổng Thu, Tổng Chi & Số Dư Tháng" as UC_CAL_SUM
+  usecase "UC16: Chọn Ngày Xem Giao Dịch Trong Ngày" as UC_CAL_DAY
+  usecase "UC17: Chuyển Đổi Tháng (Trước / Sau / Hiện Tại)" as UC_CAL_NAV
+  usecase "UC18: Tìm Kiếm Giao Dịch Theo Từ Khóa" as UC_CAL_SEARCH
+  usecase "UC19: Lọc Giao Dịch Theo Loại (Thu / Chi)" as UC_CAL_FILTER
+  usecase "UC20: Xem Chi Tiết Giao Dịch (BottomSheet)" as UC_CAL_DETAIL
+  usecase "UC21: Chỉnh Sửa Giao Dịch Từ Lịch" as UC_CAL_EDIT
+  usecase "UC22: Xóa Giao Dịch Từ Lịch" as UC_CAL_DEL
 
-    User --> UC_CAL_VIEW
-    User --> UC_CAL_SUM
-    User --> UC_CAL_DAY
-    User --> UC_CAL_NAV
-    User --> UC_CAL_SEARCH
-    User --> UC_CAL_FILTER
-    User --> UC_CAL_DETAIL
+  usecase "UC23: Cập Nhật Chỉ Số Lịch & Số Dư" as UC_CAL_RECALC
+}
 
-    UC_CAL_VIEW -.->|"<<include>>"| UC_CAL_SUM
-    UC_CAL_DAY -.->|"<<extend>>"| UC_CAL_VIEW
-    UC_CAL_DETAIL -.->|"<<extend>>"| UC_CAL_EDIT
-    UC_CAL_DETAIL -.->|"<<extend>>"| UC_CAL_DEL
-    UC_CAL_DEL -.->|"<<include>>"| UC_CAL_RECALC
+User --> UC_CAL_VIEW
+User --> UC_CAL_SUM
+User --> UC_CAL_DAY
+User --> UC_CAL_NAV
+User --> UC_CAL_SEARCH
+User --> UC_CAL_FILTER
+User --> UC_CAL_DETAIL
+
+UC_CAL_VIEW ..> UC_CAL_SUM : <<include>>
+UC_CAL_DAY ..> UC_CAL_VIEW : <<extend>>
+UC_CAL_EDIT ..> UC_CAL_DETAIL : <<extend>>
+UC_CAL_DEL ..> UC_CAL_DETAIL : <<extend>>
+UC_CAL_DEL ..> UC_CAL_RECALC : <<include>>
+@enduml
 ```
 
 * **Quan hệ `<<include>>`:** Xem lưới lịch (UC14) luôn bao hàm hiển thị tổng kết dòng tiền tháng (UC15); Thao tác xóa giao dịch (UC22) bắt buộc kích hoạt cập nhật lại các chỉ số tổng hợp trên ô ngày tương ứng (UC23).
@@ -476,36 +489,41 @@ flowchart LR
 | **UC30** | Chọn Mốc Thời Gian | Người dùng | Lựa chọn tháng hoặc năm cần thống kê để đối chiếu dữ liệu lịch sử. |
 | **UC31** | Xem Giao Dịch Thành Phần | Người dùng | Nhấn vào một lát cắt trên biểu đồ Donut để xem danh sách các giao dịch cụ thể cấu thành nên danh mục đó. |
 
-#### B. Sơ Đồ Mermaid Phân Hệ Thống Kê
-```mermaid
-flowchart LR
-    User(["🧑 Người Dùng"])
+#### B. Mã Nguồn UML (PlantUML) Phân Hệ Thống Kê
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
 
-    subgraph Sub_STAT["PHÂN HỆ THỐNG KÊ TÀI CHÍNH (FINANCIAL ANALYTICS)"]
-        direction TB
-        UC_STAT_FLOW(["UC24: Xem Tổng Quan Dòng Tiền Tháng"])
-        UC_STAT_SWITCH(["UC25: Chuyển Đổi Xem Chi Tiêu Hoặc Thu Nhập"])
-        UC_STAT_DONUT(["UC26: Xem Biểu Đồ Tròn (Donut Chart) Tỷ Trọng"])
-        UC_STAT_LIST(["UC27: Xem Danh Sách Cơ Cấu % Từng Danh Mục"])
-        UC_STAT_BAR(["UC28: Xem Biểu Đồ So Sánh Xu Hướng Thu - Chi"])
-        UC_STAT_TOP(["UC29: Xem Xếp Hạng Top Chi Tiêu Lớn Nhất"])
-        UC_STAT_PERIOD(["UC30: Chọn Mốc Thời Gian Phân Tích (Tháng / Năm)"])
-        UC_STAT_DRILL(["UC31: Chạm Lát Biểu Đồ Xem Giao Dịch Thành Phần"])
+actor "Người Dùng" as User
 
-        UC_STAT_CALC(["UC32: Tính Toán Tỷ Trọng Danh Mục"]):::internal
-    end
+rectangle "PHÂN HỆ THỐNG KÊ TÀI CHÍNH (FINANCIAL ANALYTICS)" {
+  usecase "UC24: Xem Tổng Quan Dòng Tiền Tháng" as UC_STAT_FLOW
+  usecase "UC25: Chuyển Đổi Xem Chi Tiêu Hoặc Thu Nhập" as UC_STAT_SWITCH
+  usecase "UC26: Xem Biểu Đồ Tròn (Donut Chart) Tỷ Trọng" as UC_STAT_DONUT
+  usecase "UC27: Xem Danh Sách Cơ Cấu % Từng Danh Mục" as UC_STAT_LIST
+  usecase "UC28: Xem Biểu Đồ So Sánh Xu Hướng Thu - Chi" as UC_STAT_BAR
+  usecase "UC29: Xem Xếp Hạng Top Chi Tiêu Lớn Nhất" as UC_STAT_TOP
+  usecase "UC30: Chọn Mốc Thời Gian Phân Tích (Tháng / Năm)" as UC_STAT_PERIOD
+  usecase "UC31: Chạm Lát Biểu Đồ Xem Giao Dịch Thành Phần" as UC_STAT_DRILL
 
-    User --> UC_STAT_FLOW
-    User --> UC_STAT_SWITCH
-    User --> UC_STAT_DONUT
-    User --> UC_STAT_BAR
-    User --> UC_STAT_TOP
-    User --> UC_STAT_PERIOD
+  usecase "UC32: Tính Toán Tỷ Trọng Danh Mục" as UC_STAT_CALC
+}
 
-    UC_STAT_DONUT -.->|"<<include>>"| UC_STAT_CALC
-    UC_STAT_DONUT -.->|"<<include>>"| UC_STAT_LIST
-    UC_STAT_SWITCH -.->|"<<include>>"| UC_STAT_CALC
-    UC_STAT_DONUT -.->|"<<extend>>"| UC_STAT_DRILL
+User --> UC_STAT_FLOW
+User --> UC_STAT_SWITCH
+User --> UC_STAT_DONUT
+User --> UC_STAT_BAR
+User --> UC_STAT_TOP
+User --> UC_STAT_PERIOD
+
+UC_STAT_DONUT ..> UC_STAT_CALC : <<include>>
+UC_STAT_DONUT ..> UC_STAT_LIST : <<include>>
+UC_STAT_SWITCH ..> UC_STAT_CALC : <<include>>
+UC_STAT_DRILL ..> UC_STAT_DONUT : <<extend>>
+@enduml
 ```
 
 * **Quan hệ `<<include>>`:** Hiển thị biểu đồ Donut (UC26) và chuyển đổi chế độ xem (UC25) bắt buộc bao hàm tính toán lại tỷ trọng phần trăm từ SQLite (UC32) và kết xuất danh sách chi tiết (UC27).
@@ -527,41 +545,46 @@ flowchart LR
 | **UC39** | Cảnh Báo Vượt Hạn Mức (>100%) | Hệ thống | Đổi màu toàn bộ thẻ sang Đỏ Báo Động kèm nhãn **ĐÃ VƯỢT HẠN MỨC** và số tiền vượt cụ thể. |
 | **UC40** | Đề Xuất Điều Chỉnh Từ AI | Người dùng, AI | Khi danh mục bị vượt ngân sách, Trợ lý AI tự động sinh thẻ đề xuất nâng hạn mức phù hợp. |
 
-#### B. Sơ Đồ Mermaid Phân Hệ Ngân Sách
-```mermaid
-flowchart LR
-    User(["🧑 Người Dùng"])
-    AI(["🤖 Trợ Lý AI"])
+#### B. Mã Nguồn UML (PlantUML) Phân Hệ Ngân Sách
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
 
-    subgraph Sub_BUD["PHÂN HỆ QUẢN LÝ NGÂN SÁCH (BUDGET MANAGEMENT)"]
-        direction TB
-        UC_BUD_OVERVIEW(["UC33: Xem Ngân Sách Tổng Thể Tháng"])
-        UC_BUD_SET_TOTAL(["UC34: Thiết Lập Hạn Mức Ngân Sách Tổng"])
-        UC_BUD_CAT_LIST(["UC35: Xem Danh Sách Tiến Độ Ngân Sách Danh Mục"])
-        UC_BUD_SET_CAT(["UC36: Thiết Lập Hạn Mức Từng Danh Mục Riêng"])
-        UC_BUD_PROGRESS(["UC37: Theo Dõi Thanh Tiến Độ (Progress Bar)"])
-        UC_BUD_WARN_75(["UC38: Cảnh Báo Chạm Ngưỡng (80% - Màu Cam)"])
-        UC_BUD_OVER_100(["UC39: Cảnh Báo Vượt Hạn Mức (>100% - Màu Đỏ)"])
-        UC_BUD_AI_SUGGEST(["UC40: Nhận Đề Xuất Điều Chỉnh Ngân Sách Từ AI"])
+actor "Người Dùng" as User
+actor "Trợ Lý AI" as AI
 
-        UC_BUD_PERSIST(["UC41: Lưu Thiết Lập Vào Bảng Settings & Categories"]):::internal
-    end
+rectangle "PHÂN HỆ QUẢN LÝ NGÂN SÁCH (BUDGET MANAGEMENT)" {
+  usecase "UC33: Xem Ngân Sách Tổng Thể Tháng" as UC_BUDGET_OVERVIEW
+  usecase "UC34: Thiết Lập Hạn Mức Ngân Sách Tổng" as UC_BUDGET_SET_TOTAL
+  usecase "UC35: Xem Danh Sách Tiến Độ Ngân Sách Danh Mục" as UC_BUDGET_CAT_LIST
+  usecase "UC36: Thiết Lập Hạn Mức Từng Danh Mục Riêng" as UC_BUDGET_SET_CAT
+  usecase "UC37: Theo Dõi Thanh Tiến Độ (Progress Bar)" as UC_BUDGET_PROGRESS
+  usecase "UC38: Cảnh Báo Chạm Ngưỡng (80% - Màu Cam)" as UC_BUDGET_WARN_75
+  usecase "UC39: Cảnh Báo Vượt Hạn Mức (>100% - Màu Đỏ)" as UC_BUDGET_OVER_100
+  usecase "UC40: Nhận Đề Xuất Điều Chỉnh Ngân Sách Từ AI" as UC_BUDGET_AI_SUGGEST
 
-    User --> UC_BUD_OVERVIEW
-    User --> UC_BUD_SET_TOTAL
-    User --> UC_BUD_CAT_LIST
-    User --> UC_BUD_SET_CAT
-    User --> UC_BUD_PROGRESS
-    User --> UC_BUD_AI_SUGGEST
+  usecase "UC41: Lưu Thiết Lập Vào Bảng Settings & Categories" as UC_BUDGET_PERSIST
+}
 
-    AI --> UC_BUD_AI_SUGGEST
+User --> UC_BUDGET_OVERVIEW
+User --> UC_BUDGET_SET_TOTAL
+User --> UC_BUDGET_CAT_LIST
+User --> UC_BUDGET_SET_CAT
+User --> UC_BUDGET_PROGRESS
+User --> UC_BUDGET_AI_SUGGEST
 
-    UC_BUD_SET_TOTAL -.->|"<<include>>"| UC_BUD_PERSIST
-    UC_BUD_SET_CAT -.->|"<<include>>"| UC_BUD_PERSIST
+AI --> UC_BUDGET_AI_SUGGEST
 
-    UC_BUD_PROGRESS -.->|"<<extend>>"| UC_BUD_WARN_75
-    UC_BUD_PROGRESS -.->|"<<extend>>"| UC_BUD_OVER_100
-    UC_BUD_OVER_100 -.->|"<<extend>>"| UC_BUD_AI_SUGGEST
+UC_BUDGET_SET_TOTAL ..> UC_BUDGET_PERSIST : <<include>>
+UC_BUDGET_SET_CAT ..> UC_BUDGET_PERSIST : <<include>>
+
+UC_BUDGET_WARN_75 ..> UC_BUDGET_PROGRESS : <<extend>>
+UC_BUDGET_OVER_100 ..> UC_BUDGET_PROGRESS : <<extend>>
+UC_BUDGET_AI_SUGGEST ..> UC_BUDGET_OVER_100 : <<extend>>
+@enduml
 ```
 
 * **Quan hệ `<<include>>`:** Thiết lập ngân sách tổng (UC34) và ngân sách danh mục (UC36) bắt buộc bao hàm ghi nhận cấu hình vào cơ sở dữ liệu (UC41).
@@ -584,44 +607,49 @@ flowchart LR
 | **UC49** | Sao Lưu & Phục Hồi DB | Người dùng | Sao lưu tệp SQLite cục bộ vào bộ nhớ an toàn và phục hồi lại dữ liệu khi đổi thiết bị. |
 | **UC50** | Giới Thiệu Ứng Dụng | Người dùng | Xem phiên bản phát hành, triết lý thiết kế bảo mật Offline-First và hướng dẫn sử dụng ứng dụng **Sổ Thu Chi**. |
 
-#### B. Sơ Đồ Mermaid Phân Hệ Cài Đặt & Tiện Ích
-```mermaid
-flowchart LR
-    User(["🧑 Người Dùng"])
-    OS(["📱 Android OS"])
+#### B. Mã Nguồn UML (PlantUML) Phân Hệ Cài Đặt & Tiện Ích
+```plantuml
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
 
-    subgraph Sub_MORE["PHÂN HỆ CÀI ĐẶT VÀ TIỆN ÍCH (SETTINGS & UTILITIES)"]
-        direction TB
-        UC_SET_CAT_CRUD(["UC42: Quản Lý Danh Mục (Thêm, Sửa, Xóa)"])
-        UC_SET_CAT_PROP(["UC43: Tùy Biến Tên, Emoji, Mã Màu & Hạn Mức"])
-        UC_SET_BIOMETRIC(["UC44: Khóa Bảo Mật Bằng Vân Tay (Biometric)"])
-        UC_SET_THEME(["UC45: Cài Đặt Giao Diện Sáng / Tối"])
-        UC_SET_WIDGET_VIEW(["UC46: Xem Số Dư & Phím Tắt Trên App Widget"])
-        UC_SET_WIDGET_SYNC(["UC47: Tự Động Đồng Bộ Dữ Liệu App Widget"])
-        UC_SET_EXPORT(["UC48: Xuất Dữ Liệu Ra File CSV / Excel"])
-        UC_SET_BACKUP(["UC49: Sao Lưu & Phục Hồi Dữ Liệu SQLite"])
-        UC_SET_ABOUT(["UC50: Xem Thông Tin Ứng Dụng Sổ Thu Chi"])
+actor "Người Dùng" as User
+actor "Android OS" as OS
 
-        UC_OS_BIO(["UC51: Xác Thực BiometricPrompt"]):::internal
-        UC_OS_SAF(["UC52: Quản Lý Tệp Storage Access Framework"]):::internal
-    end
+rectangle "PHÂN HỆ CÀI ĐẶT VÀ TIỆN ÍCH (SETTINGS & UTILITIES)" {
+  usecase "UC42: Quản Lý Danh Mục (Thêm, Sửa, Xóa)" as UC_SET_CAT_CRUD
+  usecase "UC43: Tùy Biến Tên, Emoji, Mã Màu & Hạn Mức" as UC_SET_CAT_PROP
+  usecase "UC44: Khóa Bảo Mật Bằng Vân Tay (Biometric)" as UC_SET_BIOMETRIC
+  usecase "UC45: Cài Đặt Giao Diện Sáng / Tối" as UC_SET_THEME
+  usecase "UC46: Xem Số Dư & Phím Tắt Trên App Widget" as UC_SET_WIDGET_VIEW
+  usecase "UC47: Tự Động Đồng Bộ Dữ Liệu App Widget" as UC_SET_WIDGET_SYNC
+  usecase "UC48: Xuất Dữ Liệu Ra File CSV / Excel" as UC_SET_EXPORT
+  usecase "UC49: Sao Lưu & Phục Hồi Dữ Liệu SQLite" as UC_SET_BACKUP
+  usecase "UC50: Xem Thông Tin Ứng Dụng Sổ Thu Chi" as UC_SET_ABOUT
 
-    User --> UC_SET_CAT_CRUD
-    User --> UC_SET_BIOMETRIC
-    User --> UC_SET_THEME
-    User --> UC_SET_WIDGET_VIEW
-    User --> UC_SET_EXPORT
-    User --> UC_SET_BACKUP
-    User --> UC_SET_ABOUT
+  usecase "UC51: Xác Thực BiometricPrompt" as UC_OS_BIO
+  usecase "UC52: Quản Lý Tệp Storage Access Framework" as UC_OS_SAF
+}
 
-    OS --> UC_SET_BIOMETRIC
-    OS --> UC_SET_WIDGET_VIEW
-    OS --> UC_SET_WIDGET_SYNC
-    OS --> UC_SET_EXPORT
+User --> UC_SET_CAT_CRUD
+User --> UC_SET_BIOMETRIC
+User --> UC_SET_THEME
+User --> UC_SET_WIDGET_VIEW
+User --> UC_SET_EXPORT
+User --> UC_SET_BACKUP
+User --> UC_SET_ABOUT
 
-    UC_SET_CAT_CRUD -.->|"<<include>>"| UC_SET_CAT_PROP
-    UC_SET_BIOMETRIC -.->|"<<include>>"| UC_OS_BIO
-    UC_SET_EXPORT -.->|"<<include>>"| UC_OS_SAF
+OS --> UC_SET_BIOMETRIC
+OS --> UC_SET_WIDGET_VIEW
+OS --> UC_SET_WIDGET_SYNC
+OS --> UC_SET_EXPORT
+
+UC_SET_CAT_CRUD ..> UC_SET_CAT_PROP : <<include>>
+UC_SET_BIOMETRIC ..> UC_OS_BIO : <<include>>
+UC_SET_EXPORT ..> UC_OS_SAF : <<include>>
+@enduml
 ```
 
 * **Quan hệ `<<include>>`:**

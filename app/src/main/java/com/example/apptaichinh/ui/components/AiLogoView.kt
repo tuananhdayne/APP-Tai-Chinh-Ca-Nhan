@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -101,7 +102,10 @@ fun AiLogoView(
         Box(
             modifier = Modifier
                 .size(size)
-                .scale(pulseScale),
+                .graphicsLayer {
+                    scaleX = pulseScale
+                    scaleY = pulseScale
+                },
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.size(size)) {

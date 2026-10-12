@@ -1,0 +1,303 @@
+' ==============================================================================
+' DỰ ÁN: SỔ THU CHI & QUẢN LÝ TÀI CHÍNH CÁ NHÂN THÔNG MINH
+' TẬP HỢP TOÀN BỘ 6 SƠ ĐỒ USE CASE NGHIỆP VỤ CHUẨN UML (PLANTUML)
+' ==============================================================================
+
+' ------------------------------------------------------------------------------
+' 1. SƠ ĐỒ USE CASE TỔNG QUÁT HỆ THỐNG (SYSTEM OVERVIEW USE CASE)
+' ------------------------------------------------------------------------------
+@startuml SystemOverviewUseCase
+title 1. SƠ ĐỒ USE CASE TỔNG QUÁT HỆ THỐNG
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Người Dùng\n(Primary Actor)" as User
+actor "Trợ Lý AI\n(Supporting Actor)" as AI
+actor "Android OS\n(System Platform)" as OS
+
+rectangle "ỨNG DỤNG SỔ THU CHI & QUẢN LÝ TÀI CHÍNH CÁ NHÂN" {
+  package "1. Quản Lý Giao Dịch" {
+    usecase "Ghi Chép Thu / Chi" as UC_TX
+    usecase "Nhập Liệu Giọng Nói (STT)" as UC_VOICE
+    usecase "Quét Hóa Đơn Tự Động (OCR)" as UC_OCR
+  }
+
+  package "2. Lịch & Lịch Sử Giao Dịch" {
+    usecase "Xem Lưới Lịch Dòng Tiền 7 Cột" as UC_CAL
+    usecase "Tra Cứu & Lọc Giao Dịch" as UC_FILTER
+  }
+
+  package "3. Thống Kê Tài Chính" {
+    usecase "Phân Tích Cơ Cấu Thu / Chi" as UC_ANALYTICS
+    usecase "So Sánh Xu Hướng Dòng Tiền" as UC_TREND
+  }
+
+  package "4. Quản Lý Ngân Sách" {
+    usecase "Thiết Lập Ngân Sách Tháng & Danh Mục" as UC_BUDGET
+    usecase "Cảnh Báo Vượt Hạn Mức" as UC_ALERT
+  }
+
+  package "5. Cài Đặt & Tiện Ích" {
+    usecase "Tùy Biến Danh Mục (Icon, Màu, Tên)" as UC_CAT
+    usecase "Đồng Bộ App Widget Màn Hình Chính" as UC_WIDGET
+    usecase "Bảo Mật Vân Tay / Sinh Trắc Học" as UC_SEC
+    usecase "Sao Lưu & Xuất Báo Cáo CSV" as UC_EXPORT
+  }
+
+  package "6. Trợ Lý AI Tự Động Hóa" {
+    usecase "Trò Chuyện & Phân Tích Tài Chính" as UC_AI_CHAT
+    usecase "Duyệt Thẻ Hành Động An Toàn" as UC_AI_CARD
+  }
+}
+
+User --> UC_TX
+User --> UC_VOICE
+User --> UC_OCR
+User --> UC_CAL
+User --> UC_FILTER
+User --> UC_ANALYTICS
+User --> UC_TREND
+User --> UC_BUDGET
+User --> UC_CAT
+User --> UC_SEC
+User --> UC_EXPORT
+User --> UC_AI_CHAT
+User --> UC_AI_CARD
+
+AI --> UC_AI_CHAT
+AI --> UC_AI_CARD
+AI --> UC_ALERT
+
+OS --> UC_VOICE
+OS --> UC_OCR
+OS --> UC_WIDGET
+OS --> UC_SEC
+@enduml
+
+' ------------------------------------------------------------------------------
+' 2. SƠ ĐỒ USE CASE PHÂN HỆ QUẢN LÝ GIAO DỊCH (TRANSACTION MANAGEMENT)
+' ------------------------------------------------------------------------------
+@startuml TransactionManagementUseCase
+title 2. PHÂN HỆ QUẢN LÝ GIAO DỊCH (TRANSACTION MANAGEMENT)
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Người Dùng" as User
+actor "Android OS" as OS
+actor "Trợ Lý AI" as AI
+
+rectangle "PHÂN HỆ QUẢN LÝ GIAO DỊCH (TRANSACTION MANAGEMENT)" {
+  usecase "UC01: Thêm Khoản Chi Tiêu" as UC_ADD_EXP
+  usecase "UC02: Thêm Khoản Thu Nhập" as UC_ADD_INC
+  usecase "UC03: Nhập Nhanh Số Tiền Bằng Phím Tắt" as UC_KEYPAD
+  usecase "UC04: Chọn Danh Mục Giao Dịch" as UC_SEL_CAT
+  usecase "UC05: Nhập Ghi Chú & Ngày Giao Dịch" as UC_NOTE_DATE
+  usecase "UC06: Nhập Liệu Giọng Nói (STT)" as UC_VOICE
+  usecase "UC07: Quét Hóa Đơn Tự Động (OCR)" as UC_OCR
+  usecase "UC08: Chỉnh Sửa Giao Dịch" as UC_EDIT_TX
+  usecase "UC09: Xóa Giao Dịch" as UC_DEL_TX
+  usecase "UC10: Phê Duyệt Thẻ Đề Xuất Từ AI" as UC_APPROVE_AI
+
+  usecase "UC11: Kiểm Tra Hợp Lệ Dữ Liệu" as UC_VAL
+  usecase "UC12: Cảnh Báo Chạm/Vượt Hạn Mức" as UC_WARN
+  usecase "UC13: Hoàn Lại Số Dư & Ngân Sách" as UC_RESTORE
+}
+
+User --> UC_ADD_EXP
+User --> UC_ADD_INC
+User --> UC_VOICE
+User --> UC_OCR
+User --> UC_EDIT_TX
+User --> UC_DEL_TX
+User --> UC_APPROVE_AI
+
+OS --> UC_VOICE
+OS --> UC_OCR
+AI --> UC_APPROVE_AI
+
+UC_ADD_EXP ..> UC_VAL : <<include>>
+UC_ADD_INC ..> UC_VAL : <<include>>
+UC_ADD_EXP ..> UC_SEL_CAT : <<include>>
+UC_ADD_INC ..> UC_SEL_CAT : <<include>>
+UC_ADD_EXP ..> UC_NOTE_DATE : <<include>>
+UC_ADD_INC ..> UC_NOTE_DATE : <<include>>
+
+UC_KEYPAD ..> UC_ADD_EXP : <<extend>>
+UC_KEYPAD ..> UC_ADD_INC : <<extend>>
+
+UC_WARN ..> UC_ADD_EXP : <<extend>>
+
+UC_DEL_TX ..> UC_RESTORE : <<include>>
+@enduml
+
+' ------------------------------------------------------------------------------
+' 3. SƠ ĐỒ USE CASE PHÂN HỆ LỊCH & LỊCH SỬ GIAO DỊCH (CALENDAR & HISTORY)
+' ------------------------------------------------------------------------------
+@startuml CalendarHistoryUseCase
+title 3. PHÂN HỆ LỊCH VÀ LỊCH SỬ GIAO DỊCH (CALENDAR & HISTORY)
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Người Dùng" as User
+
+rectangle "PHÂN HỆ LỊCH VÀ LỊCH SỬ GIAO DỊCH (CALENDAR & HISTORY)" {
+  usecase "UC14: Xem Lưới Lịch Tháng 7 Cột" as UC_CAL_VIEW
+  usecase "UC15: Xem Tổng Thu, Tổng Chi & Số Dư Tháng" as UC_CAL_SUM
+  usecase "UC16: Chọn Ngày Xem Giao Dịch Trong Ngày" as UC_CAL_DAY
+  usecase "UC17: Chuyển Đổi Tháng (Trước / Sau / Hiện Tại)" as UC_CAL_NAV
+  usecase "UC18: Tìm Kiếm Giao Dịch Theo Từ Khóa" as UC_CAL_SEARCH
+  usecase "UC19: Lọc Giao Dịch Theo Loại (Thu / Chi)" as UC_CAL_FILTER
+  usecase "UC20: Xem Chi Tiết Giao Dịch (BottomSheet)" as UC_CAL_DETAIL
+  usecase "UC21: Chỉnh Sửa Giao Dịch Từ Lịch" as UC_CAL_EDIT
+  usecase "UC22: Xóa Giao Dịch Từ Lịch" as UC_CAL_DEL
+
+  usecase "UC23: Cập Nhật Chỉ Số Lịch & Số Dư" as UC_CAL_RECALC
+}
+
+User --> UC_CAL_VIEW
+User --> UC_CAL_SUM
+User --> UC_CAL_DAY
+User --> UC_CAL_NAV
+User --> UC_CAL_SEARCH
+User --> UC_CAL_FILTER
+User --> UC_CAL_DETAIL
+
+UC_CAL_VIEW ..> UC_CAL_SUM : <<include>>
+UC_CAL_DAY ..> UC_CAL_VIEW : <<extend>>
+UC_CAL_EDIT ..> UC_CAL_DETAIL : <<extend>>
+UC_CAL_DEL ..> UC_CAL_DETAIL : <<extend>>
+UC_CAL_DEL ..> UC_CAL_RECALC : <<include>>
+@enduml
+
+' ------------------------------------------------------------------------------
+' 4. SƠ ĐỒ USE CASE PHÂN HỆ THỐNG KÊ TÀI CHÍNH (FINANCIAL ANALYTICS)
+' ------------------------------------------------------------------------------
+@startuml FinancialAnalyticsUseCase
+title 4. PHÂN HỆ THỐNG KÊ TÀI CHÍNH (FINANCIAL ANALYTICS)
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Người Dùng" as User
+
+rectangle "PHÂN HỆ THỐNG KÊ TÀI CHÍNH (FINANCIAL ANALYTICS)" {
+  usecase "UC24: Xem Tổng Quan Dòng Tiền Tháng" as UC_STAT_FLOW
+  usecase "UC25: Chuyển Đổi Xem Chi Tiêu Hoặc Thu Nhập" as UC_STAT_SWITCH
+  usecase "UC26: Xem Biểu Đồ Tròn (Donut Chart) Tỷ Trọng" as UC_STAT_DONUT
+  usecase "UC27: Xem Danh Sách Cơ Cấu % Từng Danh Mục" as UC_STAT_LIST
+  usecase "UC28: Xem Biểu Đồ So Sánh Xu Hướng Thu - Chi" as UC_STAT_BAR
+  usecase "UC29: Xem Xếp Hạng Top Chi Tiêu Lớn Nhất" as UC_STAT_TOP
+  usecase "UC30: Chọn Mốc Thời Gian Phân Tích (Tháng / Năm)" as UC_STAT_PERIOD
+  usecase "UC31: Chạm Lát Biểu Đồ Xem Giao Dịch Thành Phần" as UC_STAT_DRILL
+
+  usecase "UC32: Tính Toán Tỷ Trọng Danh Mục" as UC_STAT_CALC
+}
+
+User --> UC_STAT_FLOW
+User --> UC_STAT_SWITCH
+User --> UC_STAT_DONUT
+User --> UC_STAT_BAR
+User --> UC_STAT_TOP
+User --> UC_STAT_PERIOD
+
+UC_STAT_DONUT ..> UC_STAT_CALC : <<include>>
+UC_STAT_DONUT ..> UC_STAT_LIST : <<include>>
+UC_STAT_SWITCH ..> UC_STAT_CALC : <<include>>
+UC_STAT_DRILL ..> UC_STAT_DONUT : <<extend>>
+@enduml
+
+' ------------------------------------------------------------------------------
+' 5. SƠ ĐỒ USE CASE PHÂN HỆ QUẢN LÝ NGÂN SÁCH (BUDGET MANAGEMENT)
+' ------------------------------------------------------------------------------
+@startuml BudgetManagementUseCase
+title 5. PHÂN HỆ QUẢN LÝ NGÂN SÁCH (BUDGET MANAGEMENT)
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Người Dùng" as User
+actor "Trợ Lý AI" as AI
+
+rectangle "PHÂN HỆ QUẢN LÝ NGÂN SÁCH (BUDGET MANAGEMENT)" {
+  usecase "UC33: Xem Ngân Sách Tổng Thể Tháng" as UC_BUDGET_OVERVIEW
+  usecase "UC34: Thiết Lập Hạn Mức Ngân Sách Tổng" as UC_BUDGET_SET_TOTAL
+  usecase "UC35: Xem Danh Sách Tiến Độ Ngân Sách Danh Mục" as UC_BUDGET_CAT_LIST
+  usecase "UC36: Thiết Lập Hạn Mức Từng Danh Mục Riêng" as UC_BUDGET_SET_CAT
+  usecase "UC37: Theo Dõi Thanh Tiến Độ (Progress Bar)" as UC_BUDGET_PROGRESS
+  usecase "UC38: Cảnh Báo Chạm Ngưỡng (80% - Màu Cam)" as UC_BUDGET_WARN_75
+  usecase "UC39: Cảnh Báo Vượt Hạn Mức (>100% - Màu Đỏ)" as UC_BUDGET_OVER_100
+  usecase "UC40: Nhận Đề Xuất Điều Chỉnh Ngân Sách Từ AI" as UC_BUDGET_AI_SUGGEST
+
+  usecase "UC41: Lưu Thiết Lập Vào Bảng Settings & Categories" as UC_BUDGET_PERSIST
+}
+
+User --> UC_BUDGET_OVERVIEW
+User --> UC_BUDGET_SET_TOTAL
+User --> UC_BUDGET_CAT_LIST
+User --> UC_BUDGET_SET_CAT
+User --> UC_BUDGET_PROGRESS
+User --> UC_BUDGET_AI_SUGGEST
+
+AI --> UC_BUDGET_AI_SUGGEST
+
+UC_BUDGET_SET_TOTAL ..> UC_BUDGET_PERSIST : <<include>>
+UC_BUDGET_SET_CAT ..> UC_BUDGET_PERSIST : <<include>>
+
+UC_BUDGET_WARN_75 ..> UC_BUDGET_PROGRESS : <<extend>>
+UC_BUDGET_OVER_100 ..> UC_BUDGET_PROGRESS : <<extend>>
+UC_BUDGET_AI_SUGGEST ..> UC_BUDGET_OVER_100 : <<extend>>
+@enduml
+
+' ------------------------------------------------------------------------------
+' 6. SƠ ĐỒ USE CASE PHÂN HỆ CÀI ĐẶT & TIỆN ÍCH (SETTINGS & UTILITIES)
+' ------------------------------------------------------------------------------
+@startuml SettingsUtilitiesUseCase
+title 6. PHÂN HỆ CÀI ĐẶT VÀ TIỆN ÍCH (SETTINGS & UTILITIES)
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Người Dùng" as User
+actor "Android OS" as OS
+
+rectangle "PHÂN HỆ CÀI ĐẶT VÀ TIỆN ÍCH (SETTINGS & UTILITIES)" {
+  usecase "UC42: Quản Lý Danh Mục (Thêm, Sửa, Xóa)" as UC_SET_CAT_CRUD
+  usecase "UC43: Tùy Biến Tên, Emoji, Mã Màu & Hạn Mức" as UC_SET_CAT_PROP
+  usecase "UC44: Khóa Bảo Mật Bằng Vân Tay (Biometric)" as UC_SET_BIOMETRIC
+  usecase "UC45: Cài Đặt Giao Diện Sáng / Tối" as UC_SET_THEME
+  usecase "UC46: Xem Số Dư & Phím Tắt Trên App Widget" as UC_SET_WIDGET_VIEW
+  usecase "UC47: Tự Động Đồng Bộ Dữ Liệu App Widget" as UC_SET_WIDGET_SYNC
+  usecase "UC48: Xuất Dữ Liệu Ra File CSV / Excel" as UC_SET_EXPORT
+  usecase "UC49: Sao Lưu & Phục Hồi Dữ Liệu SQLite" as UC_SET_BACKUP
+  usecase "UC50: Xem Thông Tin Ứng Dụng Sổ Thu Chi" as UC_SET_ABOUT
+
+  usecase "UC51: Xác Thực BiometricPrompt" as UC_OS_BIO
+  usecase "UC52: Quản Lý Tệp Storage Access Framework" as UC_OS_SAF
+}
+
+User --> UC_SET_CAT_CRUD
+User --> UC_SET_BIOMETRIC
+User --> UC_SET_THEME
+User --> UC_SET_WIDGET_VIEW
+User --> UC_SET_EXPORT
+User --> UC_SET_BACKUP
+User --> UC_SET_ABOUT
+
+OS --> UC_SET_BIOMETRIC
+OS --> UC_SET_WIDGET_VIEW
+OS --> UC_SET_WIDGET_SYNC
+OS --> UC_SET_EXPORT
+
+UC_SET_CAT_CRUD ..> UC_SET_CAT_PROP : <<include>>
+UC_SET_BIOMETRIC ..> UC_OS_BIO : <<include>>
+UC_SET_EXPORT ..> UC_OS_SAF : <<include>>
+@enduml
