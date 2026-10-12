@@ -660,13 +660,15 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                             "bánh", "buffet", "kem", "cháo", "xôi", "trái cây", "hoa quả", "trà đá", "nước mía", "bánh bao",
                             "chợ", "đi chợ", "thực phẩm", "rau củ", "thịt cá", "tà tưa", "cành", "mì tôm", "mì gói",
                             "bún bò", "bún đậu", "cơm tấm", "bánh xèo", "sữa chua", "pizza", "pizaa", "kfc", "lotteria", "gà rán", "burger",
-                            "hải sản", "ốc", "lẩu nướng", "bbq", "đồ ngọt", "trà chanh", "bánh tráng", "nem", "giò", "ăn phở"
+                            "hải sản", "ốc", "lẩu nướng", "bbq", "đồ ngọt", "trà chanh", "bánh tráng", "nem", "giò", "ăn phở",
+                            "trà đào", "trà tắc", "bún riêu", "cơm sườn", "bánh mì thịt", "bún chả", "cháo lòng", "nước ngọt", "sinh tố", "cà phê trứng", "siêu thị winmart", "bánh tráng nướng"
                         ),
                         "Đi lại" to listOf(
                             "xăng", "xe", "grab", "grab bike", "bike", "đi làm", "taxi", "bắt taxi", "đi taxi", "gửi xe", "vé xe", "bến xe", "sửa xe", "bảo dưỡng",
                             "vé tàu", "vé máy bay", "be", "gojek", "xanh sm", "cầu đường", "rửa xe", "nhớt", "xăng xe", "săm lốp", "vá xe",
                             "dầu nhớt", "máy bay", "tàu hỏa", "xe bus", "xe buýt", "phí cầu đường", "grab car", "be car", "be bike",
-                            "trạm thu phí", "thu phí", "cao tốc", "bot", "vé cầu đường", "phí đường bộ", "đổ xăng", "thay nhớt"
+                            "trạm thu phí", "thu phí", "cao tốc", "bot", "vé cầu đường", "phí đường bộ", "đổ xăng", "thay nhớt",
+                            "xe máy", "xe khách", "bảo dưỡng xe", "vá lốp", "mai linh", "vé gửi xe", "gửi xe máy", "gửi ô tô"
                         ),
                         "Nhà ở" to listOf(
                             "tiền nhà", "tiền điện", "tiền nước", "mạng", "wifi", "tiền phòng", "phòng trọ", "tiền trọ",
@@ -675,53 +677,58 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                             "thợ sửa", "thợ", "sửa chữa", "đường ống", "ống nước", "vòi sen", "bình gas", "bóng đèn", "đèn led",
                             "cước", "tiền cước", "cước điện thoại", "nạp điện thoại", "tiền điện thoại", "nạp thẻ điện thoại",
                             "thuê trọ", "tiền thuê trọ", "phí thuê nhà", "trả tiền thuê", "tiền phòng trọ", "nhà trọ", "phòng trọ sinh viên",
-                            "sinh hoạt", "tiền sinh hoạt", "hóa đơn sinh hoạt"
+                            "sinh hoạt", "tiền sinh hoạt", "hóa đơn sinh hoạt", "tiền mạng", "hóa đơn điện", "hóa đơn nước", "tiền thuê", "phí quản lý"
                         ),
                         "Mua sắm" to listOf(
                             "mua sắm", "shopping", "quần áo", "áo", "quần", "giày", "dép", "shopee", "tiki", "lazada",
                             "túi xách", "túi", "mỹ phẩm", "son", "đồng hồ", "đồ gia dụng", "bách hóa", "váy", "đầm", "phụ kiện",
                             "mua đồ", "sắm đồ", "quần jean", "áo sơ mi", "giày dép", "nước hoa", "bitis", "sneaker", "áo thun",
-                            "chuột", "chuột máy tính", "bàn phím", "tai nghe", "sạc", "cáp sạc", "ốp lưng", "điện thoại", "laptop", "máy tính"
+                            "chuột", "chuột máy tính", "bàn phím", "tai nghe", "sạc", "cáp sạc", "ốp lưng", "điện thoại", "laptop", "máy tính",
+                            "áo polo", "săn sale", "nồi cơm", "chảo", "nồi chiên", "bàn là", "máy sấy", "son môi", "dưỡng da", "black rouge", "áo phông",
+                            "mua váy", "váy xinh", "mua đầm", "mua áo", "mua quần", "mua giày", "mua dép", "chảo chống dính", "nồi chảo"
                         ),
                         "Giải trí" to listOf(
                             "cà phê", "cafe", "uống cà phê", "đi cà phê", "highland", "starbucks", "chém gió", "tụ tập",
-                            "phim", "cinema", "nhậu", "nhậu nhẹt", "bida", "karaoke", "du lịch", "chơi", "kịch", "xem kịch", "kịch nghệ",
+                            "phim", "cinema", "nhậu", "nhậu nhẹt", "tiền nhậu", "bida", "karaoke", "du lịch", "chơi", "kịch", "xem kịch", "kịch nghệ",
                             "game", "nạp game", "bar", "pub", "hát", "nghỉ dưỡng", "vé xem phim", "vé ca nhạc", "đi bơi", "hồ bơi", "vé bơi",
                             "bia hơi", "cafe muối", "uống cafe", "rạp chiếu phim", "nạp thẻ", "garena", "bowling", "hát hò",
-                            "hát karaoke", "đi hát karaoke", "đi hát", "phòng hát"
+                            "hát karaoke", "đi hát karaoke", "đi hát", "phòng hát",
+                            "cgv", "lotte cinema", "bắp nước", "uống bia", "steam", "resort", "bi-a", "bida club", "live show"
                         ),
                         "Sức khỏe" to listOf(
                             "thuốc", "khám", "bệnh", "vitamin", "bác sĩ", "y tế", "nha khoa", "khẩu trang",
                             "bệnh viện", "xét nghiệm", "viện phí", "tiêm", "panadol", "khám răng", "nha sĩ",
                             "mua thuốc", "nhà thuốc", "pharmacity", "long châu", "hạ sốt", "hapacol", "kháng sinh",
                             "khám bệnh", "nhổ răng", "nhổ răng khôn", "lấy cao răng", "đi khám", "tiền khám",
-                            "khám tổng quát", "phòng khám", "chữa bệnh", "đi viện", "thuốc men", "khám mắt", "kính cận"
+                            "khám tổng quát", "phòng khám", "chữa bệnh", "đi viện", "thuốc men", "khám mắt", "kính cận",
+                            "trám răng", "thuốc cảm", "vacxin", "cắt kính", "viện mắt", "bạch mai", "thực phẩm chức năng"
                         ),
                         "Giáo dục" to listOf(
                             "sách", "học", "khóa học", "học phí", "bút", "vở", "giáo trình", "tiếng anh",
                             "trường", "lớp", "đào tạo", "gia sư", "dụng cụ học tập", "tiền học", "sách giáo khoa",
-                            "sách vở", "dạy kèm", "ielts", "toeic", "quỹ lớp"
+                            "sách vở", "dạy kèm", "ielts", "toeic", "quỹ lớp", "học kỳ", "tiền sách", "khóa học online", "bút bi", "compa"
                         ),
                         "Hiếu hỉ" to listOf(
-                            "cưới", "hỏi", "sinh nhật", "mừng", "thăm", "thăm người ốm", "thăm bệnh", "thăm ốm",
-                            "giỏ hoa quả", "tiệc", "phúng", "ma", "đám ma", "đám cưới", "tiệc cưới", "mừng cưới",
-                            "phong bì cưới", "đầy tháng", "quà biếu", "lì xì", "phong bì", "chúc mừng", "thôi nôi", "viếng", "đám tang"
+                            "đám cưới", "tiệc cưới", "mừng cưới", "phong bì cưới", "tiền cưới", "đi ăn cưới", "hỏi", "sinh nhật", "mừng", "thăm", "thăm người ốm", "thăm bệnh", "thăm ốm",
+                            "giỏ hoa quả", "tiệc", "phúng", "ma", "đám ma", "đầy tháng", "quà biếu", "lì xì", "phong bì", "chúc mừng", "thôi nôi", "viếng", "đám tang",
+                            "quà sinh nhật", "biếu tết", "ăn cưới", "mừng thọ", "tiền mừng"
                         ),
                         "Tiết kiệm" to listOf(
                             "tiết kiệm", "gửi bank", "sổ tiết kiệm", "tích lũy", "gửi tiết kiệm", "gửi tích lũy",
-                            "tiết kiệm online", "mở sổ tiết kiệm", "heo đất"
+                            "tiết kiệm online", "mở sổ tiết kiệm", "heo đất", "bỏ heo", "nuôi heo", "quỹ khẩn cấp"
                         ),
                         "Trả nợ" to listOf(
                             "nợ", "vay", "trả góp", "thẻ tín dụng", "lãi", "vay mượn", "thanh toán thẻ",
-                            "mượn tiền", "trả thẻ", "fe credit", "trả nợ", "trả tiền vay", "dư nợ thẻ", "home credit"
+                            "mượn tiền", "trả thẻ", "fe credit", "trả nợ", "trả tiền vay", "dư nợ thẻ", "home credit",
+                            "sao kê thẻ", "trả bạn", "trả góp điện thoại"
                         )
                     )
                 } else {
                     mapOf(
-                        "Lương" to listOf("lương", "salary", "chuyển khoản lương", "nhận lương", "ting ting", "bắn lương", "lương tháng", "lương cứng", "payroll"),
-                        "Thưởng" to listOf("thưởng", "bonus", "kpi", "hoa hồng", "tiền thưởng", "thưởng tết", "thưởng kpi", "thưởng nóng", "thưởng quý", "thưởng dự án"),
-                        "Làm thêm" to listOf("dự án", "freelance", "làm thêm", "part-time", "ot", "ngoài giờ", "thù lao", "tiền công", "tiền làm thêm", "dạy kèm", "shipper"),
-                        "Đầu tư" to listOf("cổ phiếu", "lãi", "đầu tư", "crypto", "chứng khoán", "bất động sản", "coin", "vàng", "tiền lãi", "lãi tiết kiệm", "sổ tiết kiệm", "lãi ngân hàng", "cổ tức", "lãi suất")
+                        "Lương" to listOf("lương", "salary", "chuyển khoản lương", "nhận lương", "ting ting", "bắn lương", "lương tháng", "lương cứng", "payroll", "tiền lương", "công ty bắn lương"),
+                        "Thưởng" to listOf("thưởng", "bonus", "kpi", "hoa hồng", "tiền thưởng", "thưởng tết", "thưởng kpi", "thưởng nóng", "thưởng quý", "thưởng dự án", "thưởng hiệu suất", "bonus hiệu suất"),
+                        "Làm thêm" to listOf("dự án", "freelance", "làm thêm", "part-time", "ot", "ngoài giờ", "thù lao", "tiền công", "tiền làm thêm", "dạy kèm", "shipper", "chạy grab", "làm thêm ngoài giờ"),
+                        "Đầu tư" to listOf("cổ phiếu", "lãi", "đầu tư", "crypto", "chứng khoán", "bất động sản", "coin", "vàng", "tiền lãi", "lãi tiết kiệm", "sổ tiết kiệm", "lãi ngân hàng", "cổ tức", "lãi suất", "chốt lời", "bán usdt", "lãi crypto")
                     )
                 }
 
@@ -744,14 +751,9 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                     var score = 0
 
                     // 1. Điểm trực tiếp từ tên danh mục (ưu tiên nếu xuất hiện nguyên văn hoặc cụm từ)
-                    if (nameNo.contains(" ")) {
-                        if (text.contains(nameLower) || textNo.contains(nameNo)) {
-                            score += nameNo.length * 6
-                        }
-                    } else {
-                        if (textTokens.contains(nameLower) || textNoTokens.contains(nameNo)) {
-                            score += nameNo.length * 6
-                        }
+                    val nameRegex = Regex("\\b${Regex.escape(nameNo)}\\b", RegexOption.IGNORE_CASE)
+                    if (nameRegex.containsMatchIn(textNo) || text.contains(nameLower)) {
+                        score += nameNo.length * 6
                     }
 
                     // 2. Điểm từ từ khóa đặc trưng (semanticMap)
@@ -761,8 +763,8 @@ class LocalToolExecutor(private val dbHelper: FinanceDatabaseHelper) {
                         val kwNo = removeDiacritics(kwLower)
 
                         val isMatched = if (kwNo.contains(" ")) {
-                            // Cụm nhiều từ: an toàn khi kiểm tra substring
-                            text.contains(kwLower) || textNo.contains(kwNo)
+                            // Cụm nhiều từ: dùng word boundary regex trên textNo để tránh "tiền nhà" khớp "tiền nhậu"
+                            Regex("\\b${Regex.escape(kwNo)}\\b", RegexOption.IGNORE_CASE).containsMatchIn(textNo) || text.contains(kwLower)
                         } else {
                             // Từ đơn: BẮT BUỘC so khớp token chính xác (tránh "nhậu" khớp "nhà", "trình" khớp "trí", "bàn" khớp "ăn")
                             textTokens.contains(kwLower) || textNoTokens.contains(kwNo)
