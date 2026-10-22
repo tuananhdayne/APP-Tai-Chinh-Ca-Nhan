@@ -23,6 +23,8 @@
 4. [Thiết Kế Cơ Sở Dữ Liệu SQLite / Room DB & Sơ Đồ ERD](#4-thiết-kế-cơ-sở-dữ-liệu-sqlite--room-db--sơ-đồ-erd)
 5. [Sơ Đồ Luồng Hoạt Động Tổng Thể Của Toàn Bộ Ứng Dụng](#5-sơ-đồ-luồng-hoạt-động-tổng-thể-của-toàn-bộ-ứng-dụng)
    * 5.1. [Hệ Thống 6 Sơ Đồ Use Case Nghiệp Vụ (UML Use Case Diagrams)](#51-hệ-thống-6-sơ-đồ-use-case-nghiệp-vụ-uml-use-case-diagrams)
+   * 5.2. [Đặc Tả Use Case Chi Tiết](#52-đặc-tả-use-case-chi-tiết)
+   * 5.3. [Đặc Tả Đầy Đủ Từng Use Case Của Người Dùng](#53-đặc-tả-đầy-đủ-từng-use-case-của-người-dùng)
 6. [Chi Tiết 5 Phân Hệ Giao Diện & Tiện Ích Mở Rộng](#6-chi-tiết-5-phân-hệ-giao-diện--tiện-ích-mở-rộng)
 7. [Chuyên Sâu Kiến Trúc Trợ Lý AI: Phòng Thủ 2 Tầng & ReAct Engine](#7-chuyên-sâu-kiến-trúc-trợ-lý-ai-phòng-thủ-2-tầng--react-engine)
 8. [Phân Hệ Vision Multimodal: Quét Hóa Đơn Tự Động (Receipt OCR)](#8-phân-hệ-vision-multimodal-quét-hóa-đơn-tự-động-receipt-ocr)
@@ -660,6 +662,589 @@ UC_SET_EXPORT ..> UC_OS_SAF : <<include>>
 
 ---
 
+## 5.2 ĐẶC TẢ USE CASE CHI TIẾT
+
+### 5.2.1 Quy Ước Đặc Tả
+
+Phần này đặc tả các mục tiêu nghiệp vụ chính mà người dùng trực tiếp thực hiện. Các use case kỹ thuật dạng `<<include>>` hoặc `<<extend>>` như kiểm tra hợp lệ, tính tỷ trọng, cập nhật chỉ số và gọi dịch vụ Android được mô tả trong luồng cha tương ứng để tránh lặp lại nội dung.
+
+| Thuộc tính | Ý nghĩa |
+| :--- | :--- |
+| **Mã và tên** | Mã định danh đồng nhất với sơ đồ tại mục 5.1 và file `docs/usecase_diagrams.puml`. |
+| **Tác nhân chính** | Người hoặc hệ thống khởi tạo use case. |
+| **Tác nhân phụ** | Thành phần hỗ trợ như Trợ lý AI hoặc Android OS. |
+| **Kích hoạt** | Sự kiện bắt đầu use case. |
+| **Tiền điều kiện** | Điều kiện phải đúng trước khi thực hiện. |
+| **Hậu điều kiện** | Trạng thái hệ thống sau khi thành công hoặc thất bại. |
+| **Luồng chính** | Chuỗi hành động thành công thông thường. |
+| **Luồng thay thế/ngoại lệ** | Nhánh tùy chọn, dữ liệu không hợp lệ hoặc lỗi hệ thống. |
+| **Quy tắc nghiệp vụ** | Các ràng buộc dữ liệu và an toàn bắt buộc. |
+
+### 5.2.2 UC01 – Thêm Khoản Chi Tiêu
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Ghi nhận một khoản tiền đã chi vào sổ tài chính. |
+| **Tác nhân chính** | Người dùng. |
+| **Kích hoạt** | Người dùng nhấn nút `[+]`, mở form nhập nhanh và chọn **Chi tiêu**. |
+| **Tiền điều kiện** | Ứng dụng đã khởi tạo; tồn tại ít nhất một danh mục loại `EXPENSE`. |
+| **Hậu điều kiện thành công** | Một giao dịch `EXPENSE` được lưu; số dư, thống kê, ngân sách và widget được cập nhật. |
+| **Hậu điều kiện thất bại** | Không tạo bản ghi; dữ liệu cũ giữ nguyên; giao diện hiển thị nguyên nhân. |
+| **Use case liên quan** | `<<include>>` UC04, UC05, UC11; `<<extend>>` UC03, UC12. |
+
+**Luồng chính:**
+
+1. Hệ thống hiển thị form nhập giao dịch và mặc định ngày hiện tại.
+2. Người dùng nhập số tiền lớn hơn 0 hoặc sử dụng các phím cộng nhanh UC03.
+3. Người dùng chọn một danh mục chi tiêu theo UC04.
+4. Người dùng chọn ngày, nhập ghi chú tùy chọn theo UC05.
+5. Người dùng nhấn **Lưu giao dịch**.
+6. Hệ thống kiểm tra dữ liệu theo UC11.
+7. Hệ thống ghi giao dịch vào SQLite/Room trong một thao tác nguyên tử.
+8. Hệ thống tính lại tổng thu, tổng chi, số dư và mức sử dụng ngân sách.
+9. Nếu đạt ngưỡng cảnh báo, hệ thống kích hoạt UC12.
+10. Hệ thống thông báo lưu thành công, làm mới StateFlow và App Widget.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Nhập câu tự nhiên:** Người dùng nhập như `ăn trưa 45k`; bộ Smart NLP điền trước số tiền, danh mục và ghi chú để người dùng kiểm tra.
+- **A2 – Chọn ngày quá khứ:** Giao dịch được ghi cho ngày đã chọn và các thống kê của kỳ tương ứng được tính lại.
+- **E1 – Số tiền trống, bằng 0 hoặc không hợp lệ:** Hệ thống không lưu và đánh dấu ô số tiền.
+- **E2 – Chưa chọn danh mục:** Hệ thống yêu cầu chọn danh mục chi tiêu.
+- **E3 – Lỗi database:** Giao dịch được rollback và hiển thị thông báo thử lại.
+
+**Quy tắc nghiệp vụ:** `amount` dùng số nguyên `Long` theo đơn vị VNĐ; loại giao dịch phải là `EXPENSE`; danh mục phải tồn tại và cùng loại; không cho phép số âm; cảnh báo ngân sách không ngăn người dùng lưu giao dịch hợp lệ.
+
+### 5.2.3 UC02 – Thêm Khoản Thu Nhập
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Ghi nhận một khoản tiền thu vào sổ tài chính. |
+| **Tác nhân chính** | Người dùng. |
+| **Kích hoạt** | Người dùng mở form nhập nhanh và chọn **Thu nhập**. |
+| **Tiền điều kiện** | Tồn tại ít nhất một danh mục loại `INCOME`. |
+| **Hậu điều kiện thành công** | Giao dịch `INCOME` được lưu và số dư tăng tương ứng. |
+| **Use case liên quan** | `<<include>>` UC04, UC05, UC11; `<<extend>>` UC03. |
+
+**Luồng chính:**
+
+1. Người dùng chọn loại **Thu nhập**.
+2. Người dùng nhập số tiền, chọn nguồn thu, ngày và ghi chú.
+3. Hệ thống xác thực số tiền và tính tương thích của danh mục.
+4. Người dùng nhấn **Lưu giao dịch**.
+5. Hệ thống lưu bản ghi `INCOME`, cập nhật số dư và thông báo thành công.
+6. Hệ thống đồng bộ danh sách gần đây, lịch, thống kê và App Widget.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Nhập nhanh:** Câu `lương tháng này 15tr` được NLP nhận diện là `15.000.000 đ` và danh mục Lương.
+- **E1 – Danh mục thuộc loại chi:** Hệ thống không lưu và yêu cầu chọn danh mục thu nhập.
+- **E2 – Dữ liệu không hợp lệ hoặc lỗi DB:** Không thay đổi dữ liệu và hiển thị lỗi.
+
+**Quy tắc nghiệp vụ:** Thu nhập không làm tăng phần trăm đã sử dụng của ngân sách chi tiêu; số dư ròng được tính bằng `Tổng thu - Tổng chi`.
+
+### 5.2.4 UC06 – Nhập Liệu Bằng Giọng Nói
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Chuyển câu nói tiếng Việt thành dữ liệu giao dịch để giảm thao tác nhập tay. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Android OS (`RecognizerIntent`/dịch vụ nhận dạng giọng nói). |
+| **Kích hoạt** | Người dùng nhấn biểu tượng Microphone trên form nhập. |
+| **Tiền điều kiện** | Thiết bị hỗ trợ nhận dạng giọng nói; quyền microphone đã được cấp khi nền tảng yêu cầu. |
+| **Hậu điều kiện thành công** | Form được điền trước từ văn bản nhận dạng; chưa lưu DB cho tới khi người dùng bấm Lưu. |
+| **Use case liên quan** | Mở rộng UC01 hoặc UC02; dùng UC04 và UC11 trước khi lưu. |
+
+**Luồng chính:**
+
+1. Người dùng nhấn nút Microphone.
+2. Ứng dụng yêu cầu Android OS bắt đầu nhận dạng tiếng Việt.
+3. Người dùng đọc nội dung, ví dụ `đổ xăng 70k`.
+4. Android OS trả văn bản đã nhận dạng.
+5. Bộ phân tích cục bộ trích xuất loại giao dịch, số tiền, danh mục và ghi chú.
+6. Hệ thống điền dữ liệu lên form để người dùng kiểm tra hoặc chỉnh sửa.
+7. Người dùng xác nhận lưu theo UC01 hoặc UC02.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Chỉ nhận dạng được ghi chú:** Hệ thống giữ nội dung văn bản và yêu cầu người dùng nhập số tiền/chọn danh mục.
+- **E1 – Từ chối quyền hoặc thiết bị không hỗ trợ:** Hiển thị hướng dẫn và cho phép nhập tay.
+- **E2 – Không nghe rõ/timeout:** Không thay đổi dữ liệu form hiện có; cho phép thử lại.
+
+**Quy tắc nghiệp vụ:** Kết quả Speech-to-Text là dữ liệu gợi ý, không được tự động ghi DB; người dùng luôn được xem và sửa trước khi lưu.
+
+### 5.2.5 UC07 – Quét Hóa Đơn Tự Động
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Trích xuất các dòng thanh toán từ ảnh hóa đơn thành danh sách giao dịch nháp. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Android OS, mô hình AI multimodal. |
+| **Kích hoạt** | Người dùng chọn **Chụp hóa đơn** hoặc chọn ảnh từ thư viện. |
+| **Tiền điều kiện** | Có ảnh hợp lệ; đã cấu hình máy chủ AI; có kết nối mạng; có danh mục chi tiêu. |
+| **Hậu điều kiện thành công** | Các dòng hợp lệ được hiển thị dạng bản nháp; chỉ những dòng được xác nhận mới được lưu. |
+| **Hậu điều kiện thất bại** | Không ghi giao dịch; ảnh và dữ liệu cá nhân không được đưa vào sổ. |
+
+**Luồng chính:**
+
+1. Người dùng mở màn hình quét hóa đơn.
+2. Người dùng chụp ảnh hoặc chọn ảnh có sẵn.
+3. Ứng dụng nén/chuyển ảnh sang Base64 và gửi tới endpoint multimodal.
+4. AI trả JSON gồm cửa hàng, ngày và các mặt hàng với số lượng, thành tiền, danh mục.
+5. Hệ thống kiểm tra JSON, bỏ các dòng có số tiền không hợp lệ và đối chiếu danh mục cục bộ.
+6. Hệ thống hiển thị danh sách dòng nháp để người dùng sửa, bỏ chọn hoặc đổi danh mục.
+7. Người dùng chọn **Lưu tất cả** hoặc xác nhận từng dòng.
+8. Hệ thống lưu các dòng đã duyệt trong giao dịch DB và cập nhật toàn bộ chỉ số.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Chỉ đọc được tổng tiền:** Tạo một dòng `Tổng hóa đơn` thay vì tự suy đoán mặt hàng.
+- **A2 – Danh mục AI không tồn tại:** Dùng bộ ghép danh mục cục bộ; nếu vẫn không khớp thì dùng `Khác`.
+- **E1 – Ảnh trống/không đọc được:** Không tạo bản nháp và yêu cầu ảnh rõ hơn.
+- **E2 – JSON sai schema hoặc không có dòng hợp lệ:** Không lưu, hiển thị lỗi phân tích.
+- **E3 – Lỗi mạng/xác thực:** Giữ màn hình hiện tại và cho phép thử lại.
+
+**Quy tắc nghiệp vụ:** `amount` là thành tiền của cả dòng, nguyên VNĐ; không tạo thêm dòng tổng nếu hóa đơn đã có chi tiết; không suy đoán chữ hoặc số bị mờ; mọi dòng đều cần người dùng duyệt trước khi lưu.
+
+### 5.2.6 UC08 – Chỉnh Sửa Giao Dịch
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Sửa số tiền, danh mục, ngày hoặc ghi chú của giao dịch đã tồn tại. |
+| **Tác nhân chính** | Người dùng. |
+| **Kích hoạt** | Người dùng chọn một giao dịch và nhấn **Sửa**. |
+| **Tiền điều kiện** | Giao dịch còn tồn tại trong DB. |
+| **Hậu điều kiện thành công** | Giao dịch được cập nhật; các tổng hợp liên quan được tính lại. |
+| **Hậu điều kiện thất bại** | Giao dịch giữ nguyên trạng thái trước khi chỉnh sửa. |
+
+**Luồng chính:**
+
+1. Hệ thống tải thông tin hiện tại vào form.
+2. Người dùng chỉnh một hoặc nhiều trường.
+3. Người dùng nhấn **Xác nhận sửa**.
+4. Hệ thống kiểm tra dữ liệu và sự tồn tại của giao dịch.
+5. Hệ thống cập nhật bản ghi trong một thao tác nguyên tử.
+6. Hệ thống tính lại số liệu của cả kỳ cũ và kỳ mới nếu ngày/loại giao dịch thay đổi.
+7. Giao diện, StateFlow và Widget được đồng bộ.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Người dùng hủy:** Đóng form, không thay đổi DB.
+- **E1 – Giao dịch đã bị xóa ở luồng khác:** Thông báo không còn dữ liệu và tải lại danh sách.
+- **E2 – Giá trị mới không hợp lệ:** Giữ form để người dùng sửa lại.
+
+**Quy tắc nghiệp vụ:** Không được đổi sang danh mục khác loại với giao dịch; mọi số liệu tổng hợp phải được tính từ DB sau cập nhật, không cộng/trừ thủ công trên UI.
+
+### 5.2.7 UC09 – Xóa Giao Dịch
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Loại bỏ một giao dịch nhập sai khỏi sổ. |
+| **Tác nhân chính** | Người dùng. |
+| **Kích hoạt** | Người dùng chọn **Xóa** tại chi tiết giao dịch. |
+| **Tiền điều kiện** | Giao dịch tồn tại. |
+| **Hậu điều kiện thành công** | Giao dịch bị xóa; UC13 cập nhật lại số dư và mức sử dụng ngân sách. |
+| **Use case liên quan** | `<<include>>` UC13. |
+
+**Luồng chính:**
+
+1. Hệ thống hiển thị hộp thoại xác nhận cùng thông tin giao dịch.
+2. Người dùng nhấn **Xác nhận xóa**.
+3. Hệ thống xóa giao dịch khỏi DB.
+4. Hệ thống tính lại số dư, lịch, thống kê, ngân sách và Widget.
+5. Hệ thống thông báo xóa thành công.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Hủy xóa:** Đóng hộp thoại, dữ liệu không thay đổi.
+- **E1 – Bản ghi không tồn tại/lỗi DB:** Không thay đổi các bản ghi khác và hiển thị lỗi.
+
+**Quy tắc nghiệp vụ:** Xóa là thao tác phá hủy nên luôn cần xác nhận rõ ràng; nếu do AI đề xuất thì còn phải đi qua Preview Card của UC10.
+
+### 5.2.8 UC10 – Duyệt Thẻ Hành Động Do AI Đề Xuất
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Cho phép người dùng kiểm soát mọi thao tác ghi dữ liệu do Trợ lý AI đề xuất. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Trợ lý AI. |
+| **Kích hoạt** | Agent trả về một hoặc nhiều `ToolAction` ở trạng thái `PENDING`. |
+| **Tiền điều kiện** | Preview Card chứa action và dữ liệu tối thiểu hợp lệ. |
+| **Hậu điều kiện xác nhận** | Action được thực thi, thẻ chuyển `CONFIRMED`, dữ liệu và thống kê được đồng bộ. |
+| **Hậu điều kiện hủy** | Thẻ chuyển `CANCELLED`; DB không thay đổi. |
+
+**Luồng chính:**
+
+1. Người dùng gửi yêu cầu tài chính bằng ngôn ngữ tự nhiên.
+2. Guardrail kiểm tra phạm vi; ReAct orchestrator có thể gọi query tool để lấy dữ liệu thật.
+3. Agent gọi action tool nhưng hệ thống chỉ tạo `ToolAction(PENDING)`, chưa ghi DB.
+4. UI hiển thị Preview Card với loại hành động, số tiền, danh mục và ghi chú.
+5. Người dùng kiểm tra và nhấn **Xác nhận**.
+6. Hệ thống xác thực lại action theo dữ liệu hiện tại.
+7. Repository thực thi action và cập nhật trạng thái thẻ thành `CONFIRMED`.
+8. Trạng thái xác nhận được đưa vào lịch sử để agent trả lời đúng ở lượt sau.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Chỉnh sửa:** Người dùng sửa số tiền/danh mục/ghi chú trên thẻ rồi mới xác nhận.
+- **A2 – Hủy:** Đánh dấu riêng action là `CANCELLED`, không ghi DB.
+- **A3 – Nhiều action:** Người dùng xác nhận/hủy từng thẻ hoặc dùng nút xác nhận tất cả; trạng thái từng thẻ độc lập.
+- **E1 – Dữ liệu đích đã thay đổi:** Không thực thi update/delete và yêu cầu tải lại.
+- **E2 – Action không hợp lệ:** Giữ ở trạng thái chờ hoặc báo lỗi; không ghi một phần ngoài chủ ý.
+
+**Quy tắc nghiệp vụ:** LLM không có quyền ghi trực tiếp; query tool chỉ đọc; mọi action tạo/sửa/xóa/danh mục/ngân sách phải qua xác nhận; lịch sử phải phân biệt rõ `PENDING`, `CONFIRMED`, `CANCELLED`.
+
+### 5.2.9 UC14–UC20 – Xem, Điều Hướng và Tra Cứu Lịch Giao Dịch
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Xem dòng tiền theo tháng/ngày và tìm giao dịch cần quan tâm. |
+| **Tác nhân chính** | Người dùng. |
+| **Kích hoạt** | Người dùng mở tab Lịch. |
+| **Tiền điều kiện** | Database đã khởi tạo; có thể chưa có giao dịch. |
+| **Hậu điều kiện** | Không thay đổi dữ liệu; trạng thái tháng, ngày, bộ lọc và kết quả hiển thị được cập nhật. |
+| **Use case liên quan** | UC14 `<<include>>` UC15; UC16 và UC20 mở rộng UC14; UC18, UC19 áp dụng bộ lọc. |
+
+**Luồng chính:**
+
+1. Hệ thống tải tháng hiện tại và tổng hợp dữ liệu từng ngày.
+2. Hệ thống hiển thị lưới lịch 7 cột cùng tổng thu/chi của từng ô ngày.
+3. Hệ thống hiển thị tổng thu, tổng chi và số dư tháng theo UC15.
+4. Người dùng chuyển tháng theo UC17 hoặc chọn một ngày theo UC16.
+5. Hệ thống tải danh sách giao dịch tương ứng.
+6. Người dùng nhập từ khóa UC18 hoặc chọn loại Thu/Chi UC19.
+7. Hệ thống lọc và hiển thị kết quả.
+8. Người dùng chọn một dòng để mở chi tiết UC20, từ đó có thể gọi UC21/UC22.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Không có dữ liệu:** Hiển thị trạng thái rỗng và tổng bằng 0, không coi là lỗi.
+- **A2 – Xóa bộ lọc:** Khôi phục toàn bộ giao dịch của ngày/tháng đang chọn.
+- **E1 – Lỗi đọc DB:** Hiển thị thông báo và tùy chọn tải lại.
+
+**Quy tắc nghiệp vụ:** Các phép tổng hợp lấy trực tiếp từ dữ liệu đã lưu; tháng dùng đúng múi giờ thiết bị; sau UC21/UC22 phải chạy UC23 để cập nhật chỉ số.
+
+### 5.2.10 UC24–UC31 – Phân Tích và Thống Kê Tài Chính
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Giúp người dùng hiểu cơ cấu và xu hướng dòng tiền theo kỳ. |
+| **Tác nhân chính** | Người dùng. |
+| **Kích hoạt** | Người dùng mở tab Thống kê. |
+| **Tiền điều kiện** | Database sẵn sàng; kỳ phân tích hợp lệ. |
+| **Hậu điều kiện** | Không thay đổi DB; biểu đồ và danh sách phản ánh kỳ/loại đang chọn. |
+| **Use case liên quan** | UC26 và UC25 `<<include>>` UC32; UC26 `<<include>>` UC27; UC31 `<<extend>>` UC26. |
+
+**Luồng chính:**
+
+1. Hệ thống chọn tháng hiện tại và tải tổng quan UC24.
+2. Người dùng chọn phân tích Chi tiêu hoặc Thu nhập theo UC25.
+3. Hệ thống nhóm giao dịch theo danh mục và tính tỷ trọng UC32.
+4. Hệ thống vẽ Donut Chart UC26 và danh sách cơ cấu UC27.
+5. Hệ thống hiển thị so sánh Thu–Chi UC28 và Top chi tiêu UC29.
+6. Người dùng đổi kỳ theo UC30; hệ thống tính lại toàn bộ dữ liệu.
+7. Người dùng chạm lát biểu đồ để xem giao dịch thành phần UC31.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Tổng bằng 0:** Không thực hiện phép chia; hiển thị biểu đồ rỗng và tỷ lệ 0%.
+- **A2 – Chỉ có một danh mục:** Hiển thị danh mục đó với tỷ lệ 100%.
+- **E1 – Dữ liệu không nhất quán:** Bỏ bản ghi không hợp lệ khỏi biểu đồ, ghi nhận lỗi nội bộ và không làm ứng dụng dừng.
+
+**Quy tắc nghiệp vụ:** Tổng tỷ trọng sau làm tròn phải xấp xỉ 100%; số tiền âm không được tham gia; màu danh mục lấy từ cấu hình danh mục; thay đổi kỳ hoặc loại phải tính lại từ nguồn dữ liệu duy nhất.
+
+### 5.2.11 UC33–UC41 – Xem và Thiết Lập Ngân Sách
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Theo dõi và thay đổi hạn mức chi tiêu tổng thể hoặc theo danh mục. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Trợ lý AI đối với UC40. |
+| **Kích hoạt** | Người dùng mở tab Ngân sách hoặc chọn sửa hạn mức. |
+| **Tiền điều kiện** | Kỳ ngân sách hợp lệ; danh mục tồn tại nếu đặt hạn mức danh mục. |
+| **Hậu điều kiện thành công** | Hạn mức được lưu bởi UC41; tiến độ và cảnh báo được tính lại. |
+| **Use case liên quan** | UC34/UC36 `<<include>>` UC41; UC38/UC39 `<<extend>>` UC37; UC40 mở rộng UC39. |
+
+**Luồng chính:**
+
+1. Hệ thống đọc hạn mức và tổng chi tháng, hiển thị tổng quan UC33.
+2. Hệ thống hiển thị tiến độ từng danh mục UC35 và Progress Bar UC37.
+3. Người dùng chọn sửa ngân sách tổng UC34 hoặc ngân sách danh mục UC36.
+4. Người dùng nhập hạn mức mới lớn hơn hoặc bằng 0.
+5. Hệ thống hiển thị giá trị cũ/mới và yêu cầu xác nhận.
+6. Hệ thống lưu cấu hình qua UC41.
+7. Hệ thống tính lại phần trăm và số tiền còn lại/vượt.
+8. Hệ thống hiển thị màu cam UC38 khi đạt từ 80% đến 100%, màu đỏ UC39 khi vượt 100%.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Đặt 0:** Hiểu là chưa thiết lập/tắt hạn mức theo quy ước của hệ thống; không chia cho 0.
+- **A2 – Đề xuất từ AI:** AI tạo Preview Card UC40; chỉ lưu sau khi người dùng duyệt theo UC10.
+- **E1 – Giá trị âm hoặc sai định dạng:** Không lưu và yêu cầu nhập lại.
+- **E2 – Danh mục không còn tồn tại:** Đóng dialog, làm mới danh sách.
+
+**Quy tắc nghiệp vụ:** `remaining = max(budget - spent, 0)` khi hiển thị; số vượt bằng `spent - budget`; vượt ngân sách phải dùng cụm từ **vượt hạn mức**, không diễn đạt thành “còn thiếu”; thay đổi hạn mức không sửa các giao dịch lịch sử.
+
+### 5.2.12 UC42–UC43 – Quản Lý và Tùy Biến Danh Mục
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Thêm, sửa hoặc xóa danh mục thu/chi và thuộc tính hiển thị. |
+| **Tác nhân chính** | Người dùng. |
+| **Kích hoạt** | Người dùng mở màn hình Quản lý danh mục. |
+| **Tiền điều kiện** | Database đã khởi tạo. |
+| **Hậu điều kiện thành công** | Danh mục và các màn hình sử dụng danh mục được đồng bộ. |
+| **Use case liên quan** | UC42 `<<include>>` UC43. |
+
+**Luồng chính:**
+
+1. Hệ thống hiển thị danh mục Thu và Chi.
+2. Người dùng chọn thêm mới hoặc chọn một danh mục hiện có.
+3. Người dùng nhập tên, loại, Emoji, màu HEX và hạn mức tùy chọn.
+4. Hệ thống kiểm tra tính hợp lệ và trùng tên trong cùng loại.
+5. Người dùng xác nhận.
+6. Hệ thống lưu và cập nhật các form, biểu đồ, ngân sách liên quan.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Sửa danh mục:** Hệ thống giữ nguyên ID để các giao dịch cũ tiếp tục liên kết.
+- **A2 – Xóa danh mục:** Hiển thị cảnh báo ảnh hưởng và yêu cầu chọn phương án xử lý giao dịch liên quan nếu cần.
+- **E1 – Trùng tên/thiếu tên/màu sai:** Không lưu, hiển thị trường lỗi.
+- **E2 – Vi phạm khóa ngoại:** Không xóa và hướng dẫn chuyển giao dịch sang danh mục khác.
+
+**Quy tắc nghiệp vụ:** Tên không được rỗng; loại chỉ là `EXPENSE` hoặc `INCOME`; không tạo danh mục trùng trong cùng loại; thao tác từ AI phải qua UC10.
+
+### 5.2.13 UC44/UC51 – Khóa Bảo Mật Bằng Sinh Trắc Học
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Bảo vệ truy cập ứng dụng bằng cơ chế xác thực của Android. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Android OS (`BiometricPrompt`). |
+| **Kích hoạt** | Người dùng bật khóa sinh trắc học hoặc mở ứng dụng khi khóa đang bật. |
+| **Tiền điều kiện** | Thiết bị hỗ trợ, có sinh trắc học đã đăng ký và cơ chế khóa thiết bị phù hợp. |
+| **Hậu điều kiện thành công** | Cài đặt được bật hoặc người dùng được phép truy cập ứng dụng. |
+| **Use case liên quan** | UC44 `<<include>>` UC51. |
+
+**Luồng chính:**
+
+1. Người dùng bật tùy chọn khóa sinh trắc học.
+2. Ứng dụng kiểm tra khả năng hỗ trợ của thiết bị.
+3. Android OS hiển thị `BiometricPrompt`.
+4. Người dùng xác thực thành công.
+5. Hệ thống lưu trạng thái bật khóa.
+6. Ở lần mở sau, ứng dụng yêu cầu xác thực trước khi hiển thị dữ liệu tài chính.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Dùng thông tin xác thực thiết bị:** Android OS cho phép PIN/mật khẩu nếu cấu hình hỗ trợ.
+- **E1 – Không hỗ trợ/chưa đăng ký:** Không bật khóa; hướng dẫn người dùng cấu hình thiết bị.
+- **E2 – Thất bại hoặc hủy:** Không cho vào vùng dữ liệu được bảo vệ; cho phép thử lại theo giới hạn nền tảng.
+
+**Quy tắc nghiệp vụ:** Ứng dụng không lưu mẫu vân tay; toàn bộ xác thực do Android OS thực hiện; không log dữ liệu sinh trắc học.
+
+### 5.2.14 UC46–UC47 – Xem và Đồng Bộ App Widget
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Hiển thị nhanh số dư, tổng thu/chi và lối tắt ghi chép ở màn hình chính. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Android OS/AppWidgetManager. |
+| **Kích hoạt** | Người dùng thêm Widget hoặc dữ liệu giao dịch thay đổi. |
+| **Tiền điều kiện** | Widget đã được thêm; ứng dụng/DB khả dụng. |
+| **Hậu điều kiện** | RemoteViews của các widget đang hoạt động hiển thị số liệu mới nhất. |
+
+**Luồng chính:**
+
+1. Android OS yêu cầu Widget cập nhật.
+2. Provider đọc tổng thu, tổng chi và số dư tháng hiện tại.
+3. Provider định dạng số tiền và cập nhật RemoteViews.
+4. Người dùng nhấn `[+ Ghi Chép]` để mở màn hình nhập giao dịch.
+5. Sau thao tác thêm/sửa/xóa, ứng dụng kích hoạt UC47 để cập nhật lại Widget.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Chưa có dữ liệu:** Hiển thị các giá trị 0 đ.
+- **E1 – Không đọc được DB:** Giữ dữ liệu gần nhất hoặc hiển thị trạng thái mặc định; không làm launcher lỗi.
+
+**Quy tắc nghiệp vụ:** Widget chỉ hiển thị dữ liệu tổng hợp cần thiết; PendingIntent phải trỏ đúng màn hình; mọi widget instance đang hoạt động phải được cập nhật.
+
+### 5.2.15 UC48/UC52 – Xuất Báo Cáo CSV
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Xuất lịch sử giao dịch thành tệp để người dùng lưu trữ hoặc phân tích. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Android OS (Storage Access Framework). |
+| **Kích hoạt** | Người dùng chọn **Xuất báo cáo CSV**. |
+| **Tiền điều kiện** | Có quyền đọc dữ liệu ứng dụng; trình chọn tệp của Android khả dụng. |
+| **Hậu điều kiện thành công** | Tệp UTF-8 được tạo tại URI do người dùng chọn; DB không thay đổi. |
+| **Use case liên quan** | UC48 `<<include>>` UC52. |
+
+**Luồng chính:**
+
+1. Người dùng chọn phạm vi thời gian và bộ lọc xuất.
+2. Ứng dụng đọc các giao dịch phù hợp.
+3. Android OS hiển thị trình chọn vị trí/tên tệp.
+4. Ứng dụng ghi tiêu đề và từng dòng CSV theo UTF-8.
+5. Hệ thống đóng stream và thông báo vị trí tệp thành công.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Không có giao dịch:** Cho phép xuất tệp chỉ có tiêu đề hoặc yêu cầu người dùng đổi phạm vi.
+- **E1 – Người dùng hủy SAF:** Kết thúc use case, không tạo tệp.
+- **E2 – Không thể ghi/thiếu dung lượng:** Đóng stream, thông báo lỗi và không thay đổi DB.
+
+**Quy tắc nghiệp vụ:** Escape đúng dấu phẩy, dấu nháy và xuống dòng; định dạng ngày giờ nhất quán; không xuất API key hoặc cấu hình bí mật.
+
+### 5.2.16 UC49 – Sao Lưu và Phục Hồi Dữ Liệu
+
+| Thuộc tính | Nội dung |
+| :--- | :--- |
+| **Mục tiêu** | Cho phép người dùng sao lưu hoặc khôi phục dữ liệu tài chính khi đổi thiết bị. |
+| **Tác nhân chính** | Người dùng. |
+| **Tác nhân phụ** | Android OS/Storage Access Framework. |
+| **Kích hoạt** | Người dùng chọn **Sao lưu** hoặc **Phục hồi**. |
+| **Tiền điều kiện** | Có quyền truy cập URI do người dùng chọn; không có transaction ghi đang mở. |
+| **Hậu điều kiện sao lưu** | Một bản sao nhất quán được tạo; DB hiện tại không đổi. |
+| **Hậu điều kiện phục hồi** | DB được thay thế bằng bản hợp lệ và ứng dụng tải lại toàn bộ state. |
+
+**Luồng chính – Sao lưu:**
+
+1. Người dùng chọn Sao lưu và vị trí lưu.
+2. Hệ thống hoàn tất các transaction đang chờ và tạo snapshot nhất quán.
+3. Hệ thống ghi bản sao vào URI được chọn.
+4. Hệ thống thông báo hoàn tất.
+
+**Luồng chính – Phục hồi:**
+
+1. Người dùng chọn tệp sao lưu.
+2. Hệ thống kiểm tra định dạng, phiên bản schema và tính toàn vẹn.
+3. Hệ thống cảnh báo dữ liệu hiện tại sẽ bị thay thế và yêu cầu xác nhận lần nữa.
+4. Hệ thống tạo bản dự phòng tạm thời, đóng kết nối DB và phục hồi atomically.
+5. Hệ thống mở lại DB, nạp state và cập nhật Widget.
+
+**Luồng thay thế và ngoại lệ:**
+
+- **A1 – Hủy trước xác nhận:** Không thay đổi dữ liệu.
+- **E1 – Tệp hỏng/khác phiên bản:** Từ chối phục hồi và giữ nguyên DB hiện tại.
+- **E2 – Phục hồi thất bại:** Khôi phục bản dự phòng tạm thời và báo lỗi.
+
+**Quy tắc nghiệp vụ:** Phục hồi là thao tác có rủi ro cao nên cần xác nhận kép; không ghi đè DB trước khi kiểm tra tệp; tệp sao lưu không được chứa API key dạng rõ nếu không có cơ chế bảo vệ phù hợp.
+
+### 5.2.17 Ma Trận Truy Vết Đặc Tả – Sơ Đồ
+
+| Nhóm đặc tả chi tiết | Các mã UC được bao phủ |
+| :--- | :--- |
+| Thêm giao dịch Thu/Chi | UC01–UC05, UC11–UC12 |
+| Giọng nói và OCR | UC06–UC07 |
+| Sửa/xóa/duyệt hành động | UC08–UC10, UC13 |
+| Lịch và lịch sử | UC14–UC23 |
+| Thống kê | UC24–UC32 |
+| Ngân sách | UC33–UC41 |
+| Danh mục | UC42–UC43 |
+| Sinh trắc học | UC44, UC51 |
+| Giao diện | UC45; được mô tả tại mục 6 và phần thiết kế giao diện |
+| Widget | UC46–UC47 |
+| Xuất và sao lưu | UC48–UC49, UC52 |
+| Thông tin ứng dụng | UC50; là use case chỉ đọc, mô tả tại màn hình Cài đặt |
+
+Ma trận trên bảo đảm toàn bộ UC01–UC52 trong sáu sơ đồ đều có vị trí đặc tả hoặc tham chiếu rõ ràng trong báo cáo.
+
+---
+
+## 5.3 ĐẶC TẢ ĐẦY ĐỦ TỪNG USE CASE CỦA NGƯỜI DÙNG
+
+Mục này tách riêng từng use case mà **Người dùng** trực tiếp khởi tạo hoặc tương tác trên giao diện. Mỗi UC được đặc tả độc lập thay vì gộp theo luồng như mục 5.2. Các UC thuần xử lý nội bộ của Hệ thống/Android OS được liệt kê riêng tại mục 5.3.6.
+
+### 5.3.1 Phân Hệ Quản Lý Giao Dịch
+
+| Mã UC | Tên Use Case | Tác nhân | Kích hoạt & Tiền điều kiện | Luồng chính | Hậu điều kiện | Luồng thay thế / Ngoại lệ |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **UC01** | Thêm khoản chi tiêu | Người dùng | Mở form nhập; có danh mục `EXPENSE`. | Chọn Chi tiêu → nhập số tiền → chọn danh mục → chọn ngày/ghi chú → nhấn Lưu → hệ thống kiểm tra và ghi DB. | Tạo một giao dịch chi; cập nhật số dư, lịch, thống kê, ngân sách và Widget. | Thiếu tiền/danh mục: không lưu; lỗi DB: rollback; chạm/vượt hạn mức: vẫn lưu nhưng cảnh báo. |
+| **UC02** | Thêm khoản thu nhập | Người dùng | Mở form nhập; có danh mục `INCOME`. | Chọn Thu nhập → nhập tiền → chọn nguồn thu → nhập ngày/ghi chú → lưu. | Tạo giao dịch thu và tăng số dư ròng tương ứng. | Danh mục sai loại hoặc tiền không hợp lệ: từ chối lưu; lỗi DB: giữ nguyên dữ liệu. |
+| **UC03** | Nhập nhanh số tiền bằng phím tắt | Người dùng | Đang ở trường nhập tiền của UC01/UC02. | Nhấn `+10k`, `+20k`, `+50k`, `+100k`, `+500k`, `+1tr` hoặc Xóa → hệ thống cộng/đặt lại giá trị và định dạng VNĐ. | Giá trị trên form thay đổi; DB chưa thay đổi. | Tràn giới hạn `Long`: không cộng và báo lỗi; nhấn Xóa: đưa giá trị về 0. |
+| **UC04** | Chọn danh mục giao dịch | Người dùng | Đã chọn loại Thu hoặc Chi; danh mục đã được tải. | Hệ thống lọc danh mục đúng loại → người dùng chọn một mục → UI đánh dấu lựa chọn. | Form giữ `categoryId` hợp lệ cùng loại giao dịch. | Không có danh mục: đề nghị tạo mới; đổi loại giao dịch: xóa lựa chọn không tương thích. |
+| **UC05** | Nhập ghi chú và ngày giao dịch | Người dùng | Đang tạo hoặc sửa giao dịch. | Chọn ngày bằng Date Picker → nhập ghi chú tùy chọn → quay lại form. | Form giữ ngày epoch và nội dung ghi chú để lưu. | Không chọn ngày: dùng ngày hiện tại; ghi chú trống: vẫn hợp lệ; ngày sai phạm vi: yêu cầu chọn lại. |
+| **UC06** | Nhập liệu bằng giọng nói | Người dùng; Android OS | Nhấn Microphone; dịch vụ nhận dạng khả dụng và quyền đã được cấp. | OS thu giọng nói → trả văn bản → NLP tách tiền, loại, danh mục, ghi chú → điền trước form → người dùng kiểm tra. | Form có dữ liệu gợi ý; chưa ghi DB trước khi người dùng lưu. | Từ chối quyền/timeout/không nghe rõ: giữ form và cho nhập tay hoặc thử lại. |
+| **UC07** | Quét hóa đơn tự động | Người dùng; Android OS; AI | Chọn Camera/Thư viện; có ảnh, mạng và cấu hình AI hợp lệ. | Chọn ảnh → gửi mô hình multimodal → kiểm tra JSON → ghép danh mục → hiển thị các dòng nháp → người dùng duyệt và lưu. | Các dòng được duyệt trở thành giao dịch chi; dữ liệu tổng hợp được cập nhật. | Chỉ đọc được tổng: tạo một dòng Tổng hóa đơn; ảnh/JSON/lỗi mạng: không ghi DB và cho thử lại. |
+| **UC08** | Chỉnh sửa giao dịch | Người dùng | Chọn Sửa trên một giao dịch còn tồn tại. | Tải dữ liệu cũ → người dùng sửa tiền/danh mục/ngày/ghi chú → xác nhận → kiểm tra → cập nhật DB. | Bản ghi và các tổng hợp của kỳ liên quan được cập nhật. | Hủy: giữ dữ liệu cũ; bản ghi đã mất/dữ liệu mới sai: không cập nhật và báo lỗi. |
+| **UC09** | Xóa giao dịch | Người dùng | Chọn Xóa trên giao dịch tồn tại. | Hiển thị thông tin và cảnh báo → người dùng xác nhận → xóa DB → tính lại số dư/ngân sách. | Bản ghi không còn; lịch, thống kê và Widget được đồng bộ. | Hủy: không đổi DB; lỗi hoặc bản ghi không tồn tại: báo lỗi, không ảnh hưởng bản ghi khác. |
+| **UC10** | Phê duyệt thẻ đề xuất từ AI | Người dùng; Trợ lý AI | Agent đã tạo `ToolAction` trạng thái `PENDING`. | Xem Preview Card → kiểm tra/sửa → nhấn Xác nhận → hệ thống xác thực lại → thực thi action → đổi trạng thái thẻ. | Action được lưu và thẻ thành `CONFIRMED`; nếu hủy thì thành `CANCELLED` và DB không đổi. | Nhiều thẻ: duyệt từng thẻ hoặc tất cả; dữ liệu đích thay đổi/action sai: từ chối thực thi an toàn. |
+
+### 5.3.2 Phân Hệ Lịch và Lịch Sử Giao Dịch
+
+| Mã UC | Tên Use Case | Tác nhân | Kích hoạt & Tiền điều kiện | Luồng chính | Hậu điều kiện | Luồng thay thế / Ngoại lệ |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **UC14** | Xem lưới lịch tháng 7 cột | Người dùng | Mở tab Lịch; DB đã khởi tạo. | Tải tháng hiện tại → nhóm giao dịch theo ngày → dựng lưới Thứ 2–Chủ nhật → hiển thị tổng thu/chi trên từng ngày. | Lịch và ngày hiện tại được hiển thị; DB không đổi. | Tháng không có dữ liệu: hiển thị lưới với các tổng bằng 0; lỗi đọc DB: cho tải lại. |
+| **UC15** | Xem tổng thu, tổng chi và số dư tháng | Người dùng | Đang xem một tháng trong UC14. | Hệ thống cộng thu và chi của tháng → tính `Số dư = Thu - Chi` → hiển thị ba chỉ số. | Người dùng thấy tổng hợp đúng tháng đang chọn. | Không có dữ liệu: hiển thị 0 đ; lỗi tổng hợp: không dùng số liệu cache sai và báo tải lại. |
+| **UC16** | Chọn ngày xem giao dịch trong ngày | Người dùng | Lưới lịch đã hiển thị. | Chạm một ngày → đánh dấu ngày → truy vấn giao dịch trong khoảng đầu/cuối ngày → hiển thị danh sách và tổng ngày. | Ngày được chọn trở thành bộ lọc hiện hành. | Ngày trống: hiển thị trạng thái chưa có giao dịch; chạm lại ngày đang chọn: giữ nguyên hoặc làm mới. |
+| **UC17** | Chuyển đổi tháng | Người dùng | Đang ở tab Lịch. | Nhấn tháng trước/tháng sau/hiện tại → cập nhật năm-tháng → tải lại lưới và tổng hợp. | Giao diện phản ánh kỳ mới; ngày chọn được đặt lại phù hợp. | Kỳ không có dữ liệu: hiển thị rỗng; lỗi truy vấn: giữ kỳ đang xem và báo lỗi. |
+| **UC18** | Tìm kiếm giao dịch theo từ khóa | Người dùng | Có danh sách giao dịch hoặc kỳ đang chọn. | Nhập từ khóa → chuẩn hóa chuỗi → lọc theo ghi chú/danh mục → hiển thị kết quả. | Danh sách chỉ còn các bản ghi phù hợp; DB không đổi. | Từ khóa trống: hiển thị toàn bộ; không có kết quả: hiện trạng thái rỗng; lỗi: cho thử lại. |
+| **UC19** | Lọc giao dịch theo loại Thu/Chi | Người dùng | Danh sách giao dịch đã tải. | Chọn Tất cả, Thu nhập hoặc Chi tiêu → áp dụng điều kiện loại → cập nhật danh sách và tổng nếu cần. | Bộ lọc được giữ trong state màn hình. | Không có bản ghi phù hợp: hiển thị rỗng; bỏ lọc: khôi phục Tất cả. |
+| **UC20** | Xem chi tiết giao dịch | Người dùng | Có ít nhất một giao dịch trong danh sách. | Chạm giao dịch → tải dữ liệu theo ID → mở BottomSheet với tiền, loại, danh mục, ngày và ghi chú. | Chi tiết được hiển thị; DB không đổi. | Bản ghi đã bị xóa: đóng sheet và tải lại; lỗi đọc: báo lỗi. |
+| **UC21** | Chỉnh sửa giao dịch từ lịch | Người dùng | BottomSheet UC20 đang mở. | Chọn Sửa → mở form đã điền → thực hiện luồng UC08 → quay lại lịch và tính lại ngày/tháng. | Giao dịch và chỉ số lịch được cập nhật. | Hủy sửa: quay về chi tiết; lỗi cập nhật: giữ dữ liệu cũ. |
+| **UC22** | Xóa giao dịch từ lịch | Người dùng | BottomSheet UC20 đang mở. | Chọn Xóa → xác nhận → thực hiện UC09 → chạy UC23 cập nhật ô ngày và số dư. | Giao dịch biến mất khỏi lịch; chỉ số ngày/tháng chính xác. | Hủy: đóng dialog; lỗi xóa: giữ dòng và hiển thị lỗi. |
+
+### 5.3.3 Phân Hệ Thống Kê Tài Chính
+
+| Mã UC | Tên Use Case | Tác nhân | Kích hoạt & Tiền điều kiện | Luồng chính | Hậu điều kiện | Luồng thay thế / Ngoại lệ |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **UC24** | Xem tổng quan dòng tiền tháng | Người dùng | Mở tab Thống kê; chọn được một kỳ. | Đọc giao dịch của kỳ → tính tổng thu, tổng chi, số dư → hiển thị thẻ tổng quan. | Có ảnh chụp tài chính của kỳ; DB không đổi. | Không có dữ liệu: hiển thị 0 đ; lỗi DB: báo tải lại. |
+| **UC25** | Chuyển đổi phân tích Chi/Thu | Người dùng | Dữ liệu thống kê đã tải. | Chọn Chi tiêu hoặc Thu nhập → lọc đúng loại → tính lại tỷ trọng → cập nhật biểu đồ và danh sách. | Chế độ phân tích hiện hành được cập nhật. | Loại được chọn không có dữ liệu: hiển thị biểu đồ rỗng và tỷ lệ 0%. |
+| **UC26** | Xem biểu đồ Donut tỷ trọng | Người dùng | Có tổng dữ liệu theo loại; UC32 đã tính nhóm danh mục. | Chuẩn hóa tỷ trọng → vẽ lát cắt theo màu danh mục → hiển thị chú giải. | Biểu đồ phản ánh cơ cấu danh mục trong kỳ. | Tổng bằng 0: không chia cho 0, hiển thị trạng thái rỗng; lỗi render: vẫn hiển thị danh sách số liệu. |
+| **UC27** | Xem danh sách cơ cấu phần trăm | Người dùng | Dữ liệu nhóm danh mục đã tính. | Sắp xếp theo số tiền → hiển thị icon, tên, tiền và tỷ lệ của từng danh mục. | Người dùng đọc được số liệu chi tiết tương ứng biểu đồ. | Một danh mục: hiển thị 100%; sai số làm tròn: tổng có thể xấp xỉ 100%. |
+| **UC28** | Xem biểu đồ so sánh xu hướng Thu–Chi | Người dùng | Có dữ liệu kỳ hoặc các mốc so sánh. | Tổng hợp theo mốc thời gian → dựng hai chuỗi Thu/Chi → vẽ cột/thanh so sánh. | Xu hướng dòng tiền được hiển thị; DB không đổi. | Thiếu một chuỗi: hiển thị chuỗi còn lại và 0 cho chuỗi thiếu. |
+| **UC29** | Xem xếp hạng Top chi tiêu | Người dùng | Kỳ đang chọn có thể có giao dịch chi. | Lọc `EXPENSE` → sắp xếp giảm dần theo tiền → lấy các khoản đầu → hiển thị. | Danh sách các khoản chi lớn nhất được tạo. | Không có chi tiêu: hiển thị rỗng; các khoản bằng nhau: dùng ngày/ID để ổn định thứ tự. |
+| **UC30** | Chọn mốc thời gian phân tích | Người dùng | Đang ở màn hình Thống kê. | Chọn tháng/năm → kiểm tra kỳ → truy vấn lại → cập nhật UC24–UC29. | Toàn bộ thống kê dùng cùng một kỳ mới. | Kỳ tương lai/chưa có dữ liệu: hiển thị 0; lựa chọn không hợp lệ: giữ kỳ cũ. |
+| **UC31** | Xem giao dịch thành phần của biểu đồ | Người dùng | Donut Chart có lát cắt. | Chạm lát cắt → xác định danh mục → lọc giao dịch cùng kỳ/loại/danh mục → hiển thị danh sách. | Người dùng truy vết được số liệu tổng hợp về giao dịch nguồn. | Lát quá nhỏ/không xác định: yêu cầu chọn từ chú giải; dữ liệu vừa đổi: tải lại biểu đồ. |
+
+### 5.3.4 Phân Hệ Quản Lý Ngân Sách
+
+| Mã UC | Tên Use Case | Tác nhân | Kích hoạt & Tiền điều kiện | Luồng chính | Hậu điều kiện | Luồng thay thế / Ngoại lệ |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **UC33** | Xem ngân sách tổng thể tháng | Người dùng | Mở tab Ngân sách; DB sẵn sàng. | Đọc hạn mức tháng và tổng chi → tính đã dùng, còn lại, phần trăm → hiển thị. | Trạng thái ngân sách tháng được trình bày; DB không đổi. | Chưa đặt ngân sách: hiển thị hướng dẫn thiết lập; hạn mức 0: không chia cho 0. |
+| **UC34** | Thiết lập ngân sách tổng | Người dùng | Chọn sửa ngân sách tháng. | Nhập hạn mức → xem giá trị cũ/mới → xác nhận → kiểm tra → UC41 lưu setting → tính lại tiến độ. | Hạn mức tổng mới có hiệu lực cho kỳ. | Nhập âm/sai định dạng: không lưu; hủy: giữ hạn mức cũ; lỗi DB: rollback. |
+| **UC35** | Xem tiến độ ngân sách danh mục | Người dùng | Có danh mục chi tiêu. | Đọc hạn mức và tổng chi từng danh mục → tính tỷ lệ/trạng thái → sắp xếp và hiển thị danh sách. | Người dùng thấy danh mục an toàn, gần ngưỡng hoặc vượt ngưỡng. | Danh mục chưa có hạn mức: hiển thị Chưa thiết lập; không có chi: tiến độ 0%. |
+| **UC36** | Thiết lập hạn mức từng danh mục | Người dùng | Chọn một danh mục `EXPENSE` còn tồn tại. | Mở dialog → nhập hạn mức → xác nhận → kiểm tra → UC41 lưu vào danh mục → cập nhật tiến độ. | Danh mục có hạn mức mới; cảnh báo được tính lại. | Danh mục bị xóa: đóng dialog; tiền âm/sai: từ chối; hủy: không đổi. |
+| **UC37** | Theo dõi thanh tiến độ ngân sách | Người dùng | Có số đã chi và hạn mức. | Tính `spent/budget` → vẽ Progress Bar → gán xanh dưới 80%, cam 80–100%, đỏ trên 100%. | Màu, tỷ lệ và số tiền phản ánh dữ liệu hiện tại. | Hạn mức 0: dùng trạng thái Chưa thiết lập; dữ liệu đổi: StateFlow tự cập nhật. |
+| **UC40** | Nhận đề xuất điều chỉnh ngân sách từ AI | Người dùng; Trợ lý AI | Ngân sách đã vượt hoặc người dùng yêu cầu tư vấn; AI khả dụng. | Agent query số liệu thật → đề xuất hạn mức → tạo Preview Card → người dùng sửa/duyệt theo UC10. | Nếu xác nhận, hạn mức mới được lưu; nếu hủy, DB không đổi. | AI/network lỗi: giữ ngân sách cũ; đề xuất sai/không mong muốn: người dùng hủy hoặc sửa. |
+
+### 5.3.5 Phân Hệ Cài Đặt và Tiện Ích
+
+| Mã UC | Tên Use Case | Tác nhân | Kích hoạt & Tiền điều kiện | Luồng chính | Hậu điều kiện | Luồng thay thế / Ngoại lệ |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **UC42** | Quản lý danh mục | Người dùng | Mở màn hình Danh mục; DB sẵn sàng. | Xem danh sách → chọn thêm/sửa/xóa → nhập hoặc xác nhận dữ liệu → hệ thống kiểm tra và lưu. | Danh mục và các màn hình phụ thuộc được đồng bộ. | Trùng tên/thiếu tên: không lưu; xóa có giao dịch liên quan: yêu cầu chuyển hoặc từ chối an toàn. |
+| **UC43** | Tùy biến tên, Emoji, màu và hạn mức | Người dùng | Đang thêm/sửa danh mục UC42. | Nhập tên → chọn Emoji → chọn màu HEX → nhập hạn mức tùy chọn → xem trước → xác nhận. | Thuộc tính danh mục được lưu và dùng thống nhất trên UI/biểu đồ. | Màu/tên/hạn mức sai: đánh dấu trường lỗi; hủy: khôi phục giá trị cũ. |
+| **UC44** | Khóa bảo mật bằng sinh trắc học | Người dùng; Android OS | Bật tùy chọn; thiết bị hỗ trợ và đã đăng ký sinh trắc học. | Kiểm tra khả năng → OS mở BiometricPrompt → xác thực → lưu trạng thái bật → yêu cầu xác thực ở lần mở sau. | Chỉ người xác thực thành công mới truy cập dữ liệu khi khóa bật. | Không hỗ trợ/chưa đăng ký: hướng dẫn cấu hình; thất bại/hủy: không bật hoặc không cho truy cập. |
+| **UC45** | Cài đặt giao diện Sáng/Tối | Người dùng | Mở Cài đặt giao diện. | Chọn Sáng, Tối hoặc Theo hệ thống → lưu lựa chọn → áp dụng theme Compose. | Giao diện đổi ngay và được khôi phục ở lần mở sau. | Theo hệ thống: cập nhật khi OS đổi theme; lỗi lưu: áp dụng tạm thời và báo lỗi nếu cần. |
+| **UC46** | Xem số dư và phím tắt trên App Widget | Người dùng; Android OS | Widget đã được thêm vào màn hình chính. | OS yêu cầu cập nhật → provider đọc tổng tháng → hiển thị số dư/thu/chi → người dùng nhấn phím tắt để mở form. | Widget hiển thị số liệu mới nhất và điều hướng đúng. | Chưa có dữ liệu: hiển thị 0 đ; lỗi DB: giữ dữ liệu gần nhất hoặc trạng thái mặc định. |
+| **UC48** | Xuất dữ liệu CSV/Excel | Người dùng; Android OS | Chọn Xuất dữ liệu; SAF khả dụng. | Chọn phạm vi → hệ thống đọc giao dịch → OS cho chọn URI → ghi CSV UTF-8 → đóng stream → báo thành công. | Tạo tệp tại vị trí người dùng chọn; DB không đổi. | Hủy SAF: không tạo; lỗi ghi/thiếu dung lượng: đóng stream và báo lỗi; không có dữ liệu: xuất tiêu đề hoặc cảnh báo. |
+| **UC49** | Sao lưu và phục hồi SQLite | Người dùng; Android OS | Chọn Sao lưu/Phục hồi; có URI truy cập được. | Sao lưu: tạo snapshot và ghi tệp. Phục hồi: kiểm tra tệp → cảnh báo → xác nhận kép → thay DB nguyên tử → tải lại state. | Có bản sao hợp lệ hoặc DB được phục hồi thành công. | Tệp hỏng/khác schema: từ chối; hủy: không đổi; phục hồi lỗi: quay lại bản dự phòng. |
+| **UC50** | Xem thông tin ứng dụng | Người dùng | Chọn Giới thiệu trong Cài đặt. | Hệ thống tải tên, phiên bản, mô tả Offline-First và hướng dẫn → hiển thị trang thông tin. | Người dùng xem được thông tin; không thay đổi dữ liệu. | Thiếu metadata: hiển thị giá trị mặc định; liên kết ngoài không mở được: báo lỗi nhưng giữ trang. |
+
+### 5.3.6 Các Use Case Hệ Thống Hỗ Trợ, Không Do User Trực Tiếp Khởi Tạo
+
+Các UC dưới đây vẫn thuộc mô hình đầy đủ UC01–UC52 nhưng không phải hành động độc lập của Người dùng. Chúng được hệ thống hoặc Android OS thực thi trong luồng cha:
+
+| Mã UC | Tác nhân thực thi | Vai trò | Được kích hoạt từ |
+| :---: | :--- | :--- | :--- |
+| **UC11** | Hệ thống | Kiểm tra số tiền, loại, danh mục và dữ liệu bắt buộc. | UC01, UC02, UC08. |
+| **UC12** | Hệ thống | Phát cảnh báo khi khoản chi chạm/vượt hạn mức. | UC01, UC37. |
+| **UC13** | Hệ thống | Tính lại số dư và ngân sách sau khi xóa. | UC09. |
+| **UC23** | Hệ thống | Cập nhật tổng trên ô lịch và phần tổng hợp. | UC21, UC22. |
+| **UC32** | Hệ thống | Nhóm dữ liệu và tính tỷ trọng danh mục. | UC25, UC26, UC27. |
+| **UC38** | Hệ thống | Hiển thị trạng thái cảnh báo màu cam ở ngưỡng 80–100%. | UC37. |
+| **UC39** | Hệ thống | Hiển thị trạng thái vượt hạn mức màu đỏ trên 100%. | UC37, UC40. |
+| **UC41** | Hệ thống | Lưu ngân sách vào Settings/Categories. | UC34, UC36, UC40. |
+| **UC47** | Android OS/Hệ thống | Nhận broadcast và đồng bộ App Widget. | UC01, UC02, UC08, UC09, UC10. |
+| **UC51** | Android OS | Thực hiện `BiometricPrompt`; ứng dụng không đọc mẫu sinh trắc học. | UC44. |
+| **UC52** | Android OS | Cấp URI đọc/ghi qua Storage Access Framework. | UC48, UC49. |
+
+Như vậy, **41 use case có tương tác trực tiếp với Người dùng** được đặc tả riêng tại mục 5.3.1–5.3.5; **11 use case hỗ trợ nội bộ** được phân loại tại mục 5.3.6. Tổng cộng khớp đủ **52 use case** trong bộ sơ đồ UML.
+
+---
+
 ## 6. CHI TIẾT 5 PHÂN HỆ GIAO DIỆN & TIỆN ÍCH MỞ RỘNG
 
 ### 6.1 Tab 0: Trang Chủ (Dashboard Tổng Quan)
@@ -707,7 +1292,7 @@ flowchart TD
         JevCheck["Gửi POST /v1/systemone (model: jev-latest)"]
         JevParse{"Phân loại Topic qua Jev JSON"}
         JevCheck --> JevParse
-        JevParse -->|choice = off_topic| BlockOffTopic["CHẶN NGAY LẬP TỨC: Trả Canned Response lịch sự (Tiết kiệm 100% token, độ trễ < 200ms)"]
+        JevParse -->|choice = off_topic| BlockOffTopic["CHẶN NGAY: Trả Canned Response, không gọi LLM chính (benchmark JEV: median 281ms)"]
         JevParse -->|Lỗi mạng / HTTP Error| FailOpen["Fail-Open Policy: Cho phép đi tiếp, không chặn trải nghiệm người dùng"]
         JevParse -->|choice = finance_or_greeting| PassTier2["HỢP LỆ: Cho phép chuyển sang Tầng 2"]
         FailOpen --> PassTier2
@@ -1184,13 +1769,56 @@ Dưới đây là bảng liệt kê chi tiết toàn bộ **9 Test Suites** vớ
 | **Kích thước file APK Debug (`assembleDebug`)** | **~21.0 MB** | Bao gồm toàn bộ icon Material 3, Room, Compose Runtime; cài đặt trong 3s |
 | **Thời gian khởi động nguội (Cold App Start)** | **~520 ms** | Đạt chuẩn xuất sắc của Google Play Vitals ($< 1000\text{ ms}$) |
 | **Mức chiếm dụng bộ nhớ RAM** | **~75 MB - 95 MB** | Hoạt động trơn tru trên cả các thiết bị Android phổ thông RAM 2GB - 3GB |
-| **Thời gian phản hồi Input Guardrail (JEV)** | **~180 ms - 250 ms** | Siêu tốc; chặn đứng các câu hỏi ngoài lề trước khi chạm tới LLM chính |
-| **Thời gian phản hồi Trợ Lý AI (ReAct Loop)** | **~1.3s - 1.8s** | Cực nhanh nhờ Gemini 3.7 / 3.8 Flash kết hợp xử lý Tool ngầm cục bộ |
+| **Input Guardrail JEV** | **Median 281 ms; P95 854 ms** | Đo thật 10 lượt; min 213 ms, trung bình 369 ms |
+| **Một lần gọi LLM** | **Median 4,288 giây; P95 20,783 giây** | Tổng hợp từ 20 lần gọi LLM trong 10 truy vấn ReAct |
+| **Query → Answer qua ReAct** | **Median 9,745 giây; P95 32,003 giây** | Mỗi truy vấn gồm JEV + 2 lần gọi LLM + 1 query tool cục bộ |
 | **Thời gian phân tích ảnh hóa đơn (Vision OCR)** | **~2.2s - 3.1s** | Nén ảnh Base64 tối ưu, bóc tách hóa đơn tiếng Việt phức tạp trong vài giây |
 | **Thời gian chạy 112 Unit Tests tự động** | **~1.02 giây** | Tốc độ ấn tượng trên môi trường JVM, tối ưu hóa tuyệt đối cho CI/CD |
 | **Tỷ lệ kiểm thử thành công (Success Rate)** | **100% (112/112 PASS)** | 0 failures, 0 ignored, độ tin cậy mã nguồn hoàn hảo |
 | **Tiêu hao năng lượng pin** | **$< 1\%$ / 30 phút sử dụng** | Không sử dụng Background Service ngầm liên tục; SQLite truy vấn tức thời |
 | **Khả năng vận hành ngoại tuyến (Offline)** | **100% tính năng cốt lõi** | Sổ sách, thống kê, lịch thu chi, ngân sách hoạt động độc lập không cần mạng |
+
+### 14.1 Phương Pháp Đo Độ Trễ Agent
+
+Phép đo được thực hiện ngày **22/10/2026** trên endpoint và cấu hình thực tế của dự án:
+
+- Truy vấn cố định: `Tháng này tôi đã tiêu bao nhiêu?`.
+- Model: `ag/gemini-3.8-flash` qua endpoint OpenAI-compatible đang cấu hình.
+- Input Guardrail: `jev-latest`.
+- Payload sử dụng system prompt hiện tại và đầy đủ 16 function tools của ứng dụng.
+- Hội thoại bắt đầu không có lịch sử, tương ứng một phiên chat mới.
+- Luồng ReAct thực tế gồm: JEV → LLM chọn `query_balance_summary` → query tool → LLM tổng hợp câu trả lời.
+- Thực hiện 1 lượt warm-up không tính kết quả, sau đó đo 10 lượt liên tiếp.
+- Dùng monotonic clock để đo từng chặng và tổng end-to-end.
+- Kết quả query tool sử dụng một fixture SQLite cố định để mọi lượt nhận cùng dữ liệu, tránh biến động nội dung làm sai lệch phép so sánh.
+- Không tính thời gian render giao diện Android; thời gian truy vấn SQLite cục bộ rất nhỏ so với độ trễ mạng/model nhưng chưa được benchmark riêng trong phép đo này.
+
+### 14.2 Kết Quả Từng Lượt Đo
+
+| Lượt | JEV Guardrail | LLM lần 1: chọn tool | LLM lần 2: tổng hợp | Tổng end-to-end |
+| :---: | ---: | ---: | ---: | ---: |
+| 1 | 241 ms | 5.019 ms | 26.731 ms | **32.003 ms** |
+| 2 | 854 ms | 5.381 ms | 3.911 ms | **10.154 ms** |
+| 3 | 239 ms | 6.491 ms | 3.009 ms | **9.745 ms** |
+| 4 | 213 ms | 5.396 ms | 3.107 ms | **8.722 ms** |
+| 5 | 261 ms | 5.149 ms | 3.255 ms | **8.671 ms** |
+| 6 | 281 ms | 5.425 ms | 4.136 ms | **9.847 ms** |
+| 7 | 354 ms | 5.156 ms | 3.669 ms | **9.184 ms** |
+| 8 | 588 ms | 4.288 ms | 7.613 ms | **12.495 ms** |
+| 9 | 285 ms | 4.092 ms | 3.345 ms | **7.727 ms** |
+| 10 | 374 ms | 20.783 ms | 2.585 ms | **23.747 ms** |
+
+### 14.3 Thống Kê Tổng Hợp
+
+| Chỉ số | Min | Median | Trung bình | P95 | Max |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| **JEV Guardrail** | 213 ms | **281 ms** | 369 ms | 854 ms | 854 ms |
+| **Một lần gọi LLM** | 2.585 ms | **4.288 ms** | 6.427 ms | 20.783 ms | 26.731 ms |
+| **End-to-end Query → Answer** | 7.727 ms | **9.745 ms** | 13.230 ms | 32.003 ms | 32.003 ms |
+
+Kết quả cho thấy con số ước tính cũ `1,3–1,8 giây` không phản ánh đúng endpoint hiện tại. Với truy vấn phải đọc dữ liệu, agent cần hai lượt gọi LLM nên thời gian phản hồi điển hình theo median là khoảng **9,75 giây**. JEV chỉ chiếm khoảng 0,28 giây ở median; phần lớn độ trễ nằm tại máy chủ suy luận. Hai lượt chậm bất thường đạt 23,747 giây và 32,003 giây, cho thấy cần theo dõi tail latency thay vì chỉ báo cáo giá trị trung bình.
+
+> **Giới hạn phép đo:** P95 từ 10 mẫu là số liệu sơ bộ và theo phương pháp nearest-rank sẽ trùng với giá trị lớn nhất. Cần tối thiểu 50–100 lượt trên nhiều loại mạng và thiết bị Android để có P95/P99 ổn định. Kết quả này phản ánh cấu hình và trạng thái endpoint tại thời điểm đo, không phải cam kết độ trễ cố định cho mọi lần sử dụng.
 
 ---
 
